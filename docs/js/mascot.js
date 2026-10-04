@@ -63,7 +63,7 @@ const drop = (x, y, delay) => n('path', { d: `M${x} ${y} q8 14 0 20 q-8 -6 0 -20
 /** pose: { zone:'calm'|'mid'|'high', face, puff (scale), sweat (0-2), breathing (bool) } -> element tree */
 export function mascotTree(pose, { title = null } = {}) {
   const k = ARC_SCALE[pose.zone];
-  const v = pose.variant ? VARIANTS.find((x) => x.id === pose.variant) ?? null : null;
+  const v = pose.variant ? VARIANTS.find((x) => x.id === pose.variant) ?? null : pose.tint ? { tint: pose.tint, eyes: 'dot', accessory: 'none' } : null;
   const arcs = ARCS.map(([d, w], i) => n('path', { d, fill: 'none', stroke: ZONE_HEX[pose.zone], 'stroke-width': +(w * k).toFixed(1), 'stroke-linecap': 'round', class: `mc-arc z-${pose.zone}`, 'data-i': i }));
   const body = n('g', { class: pose.breathing ? 'mc-body mc-breathe' : 'mc-body', transform: `translate(100 120) scale(${pose.puff ?? 1}) translate(-100 -120)` }, [
     ...(v ? [n('path', { d: BUBBLE, fill: v.tint, 'fill-opacity': 0.3, stroke: 'none', class: 'mc-tint' })] : []),

@@ -1,6 +1,8 @@
 // Landing page controller: an interactive preview of the same answer at different (virtual) conditions.
 // Reuses the engine and the rule-based transform; no network, no storage, text via textContent only.
-import { computeSettings } from './engine.js';
+import { computeSettings, THRESHOLDS } from './engine.js';
+import { renderMascot } from './mascot.js';
+import { loadJSON } from './storage.js';
 import { SAMPLE_PROFILE } from './profile.js';
 import { transform } from './transform.js';
 import { initPage, renderBlocks, renderLoadMeter } from './ui.js';
@@ -15,6 +17,16 @@ const PRESETS = {
   long: { hrvMs: 33, sessionMinutes: 60 }, // about -40%, long session
 };
 const state = { ...PRESETS.rested };
+let mascotOn = loadJSON('attune.mascot') !== false;
+let artKey = '';
+
+// Hero illustration: the brain balloon, tinted warm, whose arcs follow the preview's load (same scale as the meter).
+function renderArt(load) {
+  const zone = load >= THRESHOLDS.breakNow ? 'high' : load >= THRESHOLDS.breakSoon ? 'mid' : 'calm';
+  const pose = { zone, face: zone === 'high' ? 'tired' : zone === 'mid' ? 'tense' : 'calm', puff: 1, sweat: 0, breathing: false, tint: '#F2A65A', plain: !mascotOn };
+  const k = JSON.stringify(pose);
+  if (k !== artKey) { artKey = k; renderMascot($('lp-hero-art'), pose); }
+}
 
 let story = null;
 let indiv = null;
@@ -38,6 +50,7 @@ function render() {
 
   const s = computeSettings(SAMPLE_PROFILE, { baselineHrvMs: BASELINE_HRV_MS, hrvMs, sessionMinutes });
   renderLoadMeter($('lp-meter'), s.loadIndex, tr);
+  renderArt(s.loadIndex);
   const alert = $('lp-alert');
   alert.hidden = s.breakAdvice === 'none';
   alert.classList.toggle('break-now', s.breakAdvice === 'now');
@@ -62,4 +75,5 @@ document.querySelectorAll('.lp-pick').forEach((b) => b.addEventListener('click',
   render();
 }));
 
+document.addEventListener('attune:mascot', (e) => { mascotOn = e.detail.on; render(); });
 app.start();

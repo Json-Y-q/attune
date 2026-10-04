@@ -17,6 +17,7 @@
 Fit AI answers to how *you* read: how much information, at what pace, in what shape.
 Runs entirely in your browser. No build step, no dependencies, no API key, no server.
 
+- **Look & feel** (`docs/css/style.css`, "Theme v3"): one warm aurora theme for every page: large type, roomy rounded cards, pill controls, a floating brain-balloon hero that follows the preview's load, soft particles; no external fonts, scripts or CDN. Colours for the load scale are unchanged; motion is off under `prefers-reduced-motion`; dark mode follows the system setting. The characters carry no name labels (colour, eye shape and a small accessory only).
 - **Landing page** (`docs/index.html`): what Attune is, with an interactive preview (same answer, different virtual condition) and links to the demo, the check-in and GitHub. English by default, Korean toggle.
 - **Architecture** (`docs/architecture.html`): inline-SVG data-flow diagram, with each step labelled *Implemented in this prototype* (virtual HRV sliders, rule-based engine) or *Planned* (Apple Watch → iPhone/HealthKit on-device preprocessing → send only a summary → density engine; MCP only after validation). Sample summary format: `docs/data/sample-hrv.json` + `docs/data/hrv-summary.schema.json`.
 - **Onboarding** (`docs/onboarding.html`): three short tasks (~4 min) → a personal profile JSON stored in `localStorage`, shown as a radar/gauge, plus a copyable **Style card** (the profile as a short instruction you can paste into your AI's custom instructions). Today the profile is applied automatically only in the demo page; a browser extension is on the roadmap, not built. Optional photo/video slots live in `docs/media/`.
@@ -136,6 +137,7 @@ Brand: the chosen logo is concept 2 (a brain-shaped speech bubble whose five top
 
 AI 답변을 *내가* 읽는 방식에 맞춥니다: 정보량, 속도, 표현 형태. 모든 것이 브라우저 안에서 동작합니다. 빌드, 의존성, API 키, 서버가 필요 없습니다.
 
+- **디자인** (`docs/css/style.css`의 "Theme v3"): 모든 페이지에 같은 따뜻한 오로라 테마를 씁니다. 큰 타이포, 넉넉한 둥근 카드, 알약형 버튼, 미리보기의 부하를 따라가는 떠다니는 뇌풍선 히어로, 부드러운 입자. 외부 폰트·스크립트·CDN은 없고, 부하 색 체계는 그대로이며, 모션 줄이기 설정에서는 움직임이 꺼지고, 다크 모드는 시스템 설정을 따릅니다. 캐릭터에는 이름 라벨이 없고 색·눈 모양·작은 소품으로만 구분합니다.
 - **랜딩 페이지** (`docs/index.html`): Attune 소개와 인터랙티브 미리보기(같은 답변이 가상 컨디션에 따라 달라짐), 데모·체크인·GitHub 링크. 기본 영어, 한국어 전환.
 - **구조** (`docs/architecture.html`): 인라인 SVG 데이터 흐름도. 각 단계를 *이 프로토타입에 구현됨*(가상 HRV 슬라이더, 규칙 기반 엔진)과 *계획*(Apple Watch → iPhone/HealthKit 온디바이스 전처리 → 요약만 전송 → 밀도 조절 엔진, MCP는 검증 후)으로 구분. 요약 형식 예: `docs/data/sample-hrv.json`, `docs/data/hrv-summary.schema.json`.
 - **온보딩** (`docs/onboarding.html`): 짧은 과제 3개(약 4분) → 개인 프로파일 JSON을 `localStorage`에 저장하고 레이더/게이지로 보여 주며, AI의 맞춤 설정에 붙여 넣을 수 있는 짧은 지시문 **스타일 카드**를 복사할 수 있음. 현재 자동 적용은 데모 페이지에서만 되며 브라우저 확장은 로드맵(미구현). 선택 사진·영상 슬롯은 `docs/media/`.

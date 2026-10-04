@@ -18,7 +18,7 @@ if the visitor switches it on (checkbox, remembered in `localStorage` as `attune
 
 ## Characters (individual differences)
 `mascot-character-a.svg` … `d.svg`: the same head shape for everybody. Characters differ **only** in a soft colour tint, the eye shape
-and one small accessory (glasses, headphones, sprout, none). They are labelled A–D and carry no age, gender or other group meaning;
+and one small accessory (glasses, headphones, sprout, none). They carry no names, and no age, gender or other group meaning;
 the section says so ("Illustrative — individual differences, not age or gender; virtual values").
 
 ## Source of truth
