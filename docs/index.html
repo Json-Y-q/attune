@@ -23,12 +23,14 @@
       <a href="onboarding.html" data-i18n="nav_onboard">Onboarding</a>
       <a href="demo.html" data-i18n="nav_demo">Demo</a>
       <a href="architecture.html" data-i18n="nav_arch">Architecture</a>
+      <a href="conversation.html" data-i18n="nav_conv">Voice &amp; partner</a>
     </nav>
     <button id="lang-toggle" class="btn secondary" type="button" data-i18n="lang_btn" data-i18n-attr="aria-label:lang_btn_label">한국어</button>
   </header>
 
   <main id="main" tabindex="-1">
     <section class="lp-band lp-hero" aria-labelledby="lp-h1">
+      <div class="lp-mesh" aria-hidden="true"><i class="m-calm"></i><i class="m-mid"></i><i class="m-high"></i></div>
       <div class="lp-inner lp-hero-grid">
         <div class="lp-hero-copy">
           <p class="lp-eyebrow" data-i18n="lp_eyebrow">Open prototype · source-available</p>
@@ -43,7 +45,7 @@
           <p class="lp-micro muted" data-i18n="lp_trust_line">Not a medical device · Runs in your browser · Delete anytime</p>
         </div>
 
-        <section class="panel lp-preview" aria-labelledby="pv-h">
+        <section class="panel lp-preview glass" aria-labelledby="pv-h">
           <h2 id="pv-h" data-i18n="lp_pv_title">Same answer, different day</h2>
           <p class="muted" data-i18n="lp_pv_note">Move the sliders or pick a day. Values are virtual: no sensor is read.</p>
           <div class="lp-picks" role="group" aria-labelledby="pre-label">
@@ -71,6 +73,93 @@
       </div>
     </section>
 
+    <section id="story" class="lp-band lp-story-band" aria-labelledby="st-h">
+      <div class="lp-inner">
+        <h2 id="st-h" data-i18n="st_h">From overload to recovery</h2>
+        <p class="lp-lead" data-i18n="st_p">An 18-second story with virtual values: long replies push the load up, Attune lightens the answers and offers a checkpoint and a rest, then everything settles back to your defaults.</p>
+        <div class="st-grid">
+          <div id="st-device" class="st-device" aria-hidden="true">
+            <div class="st-notch"></div>
+            <div class="st-screen">
+              <div class="st-bar"><span class="st-dotline"></span><span id="st-device-time"></span><span id="st-chip" class="st-chip" hidden></span></div>
+              <div id="st-chat" class="st-chat"></div>
+            </div>
+          </div>
+          <div class="st-side glass">
+            <div class="st-phase" aria-live="polite">
+              <h3 id="st-phase-title"></h3>
+              <p id="st-phase-desc"></p>
+            </div>
+            <div class="st-gauge-row">
+              <div id="st-mascot" class="st-mascot" aria-hidden="true"></div>
+              <div class="st-gauge">
+                <div id="st-meter" class="meter"></div>
+                <p><span id="st-badge" class="st-badge"></span></p>
+              </div>
+            </div>
+            <p id="st-levels" class="st-line"></p>
+            <p id="st-defaults" class="muted st-line"></p>
+            <p id="st-min" class="muted st-line"></p>
+            <div class="st-controls">
+              <button id="st-play" class="btn" type="button"></button>
+              <label class="st-scrub-label"><span class="sr-only" data-i18n="st_scrub">Story timeline</span>
+                <input id="st-scrub" type="range" min="0" max="18000" step="100" value="0" data-i18n-attr="aria-label:st_scrub"></label>
+            </div>
+            <label class="st-toggle"><input id="st-mascot-toggle" type="checkbox" checked> <span data-i18n="mc_toggle">Show the mascot</span></label>
+            <p class="muted st-line" data-i18n="st_virtual">All values are virtual. No sensor is read and nothing is measured.</p>
+          </div>
+        </div>
+        <ol id="st-steps" class="st-steps" data-i18n-attr="aria-label:st_steps"><li><button class="st-step" type="button" data-phase="long" data-i18n="st_p_long">Long replies keep coming</button></li><li><button class="st-step" type="button" data-phase="rising" data-i18n="st_p_rising">The load builds up</button></li><li><button class="st-step" type="button" data-phase="adjust" data-i18n="st_p_adjust">Attune lightens the answers</button></li><li><button class="st-step" type="button" data-phase="checkpoint" data-i18n="st_p_checkpoint">A checkpoint, then a rest</button></li><li><button class="st-step" type="button" data-phase="rest" data-i18n="st_p_rest">Taking a rest</button></li><li><button class="st-step" type="button" data-phase="resume" data-i18n="st_p_resume">Pick up where you left off</button></li><li><button class="st-step" type="button" data-phase="recovered" data-i18n="st_p_recovered">Back to your defaults</button></li></ol>
+        <h3 class="st-frames-h" data-i18n="mc_frames_h">Mascot: four still frames</h3>
+        <ul class="st-frames"><li class="glass"><div class="st-frame" data-still="calm" aria-hidden="true"></div><span data-i18n="mc_calm">Calm</span></li><li class="glass"><div class="st-frame" data-still="build" aria-hidden="true"></div><span data-i18n="mc_build">Building up</span></li><li class="glass"><div class="st-frame" data-still="heavy" aria-hidden="true"></div><span data-i18n="mc_heavy">Heavy</span></li><li class="glass"><div class="st-frame" data-still="recovered" aria-hidden="true"></div><span data-i18n="mc_recovered">Recovered</span></li></ul>
+        <p class="muted st-line" data-i18n="mc_note">The mascot is an optional illustration of the meter, with the same speech-bubble and arc shapes as the logo. Its faces are drawings, not a reading of anyone’s feelings. The logo stays the default.</p>
+        <details class="lp-orig st-video">
+          <summary data-i18n="lp_story_video">Watch the 18-second video version</summary>
+          <p class="muted" data-i18n="lp_story_video_note">The same story as a short silent loop. No sound, no tracking.</p>
+          <figure class="ob-media ob-hero-media" data-media-slot="hero" data-media-ready="true">
+      <div class="ob-ph" aria-hidden="true"><svg viewBox="0 0 480 270" focusable="false"><rect class="ph-bg" width="480" height="270" rx="18"/>
+<g transform="translate(26 42)"><rect class="ph-card" x="0" y="0" width="150" height="186" rx="12"/>
+<rect class="ph-line" x="14" y="18" width="122" height="7" rx="3.5"/><rect class="ph-line" x="14" y="34" width="110" height="7" rx="3.5"/><rect class="ph-line" x="14" y="50" width="122" height="7" rx="3.5"/><rect class="ph-line" x="14" y="66" width="96" height="7" rx="3.5"/><rect class="ph-line" x="14" y="82" width="122" height="7" rx="3.5"/><rect class="ph-line" x="14" y="98" width="118" height="7" rx="3.5"/><rect class="ph-line" x="14" y="114" width="104" height="7" rx="3.5"/><rect class="ph-line" x="14" y="130" width="122" height="7" rx="3.5"/><rect class="ph-line" x="14" y="146" width="90" height="7" rx="3.5"/><rect class="ph-line" x="14" y="162" width="122" height="7" rx="3.5"/></g>
+<path class="ph-arrow" d="M196 135h72m-14-14 14 14-14 14"/>
+<g transform="translate(290 38)"><path class="ph-bubble" d="M20 0h140a20 20 0 0 1 20 20v110a20 20 0 0 1-20 20H70l-34 30v-30H20a20 20 0 0 1-20-20V20A20 20 0 0 1 20 0z"/>
+<rect class="ph-a" x="22" y="24" width="60" height="10" rx="5"/><rect class="ph-p" x="22" y="54" width="120" height="8" rx="4" opacity=".6"/><rect class="ph-p" x="22" y="74" width="96" height="8" rx="4" opacity=".6"/><rect class="ph-p" x="22" y="94" width="108" height="8" rx="4" opacity=".6"/>
+<path class="ph-arc" d="M118 130a24 24 0 0 1 40 0" stroke="var(--primary)"/><path class="ph-arc" d="M126 122a14 14 0 0 1 24 0" stroke="var(--brand-accent)"/></g></svg></div>
+      <template data-media-template>
+        <video class="ob-video" muted loop playsinline preload="none" poster="media/hero-poster.webp" data-i18n-attr="aria-label:md_hero_label">
+          <source src="media/hero.webm" type="video/webm">
+          <source src="media/hero.mp4" type="video/mp4">
+          <track kind="captions" srclang="en" label="English" src="media/hero.en.vtt" default>
+          <track kind="captions" srclang="ko" label="한국어" src="media/hero.ko.vtt">
+        </video>
+      </template>
+    </figure>
+        </details>
+      </div>
+    </section>
+
+    <section id="individuals" class="lp-band" aria-labelledby="in-h">
+      <div class="lp-inner">
+        <h2 id="in-h" data-i18n="in_h">Same conversation, different pace</h2>
+        <p class="lp-lead" id="in-p"></p>
+        <p class="in-label"><span class="st-badge z-mid" data-i18n="in_label">Illustrative — individual differences, not age or gender; virtual values</span></p>
+        <div id="in-grid" class="in-grid"></div>
+        <div class="in-controls glass">
+          <button id="in-play" class="btn" type="button"></button>
+          <label class="st-scrub-label"><span class="sr-only" data-i18n="in_scrub">Position in the shared conversation</span>
+            <input id="in-scrub" type="range" min="0" max="15000" step="50" value="0" data-i18n-attr="aria-label:in_scrub"></label>
+          <span id="in-min" class="muted"></span>
+          <label class="st-toggle"><input id="in-mascot-toggle" type="checkbox" checked> <span data-i18n="in_toggle">Show the mascots</span></label>
+        </div>
+        <h3 class="st-frames-h" data-i18n="in_tl">When Attune steps in (shared time axis)</h3>
+        <div id="in-tl" class="in-tl"></div>
+        <p id="in-first" class="st-line"></p>
+        <p class="in-msg glass" data-i18n="in_msg">How early a lighter answer is needed is set by a short measurement of your own baseline in onboarding, not by who you are. The same conversation can feel different for each person, and for the same person on different days.</p>
+        <p><a class="btn secondary" href="onboarding.html" data-i18n="in_link">See how your baseline is set</a></p>
+        <p class="muted st-line" data-i18n="in_logo_note">With the mascot switched off, the cards show the plain bubble-and-arc logo shape.</p>
+        <details class="lp-orig"><summary data-i18n="in_sum_h">Text version</summary><ul id="in-sum" class="in-sum"></ul></details>
+      </div>
+    </section>
+
     <section class="lp-band alt" aria-labelledby="lp-prob-h">
       <div class="lp-inner lp-narrow">
         <h2 id="lp-prob-h" data-i18n="lp_prob_h">Dense answers are tiring</h2>
@@ -92,16 +181,15 @@
       <div class="lp-inner">
         <h2 id="lp-sol-h" data-i18n="lp_sol_h">Fit the answer, not the person</h2>
         <p class="lp-lead" data-i18n="lp_sol_p">Attune builds a small reading-comfort profile and reshapes every answer to match it.</p>
-        <ul class="lp-grid3 lp-list">
-          <li class="lp-card">
+        <ul class="lp-bento lp-list"><li class="lp-card glass b-3 b-tall">
             <svg class="lp-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h11M4 18h6"/></svg>
             <h3 data-i18n="lp_sol_amount">Amount</h3><p data-i18n="lp_sol_amount_d">How much to say: from a one-line summary to the full text.</p>
           </li>
-          <li class="lp-card">
+          <li class="lp-card glass b-3">
             <svg class="lp-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="11" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
             <h3 data-i18n="lp_sol_pace">Pace</h3><p data-i18n="lp_sol_pace_d">How fast it arrives: tap per chunk, slow stream or instant.</p>
           </li>
-          <li class="lp-card">
+          <li class="lp-card glass b-6">
             <svg class="lp-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="6" rx="2"/><rect x="4" y="14" width="7" height="6" rx="2"/><rect x="14" y="14" width="6" height="6" rx="2"/></svg>
             <h3 data-i18n="lp_sol_shape">Shape</h3><p data-i18n="lp_sol_shape_d">How it is laid out: prose, summary first, bullets or small chunks.</p>
           </li>
@@ -109,14 +197,28 @@
       </div>
     </section>
 
+    <section class="lp-band lp-vp" aria-labelledby="lp-vp-h">
+      <div class="lp-inner">
+        <h2 id="lp-vp-h" data-i18n="lp_vp_h">Voice &amp; partner behavior</h2>
+        <p class="lp-lead" data-i18n="lp_vp_p">A simulation of how a conversation partner could slow down, shorten and offer a pause when a chat gets heavy. Speed and length start from your profile and today’s virtual condition.</p>
+        <ul class="lp-bento lp-list">
+          <li class="lp-card glass b-2"><h3 data-i18n="lp_vp_1_t">Voice speed</h3><p data-i18n="lp_vp_1_d">Five speed levels with pauses and a measured words-per-minute readout. Text-to-speech only; the microphone is never used.</p></li>
+          <li class="lp-card glass b-2"><h3 data-i18n="lp_vp_2_t">Conversation simulator</h3><p data-i18n="lp_vp_2_d">Steer a scripted chat with buttons: short replies, “what do you mean?”, silence, many quick turns.</p></li>
+          <li class="lp-card glass b-2"><h3 data-i18n="lp_vp_3_t">Polite partner</h3><p data-i18n="lp_vp_3_d">Quiet changes first, at most one gentle suggestion, and it backs off when you say no.</p></li>
+        </ul>
+        <p class="lp-cta-row"><a class="btn" href="conversation.html" data-i18n="lp_vp_cta">Open the voice &amp; partner demo</a></p>
+        <p class="muted lp-micro" data-i18n="lp_vp_note">Simulation only. It does not detect anything about you.</p>
+      </div>
+    </section>
+
     <section id="how" class="lp-band alt" aria-labelledby="lp-how-h">
       <div class="lp-inner">
         <h2 id="lp-how-h" data-i18n="lp_how_h">How it works</h2>
         <ol class="lp-steps">
-          <li class="lp-card"><span class="lp-stepno" data-i18n="lp_step" data-n="1">Step 1</span><h3 data-i18n="lp_s1_t">Measure</h3><p data-i18n="lp_s1_d">Three short game-like tasks (about 4 minutes) show how you take in information.</p></li>
-          <li class="lp-card"><span class="lp-stepno" data-i18n="lp_step" data-n="2">Step 2</span><h3 data-i18n="lp_s2_t">Profile</h3><p data-i18n="lp_s2_d">You get a personal profile: amount, pace and shape. It stays in your browser.</p></li>
-          <li class="lp-card"><span class="lp-stepno" data-i18n="lp_step" data-n="3">Step 3</span><h3 data-i18n="lp_s3_t">Apply</h3><p data-i18n="lp_s3_d">The demo reshapes an answer to your profile. Developers can plug in a model through a small adapter.</p></li>
-          <li class="lp-card"><span class="lp-stepno" data-i18n="lp_step" data-n="4">Step 4</span><h3 data-i18n="lp_s4_t">Adjust (optional)</h3><p data-i18n="lp_s4_d">On a tired day, a condition signal lightens the answer by a step and suggests a break. Here the signal is virtual; real wearables are on the roadmap.</p></li>
+          <li class="lp-card glass"><span class="lp-stepno" data-i18n="lp_step" data-n="1">Step 1</span><h3 data-i18n="lp_s1_t">Measure</h3><p data-i18n="lp_s1_d">Three short game-like tasks (about 4 minutes) show how you take in information.</p></li>
+          <li class="lp-card glass"><span class="lp-stepno" data-i18n="lp_step" data-n="2">Step 2</span><h3 data-i18n="lp_s2_t">Profile</h3><p data-i18n="lp_s2_d">You get a personal profile: amount, pace and shape. It stays in your browser.</p></li>
+          <li class="lp-card glass"><span class="lp-stepno" data-i18n="lp_step" data-n="3">Step 3</span><h3 data-i18n="lp_s3_t">Apply</h3><p data-i18n="lp_s3_d">The demo reshapes an answer to your profile. Developers can plug in a model through a small adapter.</p></li>
+          <li class="lp-card glass"><span class="lp-stepno" data-i18n="lp_step" data-n="4">Step 4</span><h3 data-i18n="lp_s4_t">Adjust (optional)</h3><p data-i18n="lp_s4_d">On a tired day, a condition signal lightens the answer by a step and suggests a break. Here the signal is virtual; real wearables are on the roadmap.</p></li>
         </ol>
         <p class="lp-more"><a class="lp-link" href="architecture.html" data-i18n="lp_arch_link">See the planned sensor flow</a></p>
       </div>
@@ -126,11 +228,11 @@
       <div class="lp-inner">
         <h2 id="lp-trust-h" data-i18n="lp_trust_h">Built to stay private</h2>
         <p><span class="lp-chip" data-i18n="lp_chip_med">Not a medical device</span></p>
-        <ul class="lp-grid2 lp-list">
-          <li class="lp-card"><h3 data-i18n="lp_t1_t">In your browser</h3><p data-i18n="lp_t1_d">No server, no account, no tracking scripts.</p></li>
-          <li class="lp-card"><h3 data-i18n="lp_t2_t">Minimal data</h3><p data-i18n="lp_t2_d">Only profile scores are stored, locally. Conversations are not stored.</p></li>
-          <li class="lp-card"><h3 data-i18n="lp_t3_t">Opt-in</h3><p data-i18n="lp_t3_d">Any future body-signal feature must be opt-in and processed on your device first.</p></li>
-          <li class="lp-card"><h3 data-i18n="lp_t4_t">Delete anytime</h3><p data-i18n="lp_t4_d">Export or delete your profile with one button.</p></li>
+        <ul class="lp-bento lp-list">
+          <li class="lp-card glass b-3"><h3 data-i18n="lp_t1_t">In your browser</h3><p data-i18n="lp_t1_d">No server, no account, no tracking scripts.</p></li>
+          <li class="lp-card glass b-3"><h3 data-i18n="lp_t2_t">Minimal data</h3><p data-i18n="lp_t2_d">Only profile scores are stored, locally. Conversations are not stored.</p></li>
+          <li class="lp-card glass b-3"><h3 data-i18n="lp_t3_t">Opt-in</h3><p data-i18n="lp_t3_d">Any future body-signal feature must be opt-in and processed on your device first.</p></li>
+          <li class="lp-card glass b-3"><h3 data-i18n="lp_t4_t">Delete anytime</h3><p data-i18n="lp_t4_d">Export or delete your profile with one button.</p></li>
         </ul>
       </div>
     </section>

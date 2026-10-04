@@ -36,3 +36,8 @@ export function getLang() {
   return saved === 'ko' ? 'ko' : 'en';
 }
 export const setLang = (l) => write(LANG_KEY, l);
+
+/* generic helpers for small JSON values (resume card, preferences); same localStorage-or-memory backend */
+export const loadJSON = (key) => { try { return JSON.parse(read(key)); } catch { return null; } };
+export const saveJSON = (key, value) => write(key, JSON.stringify(value));
+export const removeKey = (key) => remove(key);

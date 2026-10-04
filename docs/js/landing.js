@@ -4,6 +4,8 @@ import { computeSettings } from './engine.js';
 import { SAMPLE_PROFILE } from './profile.js';
 import { transform } from './transform.js';
 import { initPage, renderBlocks, renderLoadMeter } from './ui.js';
+import { mountStory, mountIndividuals } from './showcase.js';
+import { mountMedia } from './media.js';
 
 const $ = (id) => document.getElementById(id);
 const BASELINE_HRV_MS = 55; // virtual baseline for the preview
@@ -14,8 +16,12 @@ const PRESETS = {
 };
 const state = { ...PRESETS.rested };
 
-const app = initPage(() => render());
+let story = null;
+let indiv = null;
+const app = initPage((lang) => { render(); story?.render(); indiv?.render(); mountMedia(lang); });
 const tr = (k, p) => app.tr(k, p);
+story = mountStory(() => tr);
+indiv = mountIndividuals(() => tr);
 
 function render() {
   const { hrvMs, sessionMinutes } = state;

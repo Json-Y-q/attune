@@ -1,11 +1,11 @@
 // Static consistency checks that stand in for a browser: i18n parity, referenced keys and element ids exist.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { STRINGS, t } from '../docs/js/i18n.js';
 
 const read = (p) => readFileSync(new URL(`../docs/${p}`, import.meta.url), 'utf8');
-const PAGES = { 'index.html': 'js/landing.js', 'onboarding.html': 'js/onboarding.js', 'demo.html': 'js/demo.js', 'architecture.html': 'js/architecture.js' };
+const PAGES = { 'index.html': 'js/landing.js', 'onboarding.html': 'js/onboarding.js', 'demo.html': 'js/demo.js', 'architecture.html': 'js/architecture.js', 'conversation.html': 'js/conversation.js' };
 const keysIn = (src, re) => [...src.matchAll(re)].map((m) => m[1]);
 
 test('EN and KO define exactly the same keys with the same value types', () => {
@@ -64,7 +64,7 @@ test('t() keys used in JS exist in the dictionary', () => {
 });
 
 test('no innerHTML / eval / network calls in shipped JS', () => {
-  for (const f of ['profile', 'engine', 'transform', 'adapter', 'i18n', 'storage', 'ui', 'onboarding', 'demo', 'landing', 'media', 'charts', 'stylecard', 'architecture']) {
+  for (const f of ['profile', 'engine', 'transform', 'adapter', 'i18n', 'storage', 'ui', 'onboarding', 'demo', 'landing', 'media', 'charts', 'stylecard', 'architecture', 'partner', 'voice', 'story', 'mascot', 'showcase', 'conversation', 'individuals']) {
     const src = read(`js/${f}.js`);
     assert.doesNotMatch(src, /innerHTML|eval\(|new Function|fetch\(|XMLHttpRequest|sendBeacon|WebSocket/, f);
   }
@@ -134,11 +134,20 @@ test('media slots: inert templates with lazy images, captions and alt text keys;
   const slots = html.match(/<figure class="ob-media[\s\S]*?<\/figure>/g) || [];
   assert.equal(slots.length, 4);
   for (const sl of slots) {
-    assert.match(sl, /data-media-ready="false"/);
+    const hero = sl.includes('data-media-slot="hero"');
+    assert.match(sl, hero ? /data-media-ready="true"/ : /data-media-ready="false"/); // the hero video exists; step images are still optional slots
     assert.match(sl, /class="ob-ph" aria-hidden="true"><svg/);
     assert.match(sl, /<template data-media-template>/);
     if (sl.includes('<video')) { assert.match(sl, /<track kind="captions"/); assert.match(sl, /muted loop playsinline preload="none" poster=/); } else { assert.match(sl, /loading="lazy"/); assert.match(sl, /alt:md_alt_/); }
   }
   readFileSync(new URL('../docs/media/README.md', import.meta.url));
   readFileSync(new URL('../docs/media/hero.en.vtt', import.meta.url));
+});
+
+test('hero video assets: small, with poster and captions (landing story + onboarding)', () => {
+  let total = 0;
+  for (const f of ['hero.mp4', 'hero.webm', 'hero-poster.webp', 'hero.en.vtt', 'hero.ko.vtt']) total += statSync(new URL(`../docs/media/${f}`, import.meta.url)).size;
+  assert.ok(total < 5 * 1024 * 1024, `media under 5 MB, got ${total}`);
+  assert.match(read('index.html'), /data-media-slot="hero" data-media-ready="true"/);
+  for (const f of ['hero.en.vtt', 'hero.ko.vtt']) assert.match(readFileSync(new URL(`../docs/media/${f}`, import.meta.url), 'utf8'), /^WEBVTT/);
 });

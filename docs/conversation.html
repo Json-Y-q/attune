@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Attune voice pace and conversation partner: a simulation of speech speed, pauses and gentle partner behavior. Text-to-speech only, no microphone, virtual values, not a medical device.">
+  <meta name="theme-color" content="#2F5DA8">
+  <title data-i18n="cv_title">Attune — Voice pace &amp; conversation partner (simulation)</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/conversation.js"></script>
+</head>
+<body class="ob cv">
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+  <div class="banner" role="note" data-i18n="banner">Prototype — not a medical device, not a diagnosis, not scientifically validated. Sensor values here are virtual.</div>
+  <header class="site-header">
+    <div class="brand"><a href="index.html"><picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-dark.svg"><img src="img/logo.svg" alt="" width="117" height="36"></picture><strong class="sr-only" data-i18n="brand">Attune</strong></a><span class="tag" data-i18n="brand_tag">prototype</span></div>
+    <nav data-i18n-attr="aria-label:nav_label">
+      <a href="index.html" data-i18n="nav_home">Home</a>
+      <a href="onboarding.html" data-i18n="nav_onboard">Onboarding</a>
+      <a href="demo.html" data-i18n="nav_demo">Demo</a>
+      <a href="architecture.html" data-i18n="nav_arch">Architecture</a>
+      <a href="conversation.html" aria-current="page" data-i18n="nav_conv">Voice &amp; partner</a>
+    </nav>
+    <button id="lang-toggle" class="btn secondary" type="button" data-i18n="lang_btn" data-i18n-attr="aria-label:lang_btn_label">한국어</button>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section class="panel ob-card">
+      <h1 tabindex="-1" data-i18n="cv_h1">Voice pace and conversation partner</h1>
+      <p data-i18n="cv_intro">A simulation of how a conversation partner could adapt when a chat gets heavy: speech speed, pauses and shorter replies, with quiet changes first. Text-to-speech runs on your device. The microphone is never used and there is no AI model.</p>
+      <p class="ob-honest" data-i18n="cv_disclaimer">Attune is not a medical device and does not diagnose or measure fatigue or health. It adjusts how the conversation is delivered (length, pace) for reading and listening comfort. All values here are simulated.</p>
+    </section>
+
+    <section class="panel ob-card" aria-labelledby="cv-start-h">
+      <h2 id="cv-start-h" data-i18n="cv_start_h">Starting point</h2>
+      <p class="muted" data-i18n="cv_start_p">Taken from your onboarding profile and today’s virtual condition.</p>
+      <p id="cv-profile"></p>
+      <div class="cv-grid2">
+        <div>
+          <label for="cv-hrv" id="cv-hrv-label">Today’s condition (virtual HRV): 55 ms</label>
+          <input id="cv-hrv" type="range" min="20" max="70" step="1" value="55">
+          <p id="cv-hrv-help" class="muted lp-help"></p>
+          <label class="cv-check"><input id="cv-late" type="checkbox"> <span data-i18n="cv_late">Late-night weighting (virtual)</span></label>
+          <p class="muted lp-help" data-i18n="cv_late_help">Only lowers thresholds by one step. It never triggers anything on its own.</p>
+        </div>
+        <div>
+          <fieldset class="cv-mode"><legend data-i18n="cv_mode">Mode</legend>
+            <label class="cv-check"><input type="radio" name="cvmode" value="text" checked> <span data-i18n="cv_mode_text">Text</span></label>
+            <label class="cv-check"><input type="radio" name="cvmode" value="voice"> <span data-i18n="cv_mode_voice">Voice</span></label>
+          </fieldset>
+          <ul id="cv-init" class="cv-init"></ul>
+          <button id="cv-reset" class="btn secondary" type="button" data-i18n="cv_reset">Restart simulation</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel ob-card" aria-labelledby="cv-voice-h">
+      <h2 id="cv-voice-h" data-i18n="cv_voice_h">Voice speed (text-to-speech)</h2>
+      <p class="muted" data-i18n="cv_voice_note">Reads the latest reply with a voice built into your device. Nothing is recorded.</p>
+      <p id="cv-voice-warn" class="ob-honest" hidden></p>
+      <label for="cv-level" id="cv-level-label"></label>
+      <input id="cv-level" type="range" min="1" max="5" step="1" value="3">
+      <label for="cv-pause" id="cv-pause-label"></label>
+      <input id="cv-pause" type="range" min="0" max="1500" step="50" value="400">
+      <p class="muted lp-help" data-i18n="cv_pause_help">Below level 1 speed the voice is never slowed further; use longer pauses instead.</p>
+      <div class="row cv-voice-btns">
+        <button id="cv-play" class="btn" type="button" data-i18n="cv_play">Play</button><button id="cv-pause-btn" class="btn secondary" type="button" data-i18n="cv_pause">Pause</button><button id="cv-stop" class="btn secondary" type="button" data-i18n="cv_stop">Stop</button><button id="cv-slower" class="btn secondary" type="button" data-i18n="cv_slower">Slower</button><button id="cv-faster" class="btn secondary" type="button" data-i18n="cv_faster">Faster</button><button id="cv-summary" class="btn secondary" type="button" data-i18n="cv_summary">Summary</button><button id="cv-repeat" class="btn secondary" type="button" data-i18n="cv_repeat">Say again</button>
+      </div>
+      <div class="row">
+        <label for="cv-voice-sel" data-i18n="cv_voice_pick">Voice</label>
+        <select id="cv-voice-sel"></select>
+        <label class="cv-check"><input id="cv-online" type="checkbox"> <span data-i18n="cv_online">Allow online voices (the browser vendor may process the text)</span></label>
+      </div>
+      <p id="cv-vstatus" class="status" role="status"></p>
+      <p id="cv-wpm" class="status"></p>
+    </section>
+
+    <section class="panel ob-card" aria-labelledby="cv-sim-h">
+      <h2 id="cv-sim-h" data-i18n="cv_sim_h">Conversation simulator</h2>
+      <p class="muted" data-i18n="cv_sim_note">A scripted partner. Press the buttons to play what a user might do. Only counts, timings and the resume card are kept, never the conversation text.</p>
+      <div class="cv-sim-grid">
+        <div>
+          <div id="cv-chip-row" class="cv-chip-row" hidden>
+            <span id="cv-chip" class="st-chip"></span>
+            <button id="cv-why" class="btn secondary" type="button" data-i18n="cv_chip_why">Why?</button>
+            <button id="cv-undo" class="btn secondary" type="button" data-i18n="cv_chip_undo">Back to normal</button>
+          </div>
+          <div id="cv-log" class="cv-log" role="log" aria-live="polite" tabindex="0"></div>
+          <div id="cv-suggest" class="cv-suggest" hidden></div>
+          <div class="cv-acts"><button class="btn secondary cv-act" type="button" data-act="short" data-i18n="cv_b_short">Short reply</button><button class="btn secondary cv-act" type="button" data-act="clarify" data-i18n="cv_b_clarify">Ask what it meant</button><button class="btn secondary cv-act" type="button" data-act="shorter" data-i18n="cv_b_shorter">“Shorter please”</button><button class="btn secondary cv-act" type="button" data-act="tired" data-i18n="cv_b_tired">“I’m tired”</button><button class="btn secondary cv-act" type="button" data-act="silence" data-i18n="cv_b_silence">Virtual silence</button><button class="btn secondary cv-act" type="button" data-act="rapid" data-i18n="cv_b_rapid">10 quick turns</button><button class="btn secondary cv-act" type="button" data-act="dismiss" data-i18n="cv_b_dismiss">“I’m fine, keep going”</button><button class="btn secondary cv-act" type="button" data-act="normal" data-i18n="cv_b_normal">Normal reply</button><button class="btn secondary cv-act" type="button" data-act="skip" data-i18n="cv_b_skip">Skip 10 min (virtual)</button></div>
+          <form id="cv-form" class="row" autocomplete="off">
+            <label for="cv-text" data-i18n="cv_input">Or type a message (it stays on this page)</label>
+            <input id="cv-text" type="text" maxlength="200">
+            <button class="btn" type="submit" data-i18n="cv_send">Send</button>
+          </form>
+        </div>
+        <div class="cv-side">
+          <h3 data-i18n="cv_sig_h">Signal panel</h3>
+          <ul id="cv-sig" class="cv-sig"></ul>
+          <p id="cv-decision" class="status"></p>
+          <details id="cv-why-panel" class="lp-orig"><summary data-i18n="cv_why_h">Why did it change?</summary><p id="cv-why-line"></p></details>
+          <p id="cv-cool" class="muted lp-help"></p>
+          <div id="cv-meter" class="meter" hidden></div>
+          <p class="muted lp-help" data-i18n="cv_meter_note">Same meter and colours as the demo. Virtual, not a measurement.</p>
+          <h3 data-i18n="cv_dens_h">Conversation density</h3>
+          <div class="cv-dens" aria-hidden="true"><span id="cv-dens-bar"></span></div>
+          <p id="cv-dens-label" class="status"></p>
+          <p id="cv-dens-line" class="muted lp-help"></p>
+          <p id="cv-clock" class="muted lp-help"></p>
+          <p class="muted lp-help" data-i18n="cv_sig_note">Signals are simple rules on counts and timing. The thresholds are assumptions, not validated.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel ob-card" aria-labelledby="cv-sil-h">
+      <h2 id="cv-sil-h" data-i18n="cv_sil_h">Virtual silence timeline</h2>
+      <p id="cv-sil-text" class="ob-honest" hidden data-i18n="cv_sil_text">Text mode: waiting alone changes nothing (rule R5). Switch to Voice to see the timeline.</p>
+      <label for="cv-sil" id="cv-sil-label"></label>
+      <input id="cv-sil" type="range" min="0" max="30" step="1" value="0">
+      <ol class="cv-stages"><li data-st="wait"><span data-i18n="cv_st_wait">0–4 s: wait quietly</span></li><li data-st="listen"><span data-i18n="cv_st_listen">4–8 s: show a listening state (visual only)</span></li><li data-st="gentle"><span data-i18n="cv_st_gentle">8 s: one gentle line</span></li><li data-st="options"><span data-i18n="cv_st_options">15 s: offer repeat, summary or pause</span></li><li data-st="autopause"><span data-i18n="cv_st_autopause">25 s: pause and show where it stopped</span></li></ol>
+      <div id="cv-stopped" class="st-card" hidden><strong data-i18n="cv_stopped">Stopped at: explaining sleep and memory</strong><button id="cv-resume-listen" class="btn" type="button" data-i18n="cv_resume_listen">Resume listening</button></div>
+    </section>
+
+    <section class="panel ob-card" aria-labelledby="cv-cp-h">
+      <h2 id="cv-cp-h" data-i18n="cv_cp_h">Checkpoint</h2>
+      <div class="cv-grid2">
+        <div>
+          <button id="cv-cp-show" class="btn secondary" type="button" data-i18n="cv_cp_show">Show checkpoint</button>
+          <div id="cv-cp" class="st-card cv-cp" hidden>
+            <strong data-i18n="cv_cp_dec">Decided</strong><span data-i18n="cv_cp_d1">Study in short sessions spread over several days.</span><span data-i18n="cv_cp_d2">Keep regular sleep times.</span>
+            <strong data-i18n="cv_cp_open">Still open</strong><span data-i18n="cv_cp_o1">Which nap length to try?</span>
+            <strong data-i18n="cv_cp_next">Next step</strong><span data-i18n="cv_cp_n1">Pick one study slot for tomorrow.</span>
+          </div>
+        </div>
+        <div>
+          <h3 data-i18n="cv_resume_h">Resume card</h3>
+          <p id="cv-resume" class="status"></p>
+          <div class="row"><button id="cv-resume-save" class="btn secondary" type="button" data-i18n="cv_resume_save">Save resume card</button><button id="cv-resume-start" class="btn" type="button" data-i18n="cv_resume_start">Start from here</button><button id="cv-resume-delete" class="btn secondary" type="button" data-i18n="cv_resume_delete">Delete</button></div>
+          <p class="muted lp-help" data-i18n="cv_resume_note">Kept in this browser for 7 days. No conversation text is stored.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel ob-card">
+      <h2 data-i18n="cv_not_h">What this demo does not do</h2>
+      <p data-i18n="cv_not_p">No microphone or speech recognition, no AI model, no network calls and no sensors. Signals are plain rules, and every number is an assumption for testing.</p>
+      <p><a class="btn secondary" href="index.html" data-i18n="cv_back">Back to the home page</a></p>
+    </section>
+  </main>
+  <footer data-i18n="footer">Source-available prototype (PolyForm Noncommercial). Not a medical device. Data stays in your browser.</footer>
+</body>
+</html>

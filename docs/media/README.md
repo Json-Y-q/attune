@@ -1,6 +1,8 @@
 # Optional media slots
 
-The onboarding page has four media slots: `hero` (loop video) and `t1`, `t2`, `t3` (task illustrations).
+The onboarding page has four media slots: `hero` (loop video) and `t1`, `t2`, `t3` (task illustrations). The landing page reuses the `hero` video (inside the "Watch the video version" disclosure).
+
+**Included now:** `hero.mp4`, `hero.webm`, `hero-poster.webp` (the 19-second story with the mascot, about 0.9 MB in total) and captions in EN/KO. The `t1`–`t3` slots are still placeholders.
 Each slot shows an inline SVG placeholder (drawn for this project) until you provide real assets, so the site
 works with this folder as it is. Nothing here is requested from the network until a slot is switched on.
 
@@ -9,7 +11,7 @@ works with this folder as it is. Nothing here is requested from the network unti
 1. Put the files here, named after the slot:
    - hero video: `hero.webm` (VP9/AV1) and `hero.mp4` (H.264), plus `hero-poster.webp` (the still image shown first
      and when the user prefers reduced motion). Captions already exist: `hero.en.vtt`, `hero.ko.vtt` (edit them to match).
-     Keep it short (under 10 s), muted, loopable, and under about 1.5 MB.
+     Keep it short (under about 20 s), muted, loopable, and under about 5 MB (the current one is under 1 MB).
    - step images: `t1.avif`, `t1.webp`, `t1.png` (the PNG is the required fallback), same for `t2`, `t3`; 480x300 recommended.
 2. In `docs/onboarding.html` set `data-media-ready="true"` on that slot's `<figure>`.
 3. Alt text and the video label come from `docs/js/i18n.js` (`md_alt_*`, `md_hero_label`); keep EN and KO in sync.
