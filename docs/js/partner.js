@@ -1,8 +1,8 @@
 // Conversation partner logic: signals (no sensors) -> level L0-L3 -> rule R1-R14 -> adjustments.
 // Pure functions, no DOM, no network, no storage. Spec: cogload-startup/09 (sections 2-C, 3, 4-C, 5).
 // All numbers are ASSUMPTIONS for a prototype, not validated.
-import { computeSettings } from './engine.js';
-import { clamp } from './profile.js';
+import { computeSettings } from './engine.js?v=0cdcf9d8';
+import { clamp } from './profile.js?v=0cdcf9d8';
 
 export const WINDOW_TURNS = 5; // "recent 5 turns"
 export const COOLDOWN = Object.freeze({ seconds: 20 * 60, turns: 15, spokenSeconds: 10 * 60 });

@@ -331,7 +331,7 @@ body.lp { background: var(--bg); }
 .st-video { margin-top: 1rem; } .st-video .ob-media { max-width: 640px; }
 /* mascot svg theming (colours follow the site vars; shapes also differ: arc thickness and face) */
 .mc-stroke { stroke: var(--text); } .mc-fill { fill: var(--text); } .mc-hl { fill: var(--surface); }
-.mc-arc.z-calm { stroke: var(--load-calm); } .mc-arc.z-mid { stroke: var(--load-mid); } .mc-arc.z-high { stroke: var(--load-high); }
+.mc-rim.z-calm { stroke: var(--load-calm); } .mc-rim.z-mid { stroke: var(--load-mid); } .mc-rim.z-high { stroke: var(--load-high); } .mc-arc.z-calm { stroke: var(--load-calm); } .mc-arc.z-mid { stroke: var(--load-mid); } .mc-arc.z-high { stroke: var(--load-high); }
 .mc-sweat { fill: var(--load-calm); } .mc-spark { fill: var(--load-mid); }
 .mc-shake, .mc-breath { transform-box: view-box; transform-origin: 100px 120px; }
 @media (prefers-reduced-motion: no-preference) {
@@ -401,7 +401,7 @@ body.lp { background: var(--bg); }
 .in-head { position: absolute; top: -3px; width: 2px; height: 20px; background: var(--text); opacity: .55; margin-left: -1px; }
 .in-msg { padding: 1rem 1.25rem; border-radius: 20px; font-weight: 600; max-width: 62ch; }
 .in-sum { padding-left: 1.2rem; }
-.mc-tint { transition: fill-opacity .3s; } .mc-leaf { fill: #3E8E5A; }
+.mc-tint { transition: fill-opacity .3s; } .mc-head { fill: var(--mc-head, #FFF7EC); } @media (prefers-color-scheme: dark) { :root:not([data-theme=light]) { --mc-head: #2B2540; } } .mc-leaf { fill: #3E8E5A; }
 
 /* =====================================================================
    Theme v3 — warm aurora, big type, roomy cards, pill controls.
@@ -591,3 +591,13 @@ html { overflow-x: clip; }
 html:lang(ko) .lp-hero h1 { line-height: 1.2; }
 .in-mascot { padding: 16px 0 10px; overflow: visible; }
 .in-card { overflow: visible; }
+
+/* Pill buttons: one clear set of states. Selected = solid primary + on-primary text (flat colour, no translucent layer);
+   hover = tinted background with primary text; focus = 3px ring that is visible on both light and solid backgrounds. All pairs checked for WCAG AA in both colour schemes. */
+.btn.secondary:hover:not(:disabled), .st-step:hover { background: var(--accent-bg); color: var(--primary); border-color: var(--primary); }
+.btn[aria-pressed="true"], .btn.secondary[aria-pressed="true"], .lp-pick[aria-pressed="true"], .lp-pick.btn.secondary[aria-pressed="true"] {
+  background: var(--primary); color: var(--on-primary); border-color: var(--primary); box-shadow: 0 4px 14px rgb(47 93 168 / .28); font-weight: 700;
+}
+.btn[aria-pressed="true"]:hover:not(:disabled), .lp-pick[aria-pressed="true"]:hover { background: var(--primary); color: var(--on-primary); filter: brightness(.94); }
+.st-step[aria-current="step"], .st-step[aria-current="step"]:hover { background: var(--primary); color: var(--on-primary); border-color: var(--primary); box-shadow: none; font-weight: 700; }
+.btn:focus-visible, .st-step:focus-visible, .lp-pick:focus-visible, nav a:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; box-shadow: 0 0 0 3px var(--surface); }

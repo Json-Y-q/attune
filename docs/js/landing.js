@@ -1,13 +1,14 @@
 // Landing page controller: an interactive preview of the same answer at different (virtual) conditions.
 // Reuses the engine and the rule-based transform; no network, no storage, text via textContent only.
-import { computeSettings, THRESHOLDS } from './engine.js';
-import { renderMascot } from './mascot.js';
-import { loadJSON } from './storage.js';
-import { SAMPLE_PROFILE } from './profile.js';
-import { transform } from './transform.js';
-import { initPage, renderBlocks, renderLoadMeter } from './ui.js';
-import { mountStory, mountIndividuals } from './showcase.js';
-import { mountMedia } from './media.js';
+import { computeSettings, THRESHOLDS } from './engine.js?v=0cdcf9d8';
+import { renderMascot } from './mascot.js?v=0cdcf9d8';
+import { loadJSON } from './storage.js?v=0cdcf9d8';
+import { SAMPLE_PROFILE } from './profile.js?v=0cdcf9d8';
+import { transform } from './transform.js?v=0cdcf9d8';
+import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=0cdcf9d8';
+import { typeLive, typingCps } from './typing.js?v=0cdcf9d8';
+import { mountStory, mountIndividuals } from './showcase.js?v=0cdcf9d8';
+import { mountMedia } from './media.js?v=0cdcf9d8';
 
 const $ = (id) => document.getElementById(id);
 const BASELINE_HRV_MS = 55; // virtual baseline for the preview
@@ -19,6 +20,8 @@ const PRESETS = {
 const state = { ...PRESETS.rested };
 let mascotOn = loadJSON('attune.mascot') !== false;
 let artKey = '';
+let lastPace = 4;
+let outTyper = null;
 
 // Hero illustration: the brain balloon, tinted warm, whose arcs follow the preview's load (same scale as the meter).
 function renderArt(load) {
@@ -61,6 +64,8 @@ function render() {
     s: tr(`st_${s.style}`),
   });
 
+  lastPace = s.pace;
+  outTyper?.cancel(); outTyper = null;
   const answer = tr('sample_answer');
   renderBlocks($('lp-out'), transform(answer, { amount: s.amount, style: s.style }).blocks, tr);
   $('lp-orig').textContent = answer;
@@ -73,6 +78,8 @@ $('lp-min').addEventListener('input', (e) => { state.sessionMinutes = Number(e.t
 document.querySelectorAll('.lp-pick').forEach((b) => b.addEventListener('click', () => {
   Object.assign(state, PRESETS[b.dataset.pre]);
   render();
+  // picking a day types the adapted answer out (slower when the pace is lower); sliders and reduced motion show it at once
+  if (!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) outTyper = typeLive($('lp-out'), { cps: typingCps(lastPace) });
 }));
 
 document.addEventListener('attune:mascot', (e) => { mascotOn = e.detail.on; render(); });

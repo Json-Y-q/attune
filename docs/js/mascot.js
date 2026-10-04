@@ -3,6 +3,8 @@
 // Not a depiction of a person and not a reading of anyone's feelings: it is an illustration of the meter state.
 
 export const BUBBLE = 'M176 112 C176 148 150 168 110 168 Q84 172 52 196 Q58 174 68 165 C42 159 24 138 24 112';
+/** The whole head as one closed shape (arcs on top, bubble below): one flat fill, so there is no half-and-half split line. */
+export const HEAD = 'M24 112 A23.6 23.6 0 0 1 34.2 74 A27.4 27.4 0 0 1 67.9 43.1 A38.5 38.5 0 0 1 132.1 43.1 A27.4 27.4 0 0 1 165.8 74 A23.6 23.6 0 0 1 176 112 C176 148 150 168 110 168 Q84 172 52 196 Q58 174 68 165 C42 159 24 138 24 112Z';
 const ARCS = [
   ['M24 112 A23.6 23.6 0 0 1 34.2 74', 11.4],
   ['M34.2 74 A27.4 27.4 0 0 1 67.9 43.1', 14.2],
@@ -76,8 +78,8 @@ export function mascotTree(pose, { title = null } = {}) {
   const v = pose.variant ? VARIANTS.find((x) => x.id === pose.variant) ?? null : pose.tint ? { tint: pose.tint, eyes: 'dot', accessory: 'none' } : null;
   const arcs = ARCS.map(([d, w], i) => n('path', { d, fill: 'none', stroke: ZONE_HEX[pose.zone], 'stroke-width': arcWidth(w, pose), 'stroke-linecap': 'round', class: `mc-arc z-${pose.zone}`, 'data-i': i, 'data-w': w }));
   const body = n('g', { class: 'mc-body', transform: bodyTransform(pose.puff) }, [
-    ...(v ? [n('path', { d: BUBBLE, fill: v.tint, 'fill-opacity': 0.3, stroke: 'none', class: 'mc-tint' })] : []),
-    n('path', { d: BUBBLE, fill: 'none', stroke: INK, 'stroke-width': 14, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', class: 'mc-stroke' }),
+    n('path', v ? { d: HEAD, fill: v.tint, 'fill-opacity': 0.26, stroke: 'none', class: 'mc-tint' } : { d: HEAD, fill: 'none', stroke: 'none', class: 'mc-head' }),
+    n('path', { d: BUBBLE, fill: 'none', stroke: ZONE_HEX[pose.zone], 'stroke-width': 12, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', class: `mc-rim z-${pose.zone}` }), // same colour as the arcs: one outline, no colour split
     ...arcs,
     ...(pose.plain ? [] : face(pose.face, v?.eyes)),
     ...(v && !pose.plain ? ACCESSORIES[v.accessory]() : []),

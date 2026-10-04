@@ -160,3 +160,52 @@ test('hero headline: gradient text keeps room for descenders (line-height >= 1.1
   assert.match(last('padding-bottom') ?? '', /^\.?\d+(\.\d+)?(em|rem|px)$/);
   assert.doesNotMatch(rules, /overflow:\s*(hidden|clip|auto)/);
 });
+
+test('i18n: every key used by data-i18n, data-i18n-attr and literal tr()/t() calls exists in both EN and KO (no raw keys on screen)', () => {
+  const missing = [];
+  const need = (where, key) => { for (const l of ['en', 'ko']) if (typeof STRINGS[l][key] === 'undefined') missing.push(`${l}:${key} (${where})`); };
+  for (const f of ['index', 'onboarding', 'demo', 'conversation', 'architecture']) {
+    const html = readFileSync(new URL(`../docs/${f}.html`, import.meta.url), 'utf8');
+    for (const m of html.matchAll(/data-i18n="([^"]+)"/g)) need(`${f}.html`, m[1]);
+    for (const m of html.matchAll(/data-i18n-attr="([^"]+)"/g)) for (const pair of m[1].split(';')) need(`${f}.html`, pair.split(':')[1]);
+  }
+  for (const f of ['landing', 'showcase', 'conversation', 'demo', 'onboarding', 'ui', 'partner', 'story', 'individuals', 'typing', 'voice']) {
+    const js = readFileSync(new URL(`../docs/js/${f}.js`, import.meta.url), 'utf8');
+    for (const m of js.matchAll(/\btr\(\s*'([a-z0-9_]+)'/g)) need(`${f}.js`, m[1]);
+    // template keys such as tr(`in_t_${id}`): every key with that prefix must exist in both languages with the same set
+    for (const m of js.matchAll(/\btr\(\s*`([a-z0-9_]+_)\$\{/g)) {
+      const en = Object.keys(STRINGS.en).filter((k) => k.startsWith(m[1])), ko = Object.keys(STRINGS.ko).filter((k) => k.startsWith(m[1]));
+      assert.ok(en.length > 0, `${f}.js prefix ${m[1]}`);
+      assert.deepEqual(ko.sort(), en.sort(), `prefix ${m[1]}`);
+    }
+  }
+  for (const id of ['a', 'b', 'c', 'd']) for (const k of [`in_t_${id}`, `in_desc_${id}`]) need('individuals cards', k);
+  need('individuals cards', 'in_more');
+  assert.deepEqual(missing, []);
+});
+
+test('i18n: the landing scripts render with the language ready (no raw key can be drawn before the dictionary is used)', () => {
+  const js = readFileSync(new URL('../docs/js/landing.js', import.meta.url), 'utf8');
+  assert.ok(js.indexOf('const app = initPage') < js.indexOf('mountIndividuals('), 'language is resolved before the sections are built');
+  assert.match(t('en', 'definitely_missing_key'), /definitely_missing_key/); // the fallback is the key itself; the test above makes sure it never happens
+});
+
+test('cache busting: every local script/stylesheet/module import carries the same current ?v= stamp (run `npm run stamp` after edits)', async () => {
+  const { version, stamped } = await import('../scripts/stamp.mjs');
+  const v = version();
+  const { readdirSync } = await import('node:fs');
+  const files = [...readdirSync(new URL('../docs/js/', import.meta.url)).map((f) => `js/${f}`).filter((f) => f.endsWith('.js')), ...readdirSync(new URL('../docs/', import.meta.url)).filter((f) => f.endsWith('.html'))];
+  for (const f of files) assert.equal(readFileSync(new URL(`../docs/${f}`, import.meta.url), 'utf8'), stamped(f, v), `${f} is stale: run npm run stamp`);
+  const landing = readFileSync(new URL('../docs/js/landing.js', import.meta.url), 'utf8');
+  assert.match(landing, new RegExp(`from './i18n\\.js\\?v=${v}'|from './ui\\.js\\?v=${v}'`));
+});
+
+test('pill buttons: selected state is a solid primary background with on-primary text; hover/focus states are defined', () => {
+  const css = readFileSync(new URL('../docs/css/style.css', import.meta.url), 'utf8');
+  assert.match(css, /\.lp-pick\[aria-pressed="true"\][^}]*background:\s*var\(--primary\)[^}]*color:\s*var\(--on-primary\)/);
+  assert.match(css, /\.st-step\[aria-current="step"\][^}]*background:\s*var\(--primary\)[^}]*color:\s*var\(--on-primary\)/);
+  assert.match(css, /\.btn\.secondary:hover:not\(:disabled\)[^}]*background:\s*var\(--accent-bg\)/);
+  assert.match(css, /\.btn:focus-visible[^}]*outline:\s*3px solid/);
+  const mascot = readFileSync(new URL('../docs/js/mascot.js', import.meta.url), 'utf8');
+  assert.match(mascot, /d: HEAD, fill: v\.tint/); // one flat fill over the whole head, no half-and-half
+});

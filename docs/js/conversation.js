@@ -1,15 +1,15 @@
 // Conversation page controller: scripted partner simulation + text-to-speech (no microphone, no AI model, no network).
-import { computeSettings } from './engine.js';
-import { SAMPLE_PROFILE } from './profile.js';
-import { transform, toPlainText } from './transform.js';
-import { loadProfile, loadJSON, saveJSON, removeKey } from './storage.js';
-import { initPage, renderBlocks, renderLoadMeter } from './ui.js';
+import { computeSettings } from './engine.js?v=0cdcf9d8';
+import { SAMPLE_PROFILE } from './profile.js?v=0cdcf9d8';
+import { transform, toPlainText } from './transform.js?v=0cdcf9d8';
+import { loadProfile, loadJSON, saveJSON, removeKey } from './storage.js?v=0cdcf9d8';
+import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=0cdcf9d8';
 import {
   newSession, userTurn, aiReplied, control, respondToSuggestion, undoAdjust, skipAhead, addSilence, silenceStage,
   activeSignals, loadIndexFor, density, effective, sessionMinutes, buildResumeCard, resumeExpired, SILENCE, SUGGESTION_TYPES,
-} from './partner.js';
-import { typeLive, typingCps } from './typing.js';
-import { levelInfo, ttsSupported, pickVoices, createSpeaker, speechSentences } from './voice.js';
+} from './partner.js?v=0cdcf9d8';
+import { typeLive, typingCps } from './typing.js?v=0cdcf9d8';
+import { levelInfo, ttsSupported, pickVoices, createSpeaker, speechSentences } from './voice.js?v=0cdcf9d8';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };

@@ -1,10 +1,11 @@
 // Demo page controller: profile + virtual condition -> engine settings -> rule-based transform.
-import { computeSettings } from './engine.js';
-import { SAMPLE_PROFILE, DEFAULT_HRV_BASELINE_MS } from './profile.js';
-import { rewrite } from './adapter.js';
-import { transform } from './transform.js';
-import { loadProfile } from './storage.js';
-import { deliver, initPage, renderBlocks, renderLoadMeter } from './ui.js';
+import { computeSettings } from './engine.js?v=0cdcf9d8';
+import { SAMPLE_PROFILE, DEFAULT_HRV_BASELINE_MS } from './profile.js?v=0cdcf9d8';
+import { rewrite } from './adapter.js?v=0cdcf9d8';
+import { transform } from './transform.js?v=0cdcf9d8';
+import { loadProfile } from './storage.js?v=0cdcf9d8';
+import { typeLive, typingCps } from './typing.js?v=0cdcf9d8';
+import { deliver, initPage, renderBlocks, renderLoadMeter } from './ui.js?v=0cdcf9d8';
 
 const $ = (id) => document.getElementById(id);
 const own = loadProfile();
@@ -25,7 +26,7 @@ let runId = 0;
 
 const app = initPage(() => {
   if (!state.customAnswer) $('answer').value = app.tr('sample_answer');
-  update({ paced: false });
+  update({ paced: false, type: true });
 });
 const tr = (k, p) => app.tr(k, p);
 
@@ -106,7 +107,10 @@ function renderCompare(answer, s) {
   }
 }
 
-async function update({ paced }) {
+const reduced = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+// type: the adapted answer is typed out character by character (slower for lower pace levels); reduced motion shows it at once.
+async function update({ paced, type = false }) {
   const id = ++runId;
   cancelDelivery();
   syncControls();
@@ -117,8 +121,13 @@ async function update({ paced }) {
   const result = await rewrite(answer, settings, globalThis.attuneAdapter ?? null);
   if (id !== runId) return; // a newer update superseded this one
   const out = $('output');
-  if (paced) cancelDelivery = deliver(out, result.blocks, settings, tr);
-  else { renderBlocks(out, result.blocks, tr); cancelDelivery = () => {}; }
+  if (paced && settings.delivery === 'step') cancelDelivery = deliver(out, result.blocks, settings, tr);
+  else if ((paced || type) && !reduced()) {
+    renderBlocks(out, result.blocks, tr);
+    out.setAttribute('aria-busy', 'true');
+    const h = typeLive(out, { cps: typingCps(settings.pace), onDone: () => out.setAttribute('aria-busy', 'false') });
+    cancelDelivery = () => { h.finish(); };
+  } else { renderBlocks(out, result.blocks, tr); cancelDelivery = () => {}; }
   const stats = result.stats;
   const sourceLabel = result.source === 'rules' ? tr('src_rules') : result.source;
   const parts = [];
@@ -141,7 +150,7 @@ $('cond-on').addEventListener('change', (e) => { state.condOn = e.target.checked
 document.querySelectorAll('.scen').forEach((b) => b.addEventListener('click', () => {
   state.cond = { ...SCENARIOS[b.dataset.scen] };
   state.condOn = true;
-  redraw();
+  update({ paced: $('pacing').checked, type: true });
 }));
 $('btn-json').addEventListener('click', () => {
   try {
@@ -157,7 +166,7 @@ $('btn-json').addEventListener('click', () => {
 });
 $('answer').addEventListener('input', () => { state.customAnswer = true; redraw(); });
 $('btn-reset').addEventListener('click', () => { state.customAnswer = false; $('answer').value = tr('sample_answer'); redraw(); });
-$('btn-replay').addEventListener('click', () => update({ paced: true }));
+$('btn-replay').addEventListener('click', () => update({ paced: true, type: true }));
 $('pacing').addEventListener('change', redraw);
 $('btn-use-sample').addEventListener('click', () => { state.profile = SAMPLE_PROFILE; state.usingOwn = false; redraw(); });
 $('btn-use-own').addEventListener('click', () => { state.profile = own; state.usingOwn = true; redraw(); });

@@ -428,7 +428,7 @@ test('individuals: characters differ by colour, eye shape and accessory only; no
   assert.ok(VARIANTS.every((v) => ['glasses', 'headphones', 'sprout', 'none'].includes(v.accessory)));
   const svgs = VARIANTS.map((v) => toSvgString(mascotTree({ ...STILL_POSES.calm, variant: v.id })));
   assert.equal(new Set(svgs).size, VARIANTS.length);
-  const outline = (svg) => svg.match(/<path d="M176 112[^"]*"[^>]*stroke-width="14"/)?.[0];
+  const outline = (svg) => svg.match(/<path d="M176 112[^"]*"[^>]*stroke-width="12"/)?.[0];
   assert.ok(outline(svgs[0]) && svgs.every((x) => outline(x) === outline(svgs[0])), 'the bubble outline (head shape) is the same for everybody');
 });
 
