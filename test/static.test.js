@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { STRINGS, t } from '../docs/js/i18n.js';
 
 const read = (p) => readFileSync(new URL(`../docs/${p}`, import.meta.url), 'utf8');
-const PAGES = { 'index.html': 'js/onboarding.js', 'demo.html': 'js/demo.js' };
+const PAGES = { 'index.html': 'js/landing.js', 'onboarding.html': 'js/onboarding.js', 'demo.html': 'js/demo.js' };
 const keysIn = (src, re) => [...src.matchAll(re)].map((m) => m[1]);
 
 test('EN and KO define exactly the same keys with the same value types', () => {
@@ -57,15 +57,34 @@ for (const [page, script] of Object.entries(PAGES)) {
 }
 
 test('t() keys used in JS exist in the dictionary', () => {
-  for (const f of ['js/onboarding.js', 'js/demo.js', 'js/ui.js']) {
+  for (const f of ['js/onboarding.js', 'js/demo.js', 'js/ui.js', 'js/landing.js']) {
     const src = read(f);
     for (const k of keysIn(src, /\btr\('([a-z0-9_]+)'/g)) assert.ok(k in STRINGS.en, `${f}: ${k}`);
   }
 });
 
 test('no innerHTML / eval / network calls in shipped JS', () => {
-  for (const f of ['profile', 'engine', 'transform', 'adapter', 'i18n', 'storage', 'ui', 'onboarding', 'demo']) {
+  for (const f of ['profile', 'engine', 'transform', 'adapter', 'i18n', 'storage', 'ui', 'onboarding', 'demo', 'landing']) {
     const src = read(`js/${f}.js`);
     assert.doesNotMatch(src, /innerHTML|eval\(|new Function|fetch\(|XMLHttpRequest|sendBeacon|WebSocket/, f);
   }
 });
+
+const unescape = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+for (const page of Object.keys(PAGES)) {
+  test(`${page}: inline English text matches the EN dictionary (works without JS)`, () => {
+    const html = read(page);
+    for (const m of html.matchAll(/<(\w+)([^>]*?)\sdata-i18n="(\w+)"([^>]*)>([^<]+)<\/\1>/g)) {
+      if (/data-n=/.test(m[2] + m[4])) continue;
+      assert.equal(unescape(m[5]), STRINGS.en[m[3]], `${page}: ${m[3]}`);
+    }
+  });
+
+  test(`${page}: no third-party hosts; local links resolve`, () => {
+    const html = read(page);
+    for (const m of html.matchAll(/\s(?:href|src|srcset)="(https?:)?\/\/([^/"]+)/g)) assert.equal(m[2], 'github.com', `${page}: external host ${m[2]}`);
+    for (const m of html.matchAll(/\s(?:href|src)="([\w./-]+)"/g)) {
+      assert.doesNotThrow(() => readFileSync(new URL(`../docs/${m[1]}`, import.meta.url)), `${page}: broken link ${m[1]}`);
+    }
+  });
+}

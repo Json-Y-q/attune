@@ -3,107 +3,167 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Attune prototype: fit AI answers to your reading comfort. Runs entirely in your browser.">
-  <title data-i18n="ob_title">Fit AI answers to how you think</title>
+  <meta name="description" content="Attune: AI that attunes to you. A source-available prototype that fits the amount, pace and shape of AI answers to your reading comfort. Runs in your browser; not a medical device.">
+  <meta name="theme-color" content="#2F5DA8">
+  <meta property="og:title" content="Attune — AI that attunes to you">
+  <meta property="og:description" content="Fit AI answers to how you read, and how you feel today. Open prototype; virtual sensor values; not a medical device.">
+  <meta property="og:type" content="website">
+  <title data-i18n="lp_title">Attune — AI that attunes to you</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
-  <script type="module" src="js/onboarding.js"></script>
+  <script type="module" src="js/landing.js"></script>
 </head>
-<body>
+<body class="lp">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
-  <div class="banner" role="note" data-i18n="banner"></div>
+  <div class="banner" role="note" data-i18n="banner">Prototype — not a medical device, not a diagnosis, not scientifically validated. Sensor values here are virtual.</div>
   <header class="site-header">
     <div class="brand"><a href="index.html"><picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-dark.svg"><img src="img/logo.svg" alt="" width="117" height="36"></picture><strong class="sr-only" data-i18n="brand">Attune</strong></a><span class="tag" data-i18n="brand_tag">prototype</span></div>
     <nav data-i18n-attr="aria-label:nav_label">
-      <a href="index.html" aria-current="page" data-i18n="nav_onboard">Onboarding</a>
+      <a href="index.html" aria-current="page" data-i18n="nav_home">Home</a>
+      <a href="onboarding.html" data-i18n="nav_onboard">Onboarding</a>
       <a href="demo.html" data-i18n="nav_demo">Demo</a>
     </nav>
     <button id="lang-toggle" class="btn secondary" type="button" data-i18n="lang_btn" data-i18n-attr="aria-label:lang_btn_label">한국어</button>
   </header>
 
   <main id="main" tabindex="-1">
-    <!-- intro -->
-    <section id="s-intro" class="panel" data-screen>
-      <h1 tabindex="-1" data-i18n="ob_title"></h1>
-      <p data-i18n="ob_intro"></p>
-      <p data-i18n="ob_privacy"></p>
-      <p class="muted" data-i18n="ob_not_test"></p>
-      <div class="row">
-        <button id="btn-start" class="btn" type="button" data-i18n="ob_start"></button>
-      </div>
-      <div id="existing" class="row" hidden>
-        <span data-i18n="ob_existing"></span>
-        <button id="btn-existing" class="btn secondary" type="button" data-i18n="ob_view_existing"></button>
+    <section class="lp-band lp-hero" aria-labelledby="lp-h1">
+      <div class="lp-inner lp-hero-grid">
+        <div class="lp-hero-copy">
+          <p class="lp-eyebrow" data-i18n="lp_eyebrow">Open prototype · source-available</p>
+          <h1 id="lp-h1" tabindex="-1" data-i18n="lp_h1">AI that attunes to you.</h1>
+          <p class="lp-sub" data-i18n="lp_sub">Fitted to how you think — and how you feel today.</p>
+          <p class="lp-lead" data-i18n="lp_lead">Long, dense AI answers wear people out. Attune adapts the amount, pace and shape of an answer to your reading comfort, then eases off on tired days.</p>
+          <div class="lp-cta-row">
+            <a class="btn" href="demo.html" data-i18n="lp_cta_demo">Try the demo</a>
+            <a class="btn secondary" href="onboarding.html" data-i18n="lp_cta_check">Start the 4-min check-in</a>
+            <a class="btn secondary" href="https://github.com/Json-Y-q/attune" rel="noopener" data-i18n="lp_cta_github">View on GitHub</a>
+          </div>
+          <p class="lp-micro muted" data-i18n="lp_trust_line">Not a medical device · Runs in your browser · Delete anytime</p>
+        </div>
+
+        <section class="panel lp-preview" aria-labelledby="pv-h">
+          <h2 id="pv-h" data-i18n="lp_pv_title">Same answer, different day</h2>
+          <p class="muted" data-i18n="lp_pv_note">Move the sliders or pick a day. Values are virtual: no sensor is read.</p>
+          <div class="lp-picks" role="group" aria-labelledby="pre-label">
+            <span id="pre-label" class="lp-picks-label" data-i18n="lp_pre_label">Quick picks</span>
+            <button class="btn secondary lp-pick" type="button" data-pre="rested" data-i18n="lp_pre_rested">Rested day</button>
+            <button class="btn secondary lp-pick" type="button" data-pre="tired" data-i18n="lp_pre_tired">Tired day</button>
+            <button class="btn secondary lp-pick" type="button" data-pre="long" data-i18n="lp_pre_long">Long, tired session</button>
+          </div>
+          <label for="lp-hrv" id="lp-hrv-label">Condition today (virtual HRV): 55 ms</label>
+          <input id="lp-hrv" type="range" min="20" max="70" step="1" value="55">
+          <p id="lp-hrv-help" class="muted lp-help"></p>
+          <label for="lp-min" id="lp-min-label">Time in this AI session (virtual): 15 min</label>
+          <input id="lp-min" type="range" min="0" max="60" step="5" value="15">
+          <div id="lp-meter" class="meter" hidden></div>
+          <div id="lp-alert" class="alert" role="status" hidden></div>
+          <h3 data-i18n="lp_pv_out">Adapted answer</h3>
+          <p id="lp-settings" class="muted lp-help"></p>
+          <div id="lp-out" class="lp-out"></div>
+          <details class="lp-orig">
+            <summary data-i18n="lp_pv_original">Show the original answer</summary>
+            <p id="lp-orig"></p>
+          </details>
+          <p class="muted lp-help" data-i18n="lp_pv_profile">Uses a sample profile (not measured). Take the check-in to use your own.</p>
+        </section>
       </div>
     </section>
 
-    <!-- task 1: digit span -->
-    <section id="s-t1" class="panel" data-screen hidden>
-      <p class="muted"><span id="t1-step"></span></p>
-      <h2 tabindex="-1" data-i18n="t1_title"></h2>
-      <p data-i18n="t1_desc"></p>
-      <button id="t1-begin" class="btn" type="button" data-i18n="t1_begin"></button>
-      <div id="t1-run" hidden>
-        <p class="muted" id="t1-len"></p>
-        <div id="t1-display" class="digits" aria-hidden="true"></div>
-        <p id="t1-status" class="status" role="status"></p>
-        <form id="t1-form" class="row" autocomplete="off" hidden>
-          <label for="t1-input" data-i18n="t1_label"></label>
-          <input id="t1-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off">
-          <button class="btn" type="submit" data-i18n="t1_submit"></button>
-        </form>
+    <section class="lp-band alt" aria-labelledby="lp-prob-h">
+      <div class="lp-inner lp-narrow">
+        <h2 id="lp-prob-h" data-i18n="lp_prob_h">Dense answers are tiring</h2>
+        <p data-i18n="lp_prob_p">A long, packed AI answer can be exhausting before you finish reading it. How much information feels comfortable differs from person to person, and from day to day.</p>
+        <div class="lp-compare" aria-hidden="true">
+          <figure class="lp-card">
+            <div class="lp-lines dense"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <figcaption data-i18n="lp_prob_a">One-size answer</figcaption>
+          </figure>
+          <figure class="lp-card fitted">
+            <div class="lp-lines short"><i class="head"></i><i></i><i></i><i></i></div>
+            <figcaption data-i18n="lp_prob_b">Fitted answer</figcaption>
+          </figure>
+        </div>
       </div>
     </section>
 
-    <!-- task 2: reaction -->
-    <section id="s-t2" class="panel" data-screen hidden>
-      <p class="muted"><span id="t2-step"></span></p>
-      <h2 tabindex="-1" data-i18n="t2_title"></h2>
-      <p data-i18n="t2_desc"></p>
-      <button id="t2-begin" class="btn" type="button" data-i18n="t2_begin"></button>
-      <div id="t2-run" hidden>
-        <p class="status" id="t2-round"></p>
-        <div class="progress" aria-hidden="true"><span id="t2-bar"></span></div>
-        <button id="rx-box" class="rx-box" type="button" data-state="wait" data-i18n-attr="aria-label:t2_box_label"></button>
-        <p id="t2-status" class="status" role="status"></p>
+    <section class="lp-band" aria-labelledby="lp-sol-h">
+      <div class="lp-inner">
+        <h2 id="lp-sol-h" data-i18n="lp_sol_h">Fit the answer, not the person</h2>
+        <p class="lp-lead" data-i18n="lp_sol_p">Attune builds a small reading-comfort profile and reshapes every answer to match it.</p>
+        <ul class="lp-grid3 lp-list">
+          <li class="lp-card">
+            <svg class="lp-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h11M4 18h6"/></svg>
+            <h3 data-i18n="lp_sol_amount">Amount</h3><p data-i18n="lp_sol_amount_d">How much to say: from a one-line summary to the full text.</p>
+          </li>
+          <li class="lp-card">
+            <svg class="lp-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="11" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+            <h3 data-i18n="lp_sol_pace">Pace</h3><p data-i18n="lp_sol_pace_d">How fast it arrives: tap per chunk, slow stream or instant.</p>
+          </li>
+          <li class="lp-card">
+            <svg class="lp-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="6" rx="2"/><rect x="4" y="14" width="7" height="6" rx="2"/><rect x="14" y="14" width="6" height="6" rx="2"/></svg>
+            <h3 data-i18n="lp_sol_shape">Shape</h3><p data-i18n="lp_sol_shape_d">How it is laid out: prose, summary first, bullets or small chunks.</p>
+          </li>
+        </ul>
       </div>
     </section>
 
-    <!-- task 3: reading -->
-    <section id="s-t3" class="panel" data-screen hidden>
-      <p class="muted"><span id="t3-step"></span></p>
-      <h2 tabindex="-1" data-i18n="t3_title"></h2>
-      <p data-i18n="t3_desc"></p>
-      <form id="t3-form">
-        <fieldset id="fs-vol"><legend data-i18n="t3_vol"></legend></fieldset>
-        <fieldset id="fs-str"><legend data-i18n="t3_str"></legend></fieldset>
-        <fieldset id="fs-pace"><legend data-i18n="t3_pace"></legend></fieldset>
-        <p id="t3-error" class="error" role="alert"></p>
-        <button class="btn" type="submit" data-i18n="t3_finish"></button>
-      </form>
+    <section id="how" class="lp-band alt" aria-labelledby="lp-how-h">
+      <div class="lp-inner">
+        <h2 id="lp-how-h" data-i18n="lp_how_h">How it works</h2>
+        <ol class="lp-steps">
+          <li class="lp-card"><span class="lp-stepno" data-i18n="lp_step" data-n="1">Step 1</span><h3 data-i18n="lp_s1_t">Measure</h3><p data-i18n="lp_s1_d">Three short game-like tasks (about 4 minutes) show how you take in information.</p></li>
+          <li class="lp-card"><span class="lp-stepno" data-i18n="lp_step" data-n="2">Step 2</span><h3 data-i18n="lp_s2_t">Profile</h3><p data-i18n="lp_s2_d">You get a personal profile: amount, pace and shape. It stays in your browser.</p></li>
+          <li class="lp-card"><span class="lp-stepno" data-i18n="lp_step" data-n="3">Step 3</span><h3 data-i18n="lp_s3_t">Apply</h3><p data-i18n="lp_s3_d">The demo reshapes an answer to your profile. Developers can plug in a model through a small adapter.</p></li>
+          <li class="lp-card"><span class="lp-stepno" data-i18n="lp_step" data-n="4">Step 4</span><h3 data-i18n="lp_s4_t">Adjust (optional)</h3><p data-i18n="lp_s4_d">On a tired day, a condition signal lightens the answer by a step and suggests a break. Here the signal is virtual; real wearables are on the roadmap.</p></li>
+        </ol>
+      </div>
     </section>
 
-    <!-- result -->
-    <section id="s-res" class="panel" data-screen hidden>
-      <h2 tabindex="-1" data-i18n="res_title"></h2>
-      <p data-i18n="res_desc"></p>
-      <dl class="kv" id="res-levels"></dl>
-      <h3 data-i18n="res_measures"></h3>
-      <ul id="res-measures"></ul>
-      <h3 data-i18n="res_json"></h3>
-      <pre id="res-json" class="json" tabindex="0"></pre>
-      <div class="row">
-        <a id="btn-demo" class="btn" href="demo.html" data-i18n="res_demo"></a>
-        <button id="btn-download" class="btn secondary" type="button" data-i18n="res_download"></button>
-        <button id="btn-copy" class="btn secondary" type="button" data-i18n="res_copy"></button>
-        <button id="btn-import" class="btn secondary" type="button" data-i18n="res_import"></button>
-        <input id="file-import" type="file" accept="application/json,.json" hidden>
-        <button id="btn-retake" class="btn secondary" type="button" data-i18n="res_retake"></button>
-        <button id="btn-delete" class="btn secondary" type="button" data-i18n="res_delete"></button>
+    <section class="lp-band lp-trust" aria-labelledby="lp-trust-h">
+      <div class="lp-inner">
+        <h2 id="lp-trust-h" data-i18n="lp_trust_h">Built to stay private</h2>
+        <p><span class="lp-chip" data-i18n="lp_chip_med">Not a medical device</span></p>
+        <ul class="lp-grid2 lp-list">
+          <li class="lp-card"><h3 data-i18n="lp_t1_t">In your browser</h3><p data-i18n="lp_t1_d">No server, no account, no tracking scripts.</p></li>
+          <li class="lp-card"><h3 data-i18n="lp_t2_t">Minimal data</h3><p data-i18n="lp_t2_d">Only profile scores are stored, locally. Conversations are not stored.</p></li>
+          <li class="lp-card"><h3 data-i18n="lp_t3_t">Opt-in</h3><p data-i18n="lp_t3_d">Any future body-signal feature must be opt-in and processed on your device first.</p></li>
+          <li class="lp-card"><h3 data-i18n="lp_t4_t">Delete anytime</h3><p data-i18n="lp_t4_d">Export or delete your profile with one button.</p></li>
+        </ul>
       </div>
-      <p id="res-msg" class="status" role="status"></p>
+    </section>
+
+    <section class="lp-band" aria-labelledby="lp-faq-h">
+      <div class="lp-inner lp-narrow">
+        <h2 id="lp-faq-h" data-i18n="lp_faq_h">Questions</h2>
+        <details class="lp-faq"><summary data-i18n="lp_q1">Is this a medical test?</summary><p data-i18n="lp_a1">No. It is a comfort-preference tool for formatting AI answers. It does not diagnose or treat anything, and the sensor values here are virtual.</p></details>
+        <details class="lp-faq"><summary data-i18n="lp_q2">Which AI does it work with?</summary><p data-i18n="lp_a2">Today it reshapes the built-in sample and any text you paste into the demo. There is no browser extension yet. Developers can connect their own model through the adapter interface.</p></details>
+        <details class="lp-faq"><summary data-i18n="lp_q3">What happens to my data?</summary><p data-i18n="lp_a3">Your profile (scores and levels) is stored in this browser only. Nothing is uploaded and no conversation is stored. Export or delete it any time.</p></details>
+        <details class="lp-faq"><summary data-i18n="lp_q4">Can I measure again?</summary><p data-i18n="lp_a4">Yes, any time. Retake the check-in whenever you like.</p></details>
+        <details class="lp-faq"><summary data-i18n="lp_q5">Do I need a wearable?</summary><p data-i18n="lp_a5">No. The check-in works on its own. The daily-condition step uses virtual values here; connecting real devices is a future, opt-in step and is not available.</p></details>
+        <details class="lp-faq"><summary data-i18n="lp_q6">Can companies use it?</summary><p data-i18n="lp_a6">The license allows noncommercial use only; commercial use needs a separate agreement. There is no API or pricing yet. To ask, open an issue on GitHub or contact the author through the GitHub profile.</p></details>
+      </div>
+    </section>
+
+    <section class="lp-band lp-cta" aria-labelledby="lp-cta-h">
+      <div class="lp-inner lp-center">
+        <h2 id="lp-cta-h" data-i18n="lp_cta_h">Try it in a couple of minutes</h2>
+        <p data-i18n="lp_cta_p">No sign-up. Nothing leaves your browser.</p>
+        <div class="lp-cta-row lp-center-row">
+          <a class="btn inverse" href="demo.html" data-i18n="lp_cta_demo">Try the demo</a>
+          <a class="btn ghost" href="onboarding.html" data-i18n="lp_cta_check">Start the 4-min check-in</a>
+          <a class="btn ghost" href="https://github.com/Json-Y-q/attune" rel="noopener" data-i18n="lp_cta_github">View on GitHub</a>
+        </div>
+      </div>
     </section>
   </main>
-  <footer data-i18n="footer"></footer>
+
+  <footer class="lp-footer">
+    <div class="lp-inner">
+      <p data-i18n="lp_foot1">Not a medical device. It provides no diagnosis or treatment. Body-signal values on this site are virtual; any future signal would only shape the answer format and never assess health.</p>
+      <p data-i18n="lp_foot2">"Attune" is a working name. This project is not affiliated with any other product or company named Attune. The name and logos are not covered by the license.</p>
+      <p><span data-i18n="lp_foot3">Source-available under the PolyForm Noncommercial License 1.0.0, not open source. Noncommercial use is free; commercial use needs a separate license.</span> <a href="https://github.com/Json-Y-q/attune/blob/main/LICENSE" rel="noopener" data-i18n="lp_foot_license">Read the license</a> · <a href="https://github.com/Json-Y-q/attune" rel="noopener" data-i18n="lp_foot_gh">GitHub</a></p>
+    </div>
+  </footer>
 </body>
 </html>

@@ -1,6 +1,7 @@
 // Shared UI helpers: page init (language toggle) and block rendering / paced delivery.
 // Text is always inserted with textContent.
 import { applyI18n, t } from './i18n.js';
+import { THRESHOLDS } from './engine.js';
 import { getLang, setLang } from './storage.js';
 
 /** Wire the language toggle; `onLang(lang)` runs after every (re)render of static strings. */
@@ -145,3 +146,46 @@ export const levelBar = (level, label) => {
   for (let i = 1; i <= 5; i++) bar.append(el('span', i <= level ? 'seg on' : 'seg'));
   return bar;
 };
+
+/* Load meter: same 3-zone scale as the logo (calm / rising / break). Zones follow engine thresholds.
+   Colour is never the only cue: zone label text, tick length and the numeric value. */
+export function renderLoadMeter(box, loadIndex, tr) {
+  box.replaceChildren();
+  if (loadIndex == null) { box.hidden = true; return; }
+  box.hidden = false;
+  const v = Math.max(0, Math.min(100, loadIndex));
+  const zone = v >= THRESHOLDS.breakNow ? 'high' : v >= THRESHOLDS.breakSoon ? 'mid' : 'calm';
+  const name = tr(`dm_zone_${zone}`);
+  const label = document.createElement('div');
+  label.className = 'meter-label';
+  label.textContent = `${tr('dm_meter')}: ${v} / 100 · ${name}`;
+  const track = document.createElement('div');
+  track.className = 'meter-track';
+  track.setAttribute('role', 'meter');
+  track.setAttribute('aria-label', tr('dm_meter'));
+  track.setAttribute('aria-valuemin', '0');
+  track.setAttribute('aria-valuemax', '100');
+  track.setAttribute('aria-valuenow', String(v));
+  track.setAttribute('aria-valuetext', `${v} / 100, ${name}`);
+  for (let i = 0; i <= 20; i++) {
+    const at = i * 5;
+    const t = document.createElement('i');
+    t.className = `tick z-${at >= THRESHOLDS.breakNow ? 'high' : at >= THRESHOLDS.breakSoon ? 'mid' : 'calm'}`;
+    t.style.height = `${8 + i * 0.6}px`; // longer toward higher load
+    track.append(t);
+  }
+  const mark = document.createElement('span');
+  mark.className = 'meter-mark';
+  mark.style.left = `${v}%`;
+  track.append(mark);
+  const zones = document.createElement('div');
+  zones.className = 'meter-zones';
+  for (const [z, w] of [['calm', THRESHOLDS.breakSoon], ['mid', THRESHOLDS.breakNow - THRESHOLDS.breakSoon], ['high', 100 - THRESHOLDS.breakNow]]) {
+    const sp = document.createElement('span');
+    sp.className = `z-${z}`;
+    sp.style.width = `${w}%`;
+    sp.textContent = tr(`dm_zone_${z}`);
+    zones.append(sp);
+  }
+  box.append(label, track, zones);
+}

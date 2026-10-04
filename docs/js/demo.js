@@ -1,10 +1,10 @@
 // Demo page controller: profile + virtual condition -> engine settings -> rule-based transform.
-import { computeSettings, THRESHOLDS } from './engine.js';
+import { computeSettings } from './engine.js';
 import { SAMPLE_PROFILE, DEFAULT_HRV_BASELINE_MS } from './profile.js';
 import { rewrite } from './adapter.js';
 import { transform } from './transform.js';
 import { loadProfile } from './storage.js';
-import { deliver, initPage, renderBlocks } from './ui.js';
+import { deliver, initPage, renderBlocks, renderLoadMeter } from './ui.js';
 
 const $ = (id) => document.getElementById(id);
 const own = loadProfile();
@@ -64,52 +64,8 @@ function settingsRows(s) {
   ];
 }
 
-/* Load meter: same 3-zone scale as the logo (calm / rising / break). Zones follow engine thresholds.
-   Colour is never the only cue: zone label text, tick length and the numeric value. */
-function renderMeter(s) {
-  const box = $('load-meter');
-  box.replaceChildren();
-  if (s.loadIndex == null) { box.hidden = true; return; }
-  box.hidden = false;
-  const v = Math.max(0, Math.min(100, s.loadIndex));
-  const zone = v >= THRESHOLDS.breakNow ? 'high' : v >= THRESHOLDS.breakSoon ? 'mid' : 'calm';
-  const name = tr(`dm_zone_${zone}`);
-  const label = document.createElement('div');
-  label.className = 'meter-label';
-  label.textContent = `${tr('dm_meter')}: ${v} / 100 · ${name}`;
-  const track = document.createElement('div');
-  track.className = 'meter-track';
-  track.setAttribute('role', 'meter');
-  track.setAttribute('aria-label', tr('dm_meter'));
-  track.setAttribute('aria-valuemin', '0');
-  track.setAttribute('aria-valuemax', '100');
-  track.setAttribute('aria-valuenow', String(v));
-  track.setAttribute('aria-valuetext', `${v} / 100, ${name}`);
-  for (let i = 0; i <= 20; i++) {
-    const at = i * 5;
-    const t = document.createElement('i');
-    t.className = `tick z-${at >= THRESHOLDS.breakNow ? 'high' : at >= THRESHOLDS.breakSoon ? 'mid' : 'calm'}`;
-    t.style.height = `${8 + i * 0.6}px`; // longer toward higher load
-    track.append(t);
-  }
-  const mark = document.createElement('span');
-  mark.className = 'meter-mark';
-  mark.style.left = `${v}%`;
-  track.append(mark);
-  const zones = document.createElement('div');
-  zones.className = 'meter-zones';
-  for (const [z, w] of [['calm', THRESHOLDS.breakSoon], ['mid', THRESHOLDS.breakNow - THRESHOLDS.breakSoon], ['high', 100 - THRESHOLDS.breakNow]]) {
-    const sp = document.createElement('span');
-    sp.className = `z-${z}`;
-    sp.style.width = `${w}%`;
-    sp.textContent = tr(`dm_zone_${z}`);
-    zones.append(sp);
-  }
-  box.append(label, track, zones);
-}
-
 function renderSettings(s) {
-  renderMeter(s);
+  renderLoadMeter($('load-meter'), s.loadIndex, tr);
   const dl = $('settings');
   dl.replaceChildren();
   settingsRows(s).forEach(([k, v]) => {
