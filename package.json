@@ -1,0 +1,13 @@
+{
+  "name": "attune",
+  "version": "0.1.0",
+  "description": "Attune: AI that attunes to you. Prototype that adapts AI answer density to your reading comfort. Static web app + rule-based engine, zero dependencies.",
+  "type": "module",
+  "private": true,
+  "license": "SEE LICENSE IN LICENSE",
+  "scripts": {
+    "test": "node --test test/",
+    "start": "node scripts/serve.js"
+  },
+  "engines": { "node": ">=18" }
+}

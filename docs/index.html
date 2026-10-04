@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Attune prototype: fit AI answers to your reading comfort. Runs entirely in your browser.">
+  <title data-i18n="ob_title">Fit AI answers to how you think</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/onboarding.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+  <div class="banner" role="note" data-i18n="banner"></div>
+  <header class="site-header">
+    <div class="brand"><a href="index.html"><picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-dark.svg"><img src="img/logo.svg" alt="" width="117" height="36"></picture><strong class="sr-only" data-i18n="brand">Attune</strong></a><span class="tag" data-i18n="brand_tag">prototype</span></div>
+    <nav data-i18n-attr="aria-label:nav_label">
+      <a href="index.html" aria-current="page" data-i18n="nav_onboard">Onboarding</a>
+      <a href="demo.html" data-i18n="nav_demo">Demo</a>
+    </nav>
+    <button id="lang-toggle" class="btn secondary" type="button" data-i18n="lang_btn" data-i18n-attr="aria-label:lang_btn_label">한국어</button>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <!-- intro -->
+    <section id="s-intro" class="panel" data-screen>
+      <h1 tabindex="-1" data-i18n="ob_title"></h1>
+      <p data-i18n="ob_intro"></p>
+      <p data-i18n="ob_privacy"></p>
+      <p class="muted" data-i18n="ob_not_test"></p>
+      <div class="row">
+        <button id="btn-start" class="btn" type="button" data-i18n="ob_start"></button>
+      </div>
+      <div id="existing" class="row" hidden>
+        <span data-i18n="ob_existing"></span>
+        <button id="btn-existing" class="btn secondary" type="button" data-i18n="ob_view_existing"></button>
+      </div>
+    </section>
+
+    <!-- task 1: digit span -->
+    <section id="s-t1" class="panel" data-screen hidden>
+      <p class="muted"><span id="t1-step"></span></p>
+      <h2 tabindex="-1" data-i18n="t1_title"></h2>
+      <p data-i18n="t1_desc"></p>
+      <button id="t1-begin" class="btn" type="button" data-i18n="t1_begin"></button>
+      <div id="t1-run" hidden>
+        <p class="muted" id="t1-len"></p>
+        <div id="t1-display" class="digits" aria-hidden="true"></div>
+        <p id="t1-status" class="status" role="status"></p>
+        <form id="t1-form" class="row" autocomplete="off" hidden>
+          <label for="t1-input" data-i18n="t1_label"></label>
+          <input id="t1-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off">
+          <button class="btn" type="submit" data-i18n="t1_submit"></button>
+        </form>
+      </div>
+    </section>
+
+    <!-- task 2: reaction -->
+    <section id="s-t2" class="panel" data-screen hidden>
+      <p class="muted"><span id="t2-step"></span></p>
+      <h2 tabindex="-1" data-i18n="t2_title"></h2>
+      <p data-i18n="t2_desc"></p>
+      <button id="t2-begin" class="btn" type="button" data-i18n="t2_begin"></button>
+      <div id="t2-run" hidden>
+        <p class="status" id="t2-round"></p>
+        <div class="progress" aria-hidden="true"><span id="t2-bar"></span></div>
+        <button id="rx-box" class="rx-box" type="button" data-state="wait" data-i18n-attr="aria-label:t2_box_label"></button>
+        <p id="t2-status" class="status" role="status"></p>
+      </div>
+    </section>
+
+    <!-- task 3: reading -->
+    <section id="s-t3" class="panel" data-screen hidden>
+      <p class="muted"><span id="t3-step"></span></p>
+      <h2 tabindex="-1" data-i18n="t3_title"></h2>
+      <p data-i18n="t3_desc"></p>
+      <form id="t3-form">
+        <fieldset id="fs-vol"><legend data-i18n="t3_vol"></legend></fieldset>
+        <fieldset id="fs-str"><legend data-i18n="t3_str"></legend></fieldset>
+        <fieldset id="fs-pace"><legend data-i18n="t3_pace"></legend></fieldset>
+        <p id="t3-error" class="error" role="alert"></p>
+        <button class="btn" type="submit" data-i18n="t3_finish"></button>
+      </form>
+    </section>
+
+    <!-- result -->
+    <section id="s-res" class="panel" data-screen hidden>
+      <h2 tabindex="-1" data-i18n="res_title"></h2>
+      <p data-i18n="res_desc"></p>
+      <dl class="kv" id="res-levels"></dl>
+      <h3 data-i18n="res_measures"></h3>
+      <ul id="res-measures"></ul>
+      <h3 data-i18n="res_json"></h3>
+      <pre id="res-json" class="json" tabindex="0"></pre>
+      <div class="row">
+        <a id="btn-demo" class="btn" href="demo.html" data-i18n="res_demo"></a>
+        <button id="btn-download" class="btn secondary" type="button" data-i18n="res_download"></button>
+        <button id="btn-copy" class="btn secondary" type="button" data-i18n="res_copy"></button>
+        <button id="btn-import" class="btn secondary" type="button" data-i18n="res_import"></button>
+        <input id="file-import" type="file" accept="application/json,.json" hidden>
+        <button id="btn-retake" class="btn secondary" type="button" data-i18n="res_retake"></button>
+        <button id="btn-delete" class="btn secondary" type="button" data-i18n="res_delete"></button>
+      </div>
+      <p id="res-msg" class="status" role="status"></p>
+    </section>
+  </main>
+  <footer data-i18n="footer"></footer>
+</body>
+</html>

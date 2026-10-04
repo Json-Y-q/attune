@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Attune demo: the same AI answer at five information-density levels, adapted by a rule-based engine with virtual condition values.">
+  <title data-i18n="dm_title">Same answer, different density</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/demo.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+  <div class="banner" role="note" data-i18n="banner"></div>
+  <header class="site-header">
+    <div class="brand"><a href="index.html"><picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-dark.svg"><img src="img/logo.svg" alt="" width="117" height="36"></picture><strong class="sr-only" data-i18n="brand">Attune</strong></a><span class="tag" data-i18n="brand_tag">prototype</span></div>
+    <nav data-i18n-attr="aria-label:nav_label">
+      <a href="index.html" data-i18n="nav_onboard">Onboarding</a>
+      <a href="demo.html" aria-current="page" data-i18n="nav_demo">Demo</a>
+    </nav>
+    <button id="lang-toggle" class="btn secondary" type="button" data-i18n="lang_btn" data-i18n-attr="aria-label:lang_btn_label">한국어</button>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <h1 data-i18n="dm_title"></h1>
+    <p data-i18n="dm_intro"></p>
+
+    <section class="panel" aria-labelledby="h-profile">
+      <h2 id="h-profile" data-i18n="dm_profile"></h2>
+      <p id="profile-source"></p>
+      <div class="row">
+        <button id="btn-use-sample" class="btn secondary" type="button" data-i18n="dm_use_sample"></button>
+        <button id="btn-use-own" class="btn secondary" type="button" data-i18n="dm_use_own"></button>
+        <a class="btn secondary" href="index.html" data-i18n="dm_take" style="text-decoration:none;display:inline-flex;align-items:center"></a>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-cond">
+      <h2 id="h-cond" data-i18n="dm_cond"></h2>
+      <p class="muted" data-i18n="dm_cond_note"></p>
+      <label class="row"><input id="cond-on" type="checkbox" checked> <span data-i18n="dm_enable"></span></label>
+      <div class="grid2">
+        <div>
+          <label for="rg-base" id="lb-base"></label>
+          <input id="rg-base" type="range" min="20" max="100" step="1">
+          <label for="rg-hrv" id="lb-hrv"></label>
+          <input id="rg-hrv" type="range" min="10" max="120" step="1">
+          <label for="rg-min" id="lb-min"></label>
+          <input id="rg-min" type="range" min="0" max="180" step="5">
+        </div>
+        <div>
+          <h3 data-i18n="dm_scen" style="margin-top:0"></h3>
+          <div class="row">
+            <button class="btn secondary scen" type="button" data-scen="s1" data-i18n="dm_s1"></button>
+            <button class="btn secondary scen" type="button" data-scen="s2" data-i18n="dm_s2"></button>
+            <button class="btn secondary scen" type="button" data-scen="s3" data-i18n="dm_s3"></button>
+          </div>
+          <label for="cond-json" data-i18n="dm_json"></label>
+          <textarea id="cond-json" rows="5" spellcheck="false"></textarea>
+          <div class="row">
+            <button id="btn-json" class="btn secondary" type="button" data-i18n="dm_json_apply"></button>
+            <span id="json-err" class="error" role="alert"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-settings">
+      <h2 id="h-settings" data-i18n="dm_settings"></h2>
+      <div id="break-alert" class="alert" role="status" hidden></div>
+      <dl id="settings" class="kv"></dl>
+      <div id="load-meter" class="meter" hidden></div>
+      <ul id="reasons" class="reasons"></ul>
+    </section>
+
+    <section class="panel" aria-labelledby="h-answer">
+      <h2 id="h-answer" data-i18n="dm_answer"></h2>
+      <label for="answer" class="muted" data-i18n="dm_answer_label"></label>
+      <textarea id="answer" rows="8"></textarea>
+      <div class="row"><button id="btn-reset" class="btn secondary" type="button" data-i18n="dm_reset"></button></div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-out">
+      <h2 id="h-out" data-i18n="dm_out"></h2>
+      <div class="row">
+        <button id="btn-replay" class="btn" type="button" data-i18n="dm_replay"></button>
+        <label class="row" style="margin:0"><input id="pacing" type="checkbox"> <span data-i18n="dm_pacing"></span></label>
+      </div>
+      <div id="output" aria-live="polite" aria-busy="false"></div>
+      <p id="out-stats" class="muted"></p>
+    </section>
+
+    <section class="panel">
+      <details>
+        <summary data-i18n="dm_compare"></summary>
+        <div id="compare" class="compare"></div>
+      </details>
+    </section>
+  </main>
+  <footer data-i18n="footer"></footer>
+</body>
+</html>
