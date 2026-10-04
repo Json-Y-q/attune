@@ -18,7 +18,8 @@ Fit AI answers to how *you* read: how much information, at what pace, in what sh
 Runs entirely in your browser. No build step, no dependencies, no API key, no server.
 
 - **Landing page** (`docs/index.html`): what Attune is, with an interactive preview (same answer, different virtual condition) and links to the demo, the check-in and GitHub. English by default, Korean toggle.
-- **Onboarding** (`docs/onboarding.html`): three short tasks (~4 min) → a personal profile JSON stored in `localStorage`.
+- **Architecture** (`docs/architecture.html`): inline-SVG data-flow diagram, with each step labelled *Implemented in this prototype* (virtual HRV sliders, rule-based engine) or *Planned* (Apple Watch → iPhone/HealthKit on-device preprocessing → send only a summary → density engine; MCP only after validation). Sample summary format: `docs/data/sample-hrv.json` + `docs/data/hrv-summary.schema.json`.
+- **Onboarding** (`docs/onboarding.html`): three short tasks (~4 min) → a personal profile JSON stored in `localStorage`, shown as a radar/gauge, plus a copyable **Style card** (the profile as a short instruction you can paste into your AI's custom instructions). Today the profile is applied automatically only in the demo page; a browser extension is on the roadmap, not built. Optional photo/video slots live in `docs/media/`.
 - **Demo** (`docs/demo.html`): the same long answer at five density levels, adjusted by your profile and an optional, virtual "today's condition", with a load meter (calm / rising / break).
 - **Engine** (`docs/js/engine.js`, `transform.js`): pure JS modules with unit tests (`node --test`).
 
@@ -54,8 +55,8 @@ Try it: open Demo, pick "Low-HRV day" or "Long session + low HRV" and watch the 
 ## Repository layout
 
 ```
-docs/       static web app (GitHub Pages root): index.html (landing), onboarding.html, demo.html, css/, js/, img/ (logos), media/ (optional photos/video slots), favicon.svg
-  js/       profile.js, engine.js, transform.js, adapter.js (pure logic, tested) · landing.js, onboarding.js, demo.js, ui.js, storage.js, i18n.js (browser)
+docs/       static web app (GitHub Pages root): index.html (landing), onboarding.html, architecture.html, demo.html, css/, js/, img/ (logos), data/ (sample summary + schema), media/ (optional photos/video slots), favicon.svg
+  js/       profile.js, engine.js, transform.js, adapter.js (pure logic, tested) · landing.js, onboarding.js, architecture.js, stylecard.js, charts.js, media.js, demo.js, ui.js, storage.js, i18n.js (browser)
 test/       node:test unit and static checks (npm test)
 scripts/    serve.js (local static server, npm start)
 brand/      logo work: BRAND.md (spec + comparison), overview.png, concept-2/ (chosen, applied to docs/),
@@ -130,7 +131,8 @@ Brand: the chosen logo is concept 2 (a brain-shaped speech bubble whose five top
 AI 답변을 *내가* 읽는 방식에 맞춥니다: 정보량, 속도, 표현 형태. 모든 것이 브라우저 안에서 동작합니다. 빌드, 의존성, API 키, 서버가 필요 없습니다.
 
 - **랜딩 페이지** (`docs/index.html`): Attune 소개와 인터랙티브 미리보기(같은 답변이 가상 컨디션에 따라 달라짐), 데모·체크인·GitHub 링크. 기본 영어, 한국어 전환.
-- **온보딩** (`docs/onboarding.html`): 짧은 과제 3개(약 4분) → 개인 프로파일 JSON을 `localStorage`에 저장.
+- **구조** (`docs/architecture.html`): 인라인 SVG 데이터 흐름도. 각 단계를 *이 프로토타입에 구현됨*(가상 HRV 슬라이더, 규칙 기반 엔진)과 *계획*(Apple Watch → iPhone/HealthKit 온디바이스 전처리 → 요약만 전송 → 밀도 조절 엔진, MCP는 검증 후)으로 구분. 요약 형식 예: `docs/data/sample-hrv.json`, `docs/data/hrv-summary.schema.json`.
+- **온보딩** (`docs/onboarding.html`): 짧은 과제 3개(약 4분) → 개인 프로파일 JSON을 `localStorage`에 저장하고 레이더/게이지로 보여 주며, AI의 맞춤 설정에 붙여 넣을 수 있는 짧은 지시문 **스타일 카드**를 복사할 수 있음. 현재 자동 적용은 데모 페이지에서만 되며 브라우저 확장은 로드맵(미구현). 선택 사진·영상 슬롯은 `docs/media/`.
 - **데모** (`docs/demo.html`): 같은 긴 답변을 5단계 밀도로 보여 주며, 프로파일과 선택적인 가상 "오늘의 컨디션"으로 조절하며, 부하 미터(안정/상승/휴식)를 보여 줌.
 - **엔진** (`docs/js/engine.js`, `transform.js`): 단위 테스트(`node --test`)가 있는 순수 JS 모듈.
 
@@ -166,8 +168,8 @@ npm start         # http://127.0.0.1:8080  (docs/ 정적 서버)
 ### 저장소 구조
 
 ```
-docs/       정적 웹앱(GitHub Pages 루트): index.html(랜딩), onboarding.html(온보딩), demo.html, css/, js/, img/(로고), media/(선택 사진·영상 슬롯), favicon.svg
-  js/       profile.js, engine.js, transform.js, adapter.js (순수 로직, 테스트됨) · landing.js, onboarding.js, demo.js, ui.js, storage.js, i18n.js (브라우저)
+docs/       정적 웹앱(GitHub Pages 루트): index.html(랜딩), onboarding.html(온보딩), architecture.html(구조), demo.html, css/, js/, img/(로고), data/(요약 샘플·스키마), media/(선택 사진·영상 슬롯), favicon.svg
+  js/       profile.js, engine.js, transform.js, adapter.js (순수 로직, 테스트됨) · landing.js, onboarding.js, architecture.js, stylecard.js, charts.js, media.js, demo.js, ui.js, storage.js, i18n.js (브라우저)
 test/       node:test 단위·정적 검사 (npm test)
 scripts/    serve.js (로컬 정적 서버, npm start)
 brand/      로고 작업: BRAND.md(사양·비교), overview.png, concept-2/(확정, docs/에 적용),

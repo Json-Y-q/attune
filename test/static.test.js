@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { STRINGS, t } from '../docs/js/i18n.js';
 
 const read = (p) => readFileSync(new URL(`../docs/${p}`, import.meta.url), 'utf8');
-const PAGES = { 'index.html': 'js/landing.js', 'onboarding.html': 'js/onboarding.js', 'demo.html': 'js/demo.js' };
+const PAGES = { 'index.html': 'js/landing.js', 'onboarding.html': 'js/onboarding.js', 'demo.html': 'js/demo.js', 'architecture.html': 'js/architecture.js' };
 const keysIn = (src, re) => [...src.matchAll(re)].map((m) => m[1]);
 
 test('EN and KO define exactly the same keys with the same value types', () => {
@@ -64,7 +64,7 @@ test('t() keys used in JS exist in the dictionary', () => {
 });
 
 test('no innerHTML / eval / network calls in shipped JS', () => {
-  for (const f of ['profile', 'engine', 'transform', 'adapter', 'i18n', 'storage', 'ui', 'onboarding', 'demo', 'landing']) {
+  for (const f of ['profile', 'engine', 'transform', 'adapter', 'i18n', 'storage', 'ui', 'onboarding', 'demo', 'landing', 'media', 'charts', 'stylecard', 'architecture']) {
     const src = read(`js/${f}.js`);
     assert.doesNotMatch(src, /innerHTML|eval\(|new Function|fetch\(|XMLHttpRequest|sendBeacon|WebSocket/, f);
   }
@@ -84,7 +84,61 @@ for (const page of Object.keys(PAGES)) {
     const html = read(page);
     for (const m of html.matchAll(/\s(?:href|src|srcset)="(https?:)?\/\/([^/"]+)/g)) assert.equal(m[2], 'github.com', `${page}: external host ${m[2]}`);
     for (const m of html.matchAll(/\s(?:href|src)="([\w./-]+)"/g)) {
+      if (m[1].startsWith('media/')) continue; // optional assets, inside inert <template> slots
       assert.doesNotThrow(() => readFileSync(new URL(`../docs/${m[1]}`, import.meta.url)), `${page}: broken link ${m[1]}`);
     }
   });
 }
+
+test('architecture page: both SVG variants, status labels, and the HealthKit on-device statement', () => {
+  const html = read('architecture.html');
+  assert.equal((html.match(/<svg class="ar-svg/g) || []).length, 2);
+  for (const k of ['ar_impl', 'ar_plan', 'ar_badge_impl', 'ar_badge_plan']) assert.match(html, new RegExp(`data-i18n="${k}"`));
+  for (const lang of ['en', 'ko']) {
+    assert.match(STRINGS[lang].ar_d_phone, /HealthKit/);
+    assert.match(STRINGS[lang].ar_d_phone, lang === 'en' ? /on-device[^.]*not a remote API/i : /원격 API가 아니라/);
+  }
+  assert.equal(STRINGS.en.ar_impl, 'Implemented in this prototype');
+});
+
+test('sample HRV summary: matches the shown excerpt, the schema keys and the engine', async () => {
+  const raw = read('data/sample-hrv.json');
+  const sample = JSON.parse(raw);
+  const schema = JSON.parse(read('data/hrv-summary.schema.json'));
+  assert.deepEqual(Object.keys(sample).sort(), Object.keys(schema.properties).sort());
+  for (const k of schema.required) assert.ok(k in sample, k);
+  assert.equal(sample.source, 'virtual');
+  assert.ok(read('architecture.html').includes(raw.trim().replace(/"/g, '"').split('\n')[1].trim()));
+  const { computeSettings } = await import('../docs/js/engine.js');
+  const { SAMPLE_PROFILE } = await import('../docs/js/profile.js');
+  const s = computeSettings(SAMPLE_PROFILE, sample);
+  assert.ok(s.step >= 1);
+});
+
+test('style card: reflects levels, both languages, no medical claims', async () => {
+  const { styleCard } = await import('../docs/js/stylecard.js');
+  const { SAMPLE_PROFILE } = await import('../docs/js/profile.js');
+  for (const lang of ['en', 'ko']) {
+    for (let a = 1; a <= 5; a++) for (const style of ['prose', 'summary', 'bullets', 'chunks']) {
+      const card = styleCard({ levels: { amount: a, pace: 6 - a, style } }, lang);
+      assert.ok(card.includes(STRINGS[lang].sc_amount[a - 1]));
+      assert.ok(card.includes(STRINGS[lang].sc_pace[5 - a]));
+      assert.ok(card.includes(STRINGS[lang][`sc_style_${style}`]));
+    }
+  }
+  assert.match(styleCard(SAMPLE_PROFILE, 'en'), /not medical advice/);
+});
+
+test('media slots: inert templates with lazy images, captions and alt text keys; assets folder documented', () => {
+  const html = read('onboarding.html');
+  const slots = html.match(/<figure class="ob-media[\s\S]*?<\/figure>/g) || [];
+  assert.equal(slots.length, 4);
+  for (const sl of slots) {
+    assert.match(sl, /data-media-ready="false"/);
+    assert.match(sl, /class="ob-ph" aria-hidden="true"><svg/);
+    assert.match(sl, /<template data-media-template>/);
+    if (sl.includes('<video')) { assert.match(sl, /<track kind="captions"/); assert.match(sl, /muted loop playsinline preload="none" poster=/); } else { assert.match(sl, /loading="lazy"/); assert.match(sl, /alt:md_alt_/); }
+  }
+  readFileSync(new URL('../docs/media/README.md', import.meta.url));
+  readFileSync(new URL('../docs/media/hero.en.vtt', import.meta.url));
+});

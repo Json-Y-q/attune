@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Attune architecture: how a wearable HRV signal could shape AI answers (planned) versus what this prototype implements (virtual sliders). Not a medical device.">
+  <meta name="theme-color" content="#2F5DA8">
+  <title data-i18n="ar_title">Attune — How a body signal could reach the answer</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/architecture.js"></script>
+</head>
+<body class="ob ar">
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+  <div class="banner" role="note" data-i18n="banner">Prototype — not a medical device, not a diagnosis, not scientifically validated. Sensor values here are virtual.</div>
+  <header class="site-header">
+    <div class="brand"><a href="index.html"><picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-dark.svg"><img src="img/logo.svg" alt="" width="117" height="36"></picture><strong class="sr-only" data-i18n="brand">Attune</strong></a><span class="tag" data-i18n="brand_tag">prototype</span></div>
+    <nav data-i18n-attr="aria-label:nav_label">
+      <a href="index.html" data-i18n="nav_home">Home</a>
+      <a href="onboarding.html" data-i18n="nav_onboard">Onboarding</a>
+      <a href="demo.html" data-i18n="nav_demo">Demo</a>
+      <a href="architecture.html" aria-current="page" data-i18n="nav_arch">Architecture</a>
+    </nav>
+    <button id="lang-toggle" class="btn secondary" type="button" data-i18n="lang_btn" data-i18n-attr="aria-label:lang_btn_label">한국어</button>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section class="panel ob-card">
+      <h1 tabindex="-1" data-i18n="ar_h1">How a body signal could reach the answer</h1>
+      <p data-i18n="ar_intro">This prototype uses a virtual HRV slider. The wearable parts below are a plan, not something that exists today.</p>
+      <ul class="ar-legend" aria-label="Legend" data-i18n-attr="aria-label:ar_legend">
+        <li><span class="ar-tag impl" data-i18n="ar_impl">Implemented in this prototype</span></li>
+        <li><span class="ar-tag plan" data-i18n="ar_plan">Planned</span></li>
+      </ul>
+      <h2 data-i18n="ar_diagram_h">Data flow</h2>
+      <figure class="ar-fig"><svg class="ar-svg ar-h" viewBox="0 0 1180 330" aria-hidden="true" focusable="false"><defs><marker id="ar-m-implh" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="ar-mk-impl"/></marker><marker id="ar-m-planh" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="ar-mk-plan"/></marker></defs><path class="ar-arrow plan" d="M204 80 H239" marker-end="url(#ar-m-planh)"/><path class="ar-arrow plan" d="M449 80 H484" marker-end="url(#ar-m-planh)"/><path class="ar-arrow plan" d="M694 80 H729" marker-end="url(#ar-m-planh)"/><path class="ar-arrow impl" d="M939 80 H974" marker-end="url(#ar-m-implh)"/><rect class="ar-node plan" x="0" y="20" width="200" height="120" rx="14"/>
+      <circle class="ar-ic-plan" cx="20" cy="39" r="7"/><text class="ar-badge" x="34" y="44" data-i18n="ar_badge_plan">Planned</text>
+      <foreignObject x="12" y="54" width="176" height="84"><div class="ar-nt"><strong data-i18n="ar_n_watch">Apple Watch</strong><span data-i18n="ar_n_watch_s">collects HRV on the wrist</span></div></foreignObject><rect class="ar-node plan" x="245" y="20" width="200" height="120" rx="14"/>
+      <circle class="ar-ic-plan" cx="265" cy="39" r="7"/><text class="ar-badge" x="279" y="44" data-i18n="ar_badge_plan">Planned</text>
+      <foreignObject x="257" y="54" width="176" height="84"><div class="ar-nt"><strong data-i18n="ar_n_phone">iPhone · HealthKit</strong><span data-i18n="ar_n_phone_s">reads and compares to baseline</span></div></foreignObject><rect class="ar-node plan" x="490" y="20" width="200" height="120" rx="14"/>
+      <circle class="ar-ic-plan" cx="510" cy="39" r="7"/><text class="ar-badge" x="524" y="44" data-i18n="ar_badge_plan">Planned</text>
+      <foreignObject x="502" y="54" width="176" height="84"><div class="ar-nt"><strong data-i18n="ar_n_send">Send the summary only</strong><span data-i18n="ar_n_send_s">no raw data leaves the phone</span></div></foreignObject><rect class="ar-node impl" x="735" y="20" width="200" height="120" rx="14"/>
+      <circle class="ar-ic-impl" cx="755" cy="39" r="7"/><path class="ar-check" d="M751 39l3 3 6-6"/><text class="ar-badge" x="769" y="44" data-i18n="ar_badge_impl">Implemented</text>
+      <foreignObject x="747" y="54" width="176" height="84"><div class="ar-nt"><strong data-i18n="ar_n_engine">Density engine</strong><span data-i18n="ar_n_engine_s">picks amount, pace, shape</span></div></foreignObject><rect class="ar-node impl" x="980" y="20" width="200" height="120" rx="14"/>
+      <circle class="ar-ic-impl" cx="1000" cy="39" r="7"/><path class="ar-check" d="M996 39l3 3 6-6"/><text class="ar-badge" x="1014" y="44" data-i18n="ar_badge_impl">Implemented</text>
+      <foreignObject x="992" y="54" width="176" height="84"><div class="ar-nt"><strong data-i18n="ar_n_out">Fitted answer</strong><span data-i18n="ar_n_out_s">cloud AI or light on-device model</span></div></foreignObject><rect class="ar-node impl" x="490" y="190" width="200" height="120" rx="14"/>
+      <circle class="ar-ic-impl" cx="510" cy="209" r="7"/><path class="ar-check" d="M506 209l3 3 6-6"/><text class="ar-badge" x="524" y="214" data-i18n="ar_badge_impl">Implemented</text>
+      <foreignObject x="502" y="224" width="176" height="84"><div class="ar-nt"><strong data-i18n="ar_n_virtual">Virtual HRV slider</strong><span data-i18n="ar_n_virtual_s">stands in for the first three</span></div></foreignObject><path class="ar-arrow impl" d="M694 250 H795 V146" marker-end="url(#ar-m-implh)"/><rect class="ar-node plan" x="980" y="190" width="200" height="120" rx="14"/>
+      <circle class="ar-ic-plan" cx="1000" cy="209" r="7"/><text class="ar-badge" x="1014" y="214" data-i18n="ar_badge_plan">Planned</text>
+      <foreignObject x="992" y="224" width="176" height="84"><div class="ar-nt"><strong data-i18n="ar_n_mcp">MCP tool</strong><span data-i18n="ar_n_mcp_s">only after validation</span></div></foreignObject><path class="ar-arrow plan" d="M1080 186 V146" marker-end="url(#ar-m-planh)"/></svg><svg class="ar-svg ar-v" viewBox="0 0 370 930" aria-hidden="true" focusable="false"><defs><marker id="ar-m-implv" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="ar-mk-impl"/></marker><marker id="ar-m-planv" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="ar-mk-plan"/></marker></defs><path class="ar-arrow plan" d="M180 114 V134" marker-end="url(#ar-m-planv)"/><path class="ar-arrow plan" d="M180 244 V264" marker-end="url(#ar-m-planv)"/><path class="ar-arrow plan" d="M180 374 V394" marker-end="url(#ar-m-planv)"/><path class="ar-arrow impl" d="M180 504 V524" marker-end="url(#ar-m-implv)"/><rect class="ar-node plan" x="30" y="10" width="300" height="100" rx="14"/>
+      <circle class="ar-ic-plan" cx="50" cy="29" r="7"/><text class="ar-badge" x="64" y="34" data-i18n="ar_badge_plan">Planned</text>
+      <foreignObject x="42" y="44" width="276" height="64"><div class="ar-nt"><strong data-i18n="ar_n_watch">Apple Watch</strong><span data-i18n="ar_n_watch_s">collects HRV on the wrist</span></div></foreignObject><rect class="ar-node plan" x="30" y="140" width="300" height="100" rx="14"/>
+      <circle class="ar-ic-plan" cx="50" cy="159" r="7"/><text class="ar-badge" x="64" y="164" data-i18n="ar_badge_plan">Planned</text>
+      <foreignObject x="42" y="174" width="276" height="64"><div class="ar-nt"><strong data-i18n="ar_n_phone">iPhone · HealthKit</strong><span data-i18n="ar_n_phone_s">reads and compares to baseline</span></div></foreignObject><rect class="ar-node plan" x="30" y="270" width="300" height="100" rx="14"/>
+      <circle class="ar-ic-plan" cx="50" cy="289" r="7"/><text class="ar-badge" x="64" y="294" data-i18n="ar_badge_plan">Planned</text>
+      <foreignObject x="42" y="304" width="276" height="64"><div class="ar-nt"><strong data-i18n="ar_n_send">Send the summary only</strong><span data-i18n="ar_n_send_s">no raw data leaves the phone</span></div></foreignObject><rect class="ar-node impl" x="30" y="400" width="300" height="100" rx="14"/>
+      <circle class="ar-ic-impl" cx="50" cy="419" r="7"/><path class="ar-check" d="M46 419l3 3 6-6"/><text class="ar-badge" x="64" y="424" data-i18n="ar_badge_impl">Implemented</text>
+      <foreignObject x="42" y="434" width="276" height="64"><div class="ar-nt"><strong data-i18n="ar_n_engine">Density engine</strong><span data-i18n="ar_n_engine_s">picks amount, pace, shape</span></div></foreignObject><rect class="ar-node impl" x="30" y="530" width="300" height="100" rx="14"/>
+      <circle class="ar-ic-impl" cx="50" cy="549" r="7"/><path class="ar-check" d="M46 549l3 3 6-6"/><text class="ar-badge" x="64" y="554" data-i18n="ar_badge_impl">Implemented</text>
+      <foreignObject x="42" y="564" width="276" height="64"><div class="ar-nt"><strong data-i18n="ar_n_out">Fitted answer</strong><span data-i18n="ar_n_out_s">cloud AI or light on-device model</span></div></foreignObject><rect class="ar-node impl" x="30" y="690" width="300" height="100" rx="14"/>
+      <circle class="ar-ic-impl" cx="50" cy="709" r="7"/><path class="ar-check" d="M46 709l3 3 6-6"/><text class="ar-badge" x="64" y="714" data-i18n="ar_badge_impl">Implemented</text>
+      <foreignObject x="42" y="724" width="276" height="64"><div class="ar-nt"><strong data-i18n="ar_n_virtual">Virtual HRV slider</strong><span data-i18n="ar_n_virtual_s">stands in for the first three</span></div></foreignObject><path class="ar-arrow impl" d="M332 740 H352 V450 H336" marker-end="url(#ar-m-implv)"/><rect class="ar-node plan" x="30" y="820" width="300" height="100" rx="14"/>
+      <circle class="ar-ic-plan" cx="50" cy="839" r="7"/><text class="ar-badge" x="64" y="844" data-i18n="ar_badge_plan">Planned</text>
+      <foreignObject x="42" y="854" width="276" height="64"><div class="ar-nt"><strong data-i18n="ar_n_mcp">MCP tool</strong><span data-i18n="ar_n_mcp_s">only after validation</span></div></foreignObject><path class="ar-arrow plan" d="M28 870 H8 V580 H24" marker-end="url(#ar-m-planv)"/></svg></figure>
+      <h2 data-i18n="ar_detail_h">Step by step</h2>
+      <ol class="ar-list">
+        <li class="ar-item plan"><span class="ar-tag plan" data-i18n="ar_plan">Planned</span> <strong data-i18n="ar_n_watch">Apple Watch</strong><p data-i18n="ar_d_watch">The watch measures heart-rate variability (HRV) on the wrist. Raw samples stay on the watch and phone.</p></li>
+        <li class="ar-item plan"><span class="ar-tag plan" data-i18n="ar_plan">Planned</span> <strong data-i18n="ar_n_phone">iPhone · HealthKit</strong><p data-i18n="ar_d_phone">A companion app on the iPhone would read HRV through HealthKit and compute how far today is from your own baseline. HealthKit is an on-device Apple framework, not a remote API: the app reads it locally with your permission, and nothing leaves the phone unless the app sends it.</p></li>
+        <li class="ar-item plan"><span class="ar-tag plan" data-i18n="ar_plan">Planned</span> <strong data-i18n="ar_n_send">Send the summary only</strong><p data-i18n="ar_d_send">Only the preprocessed result is sent: for example the deviation from baseline and the minutes in the current session. Raw HRV is not sent. It would be opt-in and can be switched off.</p></li>
+        <li class="ar-item impl"><span class="ar-tag impl" data-i18n="ar_impl">Implemented in this prototype</span> <strong data-i18n="ar_n_engine">Density engine</strong><p data-i18n="ar_d_engine">The density engine combines your profile with that summary and picks the amount, pace and shape of the answer. In this prototype it is rule-based JavaScript running in your browser. Later it could run next to a cloud AI or as a light on-device model.</p></li>
+        <li class="ar-item impl"><span class="ar-tag impl" data-i18n="ar_impl">Implemented in this prototype</span> <strong data-i18n="ar_n_out">Fitted answer</strong><p data-i18n="ar_d_out">The answer is reshaped to the chosen settings. In this prototype a rule-based transform does it, and an adapter interface lets a developer plug in a model.</p></li>
+        <li class="ar-item impl"><span class="ar-tag impl" data-i18n="ar_impl">Implemented in this prototype</span> <strong data-i18n="ar_n_virtual">Virtual HRV slider</strong><p data-i18n="ar_d_virtual">The demo and landing page use a slider that stands in for the first three steps. No sensor is read and no value is real.</p></li>
+        <li class="ar-item plan"><span class="ar-tag plan" data-i18n="ar_plan">Planned</span> <strong data-i18n="ar_n_mcp">MCP tool</strong><p data-i18n="ar_d_mcp">Exposing the engine as an MCP (Model Context Protocol) tool is a possible later step, only after the idea has been validated. Not built.</p></li>
+      </ol>
+      <h2 data-i18n="ar_sample_h">Summary format (sample)</h2>
+      <p data-i18n="ar_sample_p">This is the small summary the engine reads. In this prototype the values are virtual. The same shape is used by the demo sliders. Files: docs/data/sample-hrv.json and docs/data/hrv-summary.schema.json.</p>
+      <pre class="json" tabindex="0">{
+  "schema": "attune.condition.v1",
+  "source": "virtual",
+  "baselineHrvMs": 55,
+  "hrvMs": 37,
+  "sessionMinutes": 20
+}</pre>
+      <p class="muted" data-i18n="ar_sample_fields">baselineHrvMs: your usual HRV in ms. hrvMs: today. sessionMinutes: time in the current AI session. source must be "virtual" in this prototype.</p>
+      <p class="muted" data-i18n="ar_tm">Apple, Apple Watch, iPhone and HealthKit are trademarks of Apple Inc. This project is not affiliated with or endorsed by Apple. Not a medical device; HRV is used only to shape the answer format, never to assess health.</p>
+      <p><a class="btn secondary" href="index.html" data-i18n="ar_back">Back to the home page</a></p>
+    </section>
+  </main>
+  <footer data-i18n="footer">Source-available prototype (PolyForm Noncommercial). Not a medical device. Data stays in your browser.</footer>
+</body>
+</html>

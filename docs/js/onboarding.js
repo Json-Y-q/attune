@@ -3,6 +3,9 @@ import { DigitSpanSession, buildProfile, validateProfile } from './profile.js';
 import { transform } from './transform.js';
 import { clearProfile, loadProfile, saveProfile } from './storage.js';
 import { deliver, initPage, levelBar, renderBlocks } from './ui.js';
+import { mountMedia } from './media.js';
+import { styleCard } from './stylecard.js';
+import { renderRadar, renderGauge } from './charts.js';
 
 const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -11,14 +14,39 @@ const raw = { digitSpan: null, rts: null };
 let currentProfile = null;
 let cancelPreview = () => {};
 
-const app = initPage(() => {
+const SCREEN_STEP = { 's-intro': 0, 's-t1': 1, 's-t2': 2, 's-t3': 3, 's-res': 4 };
+let currentScreen = 's-intro';
+
+const app = initPage((lang) => {
   renderStepLabels();
+  renderProgress();
+  mountMedia(lang);
   if (!$('s-t3').hidden) renderReadingOptions();
   if (!$('s-res').hidden && currentProfile) renderResult(currentProfile);
 });
 const tr = (k, p) => app.tr(k, p);
 
+function renderProgress() {
+  const cur = SCREEN_STEP[currentScreen];
+  document.querySelectorAll('#ob-steps li').forEach((li) => {
+    const n = Number(li.dataset.step);
+    li.classList.toggle('done', n < cur || cur === 4);
+    li.classList.toggle('current', n === cur);
+    if (n === cur) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+    li.querySelector('.ob-done')?.remove();
+    if (n < cur || cur === 4) {
+      const sr = document.createElement('span');
+      sr.className = 'sr-only ob-done';
+      sr.textContent = ` ${tr('ob_done')}`;
+      li.append(sr);
+    }
+  });
+  $('ob-progress-text').textContent = cur === 0 ? tr('ob_ready') : cur === 4 ? tr('ob_p4') : tr('step_of', { n: cur });
+}
+
 function show(id) {
+  currentScreen = id;
+  renderProgress();
   document.querySelectorAll('[data-screen]').forEach((s) => { s.hidden = s.id !== id; });
   const heading = $(id).querySelector('h1, h2');
   heading?.focus();
@@ -231,6 +259,25 @@ function renderResult(p) {
   items.push(tr('res_cap', { n: p.baseline.capacityScore }));
   items.forEach((text) => { const li = document.createElement('li'); li.textContent = text; ul.append(li); });
   $('res-json').textContent = JSON.stringify(p, null, 2);
+  $('res-card').textContent = styleCard(p, app.lang);
+  renderCharts(p);
+}
+function renderCharts(p) {
+  const m = p.measures ?? {};
+  const vals = {
+    memory: m.digitSpan?.score ?? null,
+    attention: m.attention?.score ?? null,
+    amount: p.levels.amount * 20,
+    pace: p.levels.pace * 20,
+  };
+  const fmt = (v) => (v == null ? '–' : String(Math.round(v)));
+  renderRadar($('res-radar'), [
+    { label: tr('res_ax_memory'), value: vals.memory },
+    { label: tr('res_ax_attention'), value: vals.attention },
+    { label: tr('res_ax_amount'), value: vals.amount },
+    { label: tr('res_ax_pace'), value: vals.pace },
+  ], tr('res_chart_alt', { m: fmt(vals.memory), a: fmt(vals.attention), u: fmt(vals.amount), p: fmt(vals.pace) }));
+  renderGauge($('res-gauge'), p.baseline.capacityScore, tr('res_gauge_label'), tr('res_gauge_alt', { n: Math.round(p.baseline.capacityScore) }));
 }
 function showResult(p) {
   currentProfile = p;
@@ -246,6 +293,14 @@ function download() {
   a.download = 'attune-profile.json';
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+async function copyCard() {
+  try {
+    await navigator.clipboard.writeText(styleCard(currentProfile, app.lang));
+    $('res-msg').textContent = tr('res_card_copied');
+  } catch {
+    $('res-card').focus(); // user can copy manually
+  }
 }
 async function copy() {
   try {
@@ -279,6 +334,7 @@ $('t2-begin').addEventListener('click', runReaction);
 $('t3-form').addEventListener('submit', finishTask3);
 $('btn-download').addEventListener('click', download);
 $('btn-copy').addEventListener('click', copy);
+$('btn-copy-card').addEventListener('click', copyCard);
 $('btn-import').addEventListener('click', () => $('file-import').click());
 $('file-import').addEventListener('change', (e) => { if (e.target.files[0]) importFile(e.target.files[0]); e.target.value = ''; });
 $('btn-retake').addEventListener('click', () => {

@@ -3,65 +3,136 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Attune prototype: fit AI answers to your reading comfort. Runs entirely in your browser.">
+  <meta name="description" content="Attune check-in: three short tasks (about 4 minutes) build a personal reading profile so AI answers fit you. Runs entirely in your browser; not a medical device.">
+  <meta name="theme-color" content="#2F5DA8">
   <title data-i18n="ob_title">Fit AI answers to how you think</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
   <script type="module" src="js/onboarding.js"></script>
 </head>
-<body>
+<body class="ob">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
-  <div class="banner" role="note" data-i18n="banner"></div>
+  <div class="banner" role="note" data-i18n="banner">Prototype — not a medical device, not a diagnosis, not scientifically validated. Sensor values here are virtual.</div>
   <header class="site-header">
     <div class="brand"><a href="index.html"><picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-dark.svg"><img src="img/logo.svg" alt="" width="117" height="36"></picture><strong class="sr-only" data-i18n="brand">Attune</strong></a><span class="tag" data-i18n="brand_tag">prototype</span></div>
     <nav data-i18n-attr="aria-label:nav_label">
       <a href="index.html" data-i18n="nav_home">Home</a>
       <a href="onboarding.html" aria-current="page" data-i18n="nav_onboard">Onboarding</a>
       <a href="demo.html" data-i18n="nav_demo">Demo</a>
+      <a href="architecture.html" data-i18n="nav_arch">Architecture</a>
     </nav>
     <button id="lang-toggle" class="btn secondary" type="button" data-i18n="lang_btn" data-i18n-attr="aria-label:lang_btn_label">한국어</button>
   </header>
 
   <main id="main" tabindex="-1">
+    <p class="ob-why-line" data-i18n="ob_why_line">Why: 3 short tasks (~4 min) → your personal reading profile → AI answers fitted to you</p>
+    <ol id="ob-steps" class="ob-steps" data-i18n-attr="aria-label:ob_steps_label">
+      <li data-step="1"><span class="ob-dot" aria-hidden="true">1</span><span class="ob-steplabel" data-i18n="ob_p1">Number span</span></li>
+      <li data-step="2"><span class="ob-dot" aria-hidden="true">2</span><span class="ob-steplabel" data-i18n="ob_p2">Reaction</span></li>
+      <li data-step="3"><span class="ob-dot" aria-hidden="true">3</span><span class="ob-steplabel" data-i18n="ob_p3">Reading comfort</span></li>
+      <li data-step="4"><span class="ob-dot" aria-hidden="true">&#10003;</span><span class="ob-steplabel" data-i18n="ob_p4">Your profile</span></li>
+    </ol>
+    <p id="ob-progress-text" class="ob-progress-text"></p>
+
     <!-- intro -->
-    <section id="s-intro" class="panel" data-screen>
-      <h1 tabindex="-1" data-i18n="ob_title"></h1>
-      <p data-i18n="ob_intro"></p>
-      <p data-i18n="ob_privacy"></p>
-      <p class="muted" data-i18n="ob_not_test"></p>
-      <div class="row">
-        <button id="btn-start" class="btn" type="button" data-i18n="ob_start"></button>
+    <section id="s-intro" class="panel ob-card" data-screen>
+      <div class="ob-intro-grid">
+        <div>
+          <h1 tabindex="-1" data-i18n="ob_title">Fit AI answers to how you think</h1>
+          <p data-i18n="ob_intro">Three short tasks (about 4 minutes) build a personal profile: how much, how fast and in what shape you like AI answers. Then the demo shows the same answer adapted to you.</p>
+          <p data-i18n="ob_privacy">Privacy: results stay in this browser (localStorage). Nothing is sent to any server. You can export or delete them any time.</p>
+          <p class="muted" data-i18n="ob_not_test">This is a comfort-preference tool, not an intelligence or health test. Results are rough and can vary day to day.</p>
+          <div class="row">
+            <button id="btn-start" class="btn" type="button" data-i18n="ob_start">Start</button>
+          </div>
+          <div id="existing" class="row" hidden>
+            <span data-i18n="ob_existing">A profile from this browser already exists.</span>
+            <button id="btn-existing" class="btn secondary" type="button" data-i18n="ob_view_existing">View it</button>
+          </div>
+        </div>
+        <figure class="ob-media ob-hero-media" data-media-slot="hero" data-media-ready="false">
+      <div class="ob-ph" aria-hidden="true"><svg viewBox="0 0 480 270" focusable="false"><rect class="ph-bg" width="480" height="270" rx="18"/>
+<g transform="translate(26 42)"><rect class="ph-card" x="0" y="0" width="150" height="186" rx="12"/>
+<rect class="ph-line" x="14" y="18" width="122" height="7" rx="3.5"/><rect class="ph-line" x="14" y="34" width="110" height="7" rx="3.5"/><rect class="ph-line" x="14" y="50" width="122" height="7" rx="3.5"/><rect class="ph-line" x="14" y="66" width="96" height="7" rx="3.5"/><rect class="ph-line" x="14" y="82" width="122" height="7" rx="3.5"/><rect class="ph-line" x="14" y="98" width="118" height="7" rx="3.5"/><rect class="ph-line" x="14" y="114" width="104" height="7" rx="3.5"/><rect class="ph-line" x="14" y="130" width="122" height="7" rx="3.5"/><rect class="ph-line" x="14" y="146" width="90" height="7" rx="3.5"/><rect class="ph-line" x="14" y="162" width="122" height="7" rx="3.5"/></g>
+<path class="ph-arrow" d="M196 135h72m-14-14 14 14-14 14"/>
+<g transform="translate(290 38)"><path class="ph-bubble" d="M20 0h140a20 20 0 0 1 20 20v110a20 20 0 0 1-20 20H70l-34 30v-30H20a20 20 0 0 1-20-20V20A20 20 0 0 1 20 0z"/>
+<rect class="ph-a" x="22" y="24" width="60" height="10" rx="5"/><rect class="ph-p" x="22" y="54" width="120" height="8" rx="4" opacity=".6"/><rect class="ph-p" x="22" y="74" width="96" height="8" rx="4" opacity=".6"/><rect class="ph-p" x="22" y="94" width="108" height="8" rx="4" opacity=".6"/>
+<path class="ph-arc" d="M118 130a24 24 0 0 1 40 0" stroke="var(--primary)"/><path class="ph-arc" d="M126 122a14 14 0 0 1 24 0" stroke="var(--brand-accent)"/></g></svg></div>
+      <template data-media-template>
+        <video class="ob-video" muted loop playsinline preload="none" poster="media/hero-poster.webp" data-i18n-attr="aria-label:md_hero_label">
+          <source src="media/hero.webm" type="video/webm">
+          <source src="media/hero.mp4" type="video/mp4">
+          <track kind="captions" srclang="en" label="English" src="media/hero.en.vtt" default>
+          <track kind="captions" srclang="ko" label="한국어" src="media/hero.ko.vtt">
+        </video>
+      </template>
+    </figure>
       </div>
-      <div id="existing" class="row" hidden>
-        <span data-i18n="ob_existing"></span>
-        <button id="btn-existing" class="btn secondary" type="button" data-i18n="ob_view_existing"></button>
-      </div>
+      <ol class="ob-flow">
+        <li><span class="ob-flow-n" aria-hidden="true">1</span><strong data-i18n="ob_flow1_t">Three short tasks</strong><span class="muted" data-i18n="ob_flow1_d">About 4 minutes. There is nothing to pass or fail.</span></li>
+        <li><span class="ob-flow-n" aria-hidden="true">2</span><strong data-i18n="ob_flow2_t">Your reading profile</strong><span class="muted" data-i18n="ob_flow2_d">How much, how fast and in what shape you like answers.</span></li>
+        <li><span class="ob-flow-n" aria-hidden="true">3</span><strong data-i18n="ob_flow3_t">Answers fitted to you</strong><span class="muted" data-i18n="ob_flow3_d">The demo shows the same answer reshaped for you.</span></li>
+      </ol>
     </section>
 
     <!-- task 1: digit span -->
-    <section id="s-t1" class="panel" data-screen hidden>
-      <p class="muted"><span id="t1-step"></span></p>
-      <h2 tabindex="-1" data-i18n="t1_title"></h2>
-      <p data-i18n="t1_desc"></p>
-      <button id="t1-begin" class="btn" type="button" data-i18n="t1_begin"></button>
+    <section id="s-t1" class="panel ob-card" data-screen hidden>
+      <div class="ob-task-head">
+        <div>
+          <p class="muted"><span id="t1-step"></span></p>
+          <h2 tabindex="-1" data-i18n="t1_title">Number span</h2>
+          <p class="ob-note"><strong data-i18n="ob_measures">What it measures</strong> <span data-i18n="t1_measures">How many items you can hold in mind at once.</span><br><strong data-i18n="ob_uses">Where it is used</strong> <span data-i18n="t1_uses">Sets how much text Attune shows at a time.</span></p>
+          <p data-i18n="t1_desc">Digits appear one at a time. Afterwards, type them in the same order and press Enter. The sequence gets longer while you are correct. This task is visual.</p>
+        </div>
+        <figure class="ob-media ob-step-media" data-media-slot="t1" data-media-ready="false">
+      <div class="ob-ph" aria-hidden="true"><svg viewBox="0 0 240 150" focusable="false"><rect class="ph-bg" width="240" height="150" rx="14"/>
+<rect class="ph-card" x="24" y="40" width="48" height="64" rx="10"/><rect class="ph-card" x="96" y="40" width="48" height="64" rx="10"/><rect class="ph-card ph-on" x="168" y="40" width="48" height="64" rx="10"/>
+<text class="ph-digit" x="48" y="86" text-anchor="middle">3</text><text class="ph-digit" x="120" y="86" text-anchor="middle">8</text><text class="ph-digit" x="192" y="86" text-anchor="middle" fill="var(--brand-accent)">1</text></svg></div>
+      <template data-media-template>
+        <picture>
+          <source type="image/avif" srcset="media/t1.avif">
+          <source type="image/webp" srcset="media/t1.webp">
+          <img src="media/t1.png" width="480" height="300" loading="lazy" decoding="async" alt="" data-i18n-attr="alt:md_alt_1">
+        </picture>
+      </template>
+    </figure>
+      </div>
+      <button id="t1-begin" class="btn" type="button" data-i18n="t1_begin">Begin task 1</button>
       <div id="t1-run" hidden>
         <p class="muted" id="t1-len"></p>
         <div id="t1-display" class="digits" aria-hidden="true"></div>
         <p id="t1-status" class="status" role="status"></p>
         <form id="t1-form" class="row" autocomplete="off" hidden>
-          <label for="t1-input" data-i18n="t1_label"></label>
+          <label for="t1-input" data-i18n="t1_label">Digits</label>
           <input id="t1-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off">
-          <button class="btn" type="submit" data-i18n="t1_submit"></button>
+          <button class="btn" type="submit" data-i18n="t1_submit">Submit</button>
         </form>
       </div>
     </section>
 
     <!-- task 2: reaction -->
-    <section id="s-t2" class="panel" data-screen hidden>
-      <p class="muted"><span id="t2-step"></span></p>
-      <h2 tabindex="-1" data-i18n="t2_title"></h2>
-      <p data-i18n="t2_desc"></p>
-      <button id="t2-begin" class="btn" type="button" data-i18n="t2_begin"></button>
+    <section id="s-t2" class="panel ob-card" data-screen hidden>
+      <div class="ob-task-head">
+        <div>
+          <p class="muted"><span id="t2-step"></span></p>
+          <h2 tabindex="-1" data-i18n="t2_title">Reaction and focus</h2>
+          <p class="ob-note"><strong data-i18n="ob_measures">What it measures</strong> <span data-i18n="t2_measures">How steady your attention and reaction speed are.</span><br><strong data-i18n="ob_uses">Where it is used</strong> <span data-i18n="t2_uses">Sets how fast text arrives and when to suggest a break.</span></p>
+          <p data-i18n="t2_desc">Wait for the box to turn green and say NOW, then press Space or Enter, or tap the box, as fast as you can. 20 rounds. Pressing early restarts the round.</p>
+        </div>
+        <figure class="ob-media ob-step-media" data-media-slot="t2" data-media-ready="false">
+      <div class="ob-ph" aria-hidden="true"><svg viewBox="0 0 240 150" focusable="false"><rect class="ph-bg" width="240" height="150" rx="14"/>
+<rect x="40" y="30" width="160" height="90" rx="14" fill="var(--ok)"/><text class="ph-digit" x="120" y="86" text-anchor="middle" fill="#fff" style="font-size:26px">NOW</text>
+<path d="M150 98l0 34 9-8 7 15 8-4-7-15 12-1z" fill="var(--text)" stroke="var(--surface)" stroke-width="2"/></svg></div>
+      <template data-media-template>
+        <picture>
+          <source type="image/avif" srcset="media/t2.avif">
+          <source type="image/webp" srcset="media/t2.webp">
+          <img src="media/t2.png" width="480" height="300" loading="lazy" decoding="async" alt="" data-i18n-attr="alt:md_alt_2">
+        </picture>
+      </template>
+    </figure>
+      </div>
+      <button id="t2-begin" class="btn" type="button" data-i18n="t2_begin">Begin task 2</button>
       <div id="t2-run" hidden>
         <p class="status" id="t2-round"></p>
         <div class="progress" aria-hidden="true"><span id="t2-bar"></span></div>
@@ -71,40 +142,87 @@
     </section>
 
     <!-- task 3: reading -->
-    <section id="s-t3" class="panel" data-screen hidden>
-      <p class="muted"><span id="t3-step"></span></p>
-      <h2 tabindex="-1" data-i18n="t3_title"></h2>
-      <p data-i18n="t3_desc"></p>
+    <section id="s-t3" class="panel ob-card" data-screen hidden>
+      <div class="ob-task-head">
+        <div>
+          <p class="muted"><span id="t3-step"></span></p>
+          <h2 tabindex="-1" data-i18n="t3_title">Reading comfort</h2>
+          <p class="ob-note"><strong data-i18n="ob_measures">What it measures</strong> <span data-i18n="t3_measures">Your own preferences. There are no right answers.</span><br><strong data-i18n="ob_uses">Where it is used</strong> <span data-i18n="t3_uses">Sets the default amount, shape and pace of your answers.</span></p>
+          <p data-i18n="t3_desc">Same text, different shapes. Pick what feels easiest to read without losing the point.</p>
+        </div>
+        <figure class="ob-media ob-step-media" data-media-slot="t3" data-media-ready="false">
+      <div class="ob-ph" aria-hidden="true"><svg viewBox="0 0 240 150" focusable="false"><rect class="ph-bg" width="240" height="150" rx="14"/>
+<rect class="ph-card" x="16" y="24" width="64" height="102" rx="9"/><rect class="ph-line" x="26" y="38" width="44" height="6" rx="3"/><rect class="ph-line" x="26" y="52" width="44" height="6" rx="3"/><rect class="ph-line" x="26" y="66" width="34" height="6" rx="3"/><rect class="ph-line" x="26" y="80" width="44" height="6" rx="3"/><rect class="ph-line" x="26" y="94" width="38" height="6" rx="3"/>
+<rect class="ph-card ph-on" x="88" y="24" width="64" height="102" rx="9"/><rect class="ph-a" x="98" y="38" width="30" height="7" rx="3.5"/><circle class="ph-p" cx="102" cy="64" r="3"/><rect class="ph-p" x="110" y="61" width="32" height="6" rx="3" opacity=".6"/><circle class="ph-p" cx="102" cy="82" r="3"/><rect class="ph-p" x="110" y="79" width="28" height="6" rx="3" opacity=".6"/><circle class="ph-p" cx="102" cy="100" r="3"/><rect class="ph-p" x="110" y="97" width="32" height="6" rx="3" opacity=".6"/>
+<rect class="ph-card" x="160" y="24" width="64" height="102" rx="9"/><rect class="ph-p" x="170" y="38" width="44" height="22" rx="5" opacity=".35"/><rect class="ph-p" x="170" y="66" width="44" height="22" rx="5" opacity=".35"/><rect class="ph-p" x="170" y="94" width="44" height="22" rx="5" opacity=".35"/></svg></div>
+      <template data-media-template>
+        <picture>
+          <source type="image/avif" srcset="media/t3.avif">
+          <source type="image/webp" srcset="media/t3.webp">
+          <img src="media/t3.png" width="480" height="300" loading="lazy" decoding="async" alt="" data-i18n-attr="alt:md_alt_3">
+        </picture>
+      </template>
+    </figure>
+      </div>
       <form id="t3-form">
-        <fieldset id="fs-vol"><legend data-i18n="t3_vol"></legend></fieldset>
-        <fieldset id="fs-str"><legend data-i18n="t3_str"></legend></fieldset>
-        <fieldset id="fs-pace"><legend data-i18n="t3_pace"></legend></fieldset>
+        <fieldset id="fs-vol"><legend data-i18n="t3_vol">How much text?</legend></fieldset>
+        <fieldset id="fs-str"><legend data-i18n="t3_str">What shape?</legend></fieldset>
+        <fieldset id="fs-pace"><legend data-i18n="t3_pace">How should text arrive?</legend></fieldset>
         <p id="t3-error" class="error" role="alert"></p>
-        <button class="btn" type="submit" data-i18n="t3_finish"></button>
+        <button class="btn" type="submit" data-i18n="t3_finish">Create my profile</button>
       </form>
     </section>
 
     <!-- result -->
-    <section id="s-res" class="panel" data-screen hidden>
-      <h2 tabindex="-1" data-i18n="res_title"></h2>
-      <p data-i18n="res_desc"></p>
-      <dl class="kv" id="res-levels"></dl>
-      <h3 data-i18n="res_measures"></h3>
-      <ul id="res-measures"></ul>
-      <h3 data-i18n="res_json"></h3>
-      <pre id="res-json" class="json" tabindex="0"></pre>
-      <div class="row">
-        <a id="btn-demo" class="btn" href="demo.html" data-i18n="res_demo"></a>
-        <button id="btn-download" class="btn secondary" type="button" data-i18n="res_download"></button>
-        <button id="btn-copy" class="btn secondary" type="button" data-i18n="res_copy"></button>
-        <button id="btn-import" class="btn secondary" type="button" data-i18n="res_import"></button>
-        <input id="file-import" type="file" accept="application/json,.json" hidden>
-        <button id="btn-retake" class="btn secondary" type="button" data-i18n="res_retake"></button>
-        <button id="btn-delete" class="btn secondary" type="button" data-i18n="res_delete"></button>
+    <section id="s-res" class="panel ob-card" data-screen hidden>
+      <h2 tabindex="-1" data-i18n="res_title">Your profile</h2>
+      <p data-i18n="res_desc">Levels run from 1 (lightest) to 5 (fullest). Your defaults:</p>
+      <p class="muted" data-i18n="res_why">This is what Attune uses to shape every answer for you.</p>
+      <div class="ob-result-grid">
+        <div class="ob-chart-box">
+          <h3 data-i18n="res_chart">Profile at a glance</h3>
+          <div id="res-radar" class="ob-radar"></div>
+          <div id="res-gauge" class="ob-gauge"></div>
+        </div>
+        <div>
+          <dl class="kv" id="res-levels"></dl>
+          <h3 data-i18n="res_measures">Measured values</h3>
+          <ul id="res-measures"></ul>
+        </div>
       </div>
+      <section class="ob-use" aria-labelledby="ob-use-h">
+        <h3 id="ob-use-h" data-i18n="res_use_h"></h3>
+        <p class="ob-honest" data-i18n="res_use_status"></p>
+        <ol class="ob-use-steps">
+          <li data-i18n="res_use_1"></li>
+          <li data-i18n="res_use_2"></li>
+          <li data-i18n="res_use_3"></li>
+        </ol>
+        <h4 data-i18n="res_card_h"></h4>
+        <pre id="res-card" class="json ob-card-text" tabindex="0"></pre>
+        <div class="row">
+          <button id="btn-copy-card" class="btn" type="button" data-i18n="res_card_copy"></button>
+        </div>
+      </section>
+      <div class="row ob-next">
+        <a id="btn-demo" class="btn ob-big" href="demo.html" data-i18n="res_demo">Next: see it applied in the demo</a>
+        <button id="btn-retake" class="btn secondary" type="button" data-i18n="res_retake">Retake</button>
+      </div>
+      <details class="ob-manage">
+        <summary data-i18n="res_manage">Export, import or delete</summary>
+        <h3 data-i18n="res_json">Profile JSON</h3>
+        <pre id="res-json" class="json" tabindex="0"></pre>
+        <div class="row">
+          <button id="btn-download" class="btn secondary" type="button" data-i18n="res_download">Download JSON</button>
+          <button id="btn-copy" class="btn secondary" type="button" data-i18n="res_copy">Copy JSON</button>
+          <button id="btn-import" class="btn secondary" type="button" data-i18n="res_import">Import JSON</button>
+          <input id="file-import" type="file" accept="application/json,.json" hidden>
+          <button id="btn-delete" class="btn secondary" type="button" data-i18n="res_delete">Delete profile</button>
+        </div>
+      </details>
       <p id="res-msg" class="status" role="status"></p>
     </section>
   </main>
-  <footer data-i18n="footer"></footer>
+  <footer data-i18n="footer">Source-available prototype (PolyForm Noncommercial). Not a medical device. Data stays in your browser.</footer>
 </body>
 </html>
