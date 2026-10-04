@@ -7,8 +7,8 @@
   <meta name="theme-color" content="#2F5DA8">
   <title data-i18n="cv_title">Attune — Voice pace &amp; conversation partner (simulation)</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=0cdcf9d8">
-  <script type="module" src="js/conversation.js?v=0cdcf9d8"></script>
+  <link rel="stylesheet" href="css/style.css?v=03a17e33">
+  <script type="module" src="js/conversation.js?v=03a17e33"></script>
 </head>
 <body class="ob cv">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -111,6 +111,29 @@
           <p class="muted lp-help" data-i18n="cv_sig_note">Signals are simple rules on counts and timing. The thresholds are assumptions, not validated.</p>
         </div>
       </div>
+    </section>
+
+    <section id="loop" class="panel ob-card" aria-labelledby="lo-h">
+      <h2 id="lo-h" data-i18n="lo_h">Loop escape</h2>
+      <p data-i18n="lo_intro">Notices when a chat goes round in circles (the same question again, the AI repeating itself, long with no progress, changing direction) and offers ways out. It uses simple rules inside this tab.</p>
+      <ul class="lo-status"><li data-i18n="lo_impl">Implemented: rule-based local detection (word overlap, wording patterns in English and Korean, repeated advice and errors).</li><li data-i18n="lo_plan">Planned, not built: LLM-based meaning check, browser extension, real chat integration.</li></ul>
+      <p class="ob-honest" data-i18n="lo_privacy">Nothing you paste is stored or sent anywhere. It is checked in this page only and disappears when you reload or press Clear.</p>
+      <div class="lo-ex" role="group" aria-labelledby="lo-ex-l">
+        <span id="lo-ex-l" class="lp-picks-label" data-i18n="lo_examples">Virtual example conversations</span>
+        <button class="btn secondary lo-exbtn" type="button" data-ex="reask" data-i18n="lo_ex_reask">Asks again</button>
+        <button class="btn secondary lo-exbtn" type="button" data-ex="same_answer" data-i18n="lo_ex_same_answer">Same answer, same error</button>
+        <button class="btn secondary lo-exbtn" type="button" data-ex="wavering" data-i18n="lo_ex_wavering">Changes direction</button>
+        <button class="btn secondary lo-exbtn" type="button" data-ex="healthy" data-i18n="lo_ex_healthy">Moving along (no loop)</button>
+      </div>
+      <label for="lo-input" data-i18n="lo_input_label">Conversation to check (paste it or pick an example)</label>
+      <textarea id="lo-input" class="lo-input" rows="9" maxlength="20000" spellcheck="false" autocomplete="off"></textarea>
+      <p class="muted lp-help" data-i18n="lo_input_hint">Start lines with “You:” and “AI:” (or “나:” and “AI:”). Without markers, blocks separated by a blank line are read as you, AI, you, AI…</p>
+      <label for="lo-load" data-i18n="lo_load_label">Virtual load for this check</label>
+      <select id="lo-load"><option value="sim">Simulator</option><option value="calm" data-i18n="lo_load_calm">Calm (25)</option><option value="mid" data-i18n="lo_load_mid">Rising (60)</option><option value="high" data-i18n="lo_load_high">High (85)</option></select>
+      <p class="muted lp-help" data-i18n="lo_load_help">Virtual number, not a measurement. When it is high, a weaker loop sign is enough and this suggestion comes before the others.</p>
+      <div class="row"><button id="lo-run" class="btn" type="button" data-i18n="lo_analyze">Check for a loop</button><button id="lo-clear" class="btn secondary" type="button" data-i18n="lo_clear">Clear</button></div>
+      <div id="lo-result" class="lo-result" role="region" tabindex="-1" aria-live="polite" hidden></div>
+      <p class="muted lp-help" data-i18n="lo_cool">One suggestion at a time, then about 20 virtual minutes of quiet.</p>
     </section>
 
     <section class="panel ob-card" aria-labelledby="cv-sil-h">

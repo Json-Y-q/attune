@@ -1,7 +1,7 @@
 // "Overload -> adjustment -> recovery" story: a deterministic timeline of VIRTUAL values (no sensors, no model).
 // storyAt(ms) is a pure function so the page, the tests and the recorded video all show exactly the same thing.
 // About 42 seconds: each stage dwells long enough to read, and the changes between stages are slow and eased.
-import { THRESHOLDS } from './engine.js?v=0cdcf9d8';
+import { THRESHOLDS } from './engine.js?v=03a17e33';
 
 export const STORY_MS = 42000;
 export const DEFAULT_LEVELS = Object.freeze({ amount: 4, pace: 4 });

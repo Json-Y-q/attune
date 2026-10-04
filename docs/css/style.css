@@ -601,3 +601,19 @@ html:lang(ko) .lp-hero h1 { line-height: 1.2; }
 .btn[aria-pressed="true"]:hover:not(:disabled), .lp-pick[aria-pressed="true"]:hover { background: var(--primary); color: var(--on-primary); filter: brightness(.94); }
 .st-step[aria-current="step"], .st-step[aria-current="step"]:hover { background: var(--primary); color: var(--on-primary); border-color: var(--primary); box-shadow: none; font-weight: 700; }
 .btn:focus-visible, .st-step:focus-visible, .lp-pick:focus-visible, nav a:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; box-shadow: 0 0 0 3px var(--surface); }
+
+/* Loop escape (conversation.html) */
+.lo-status { margin: .25rem 0 .75rem; padding-left: 1.2rem; } .lo-status li { margin: .15rem 0; }
+.lo-ex { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: .75rem 0; }
+.lo-input, .lo-prompt { width: 100%; font: inherit; font-size: .95rem; line-height: 1.5; padding: .75rem .9rem; border: 1.5px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--text); resize: vertical; }
+#lo-load { font: inherit; min-height: 44px; padding: .4rem .8rem; border: 1.5px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); }
+.lo-result { margin-top: 1rem; padding: 1.1rem 1.25rem; border: 1.5px solid var(--hairline); border-radius: var(--radius); background: color-mix(in srgb, var(--surface) 82%, transparent); }
+.lo-result:focus { outline: 3px solid var(--primary); outline-offset: 3px; }
+.lo-type { font-weight: 700; font-size: 1.1rem; margin: .25rem 0 .5rem; }
+.lo-bar { height: 10px; border-radius: 999px; background: var(--accent-bg); overflow: hidden; max-width: 22rem; } .lo-bar span { display: block; height: 100%; background: var(--primary); border-radius: 999px; }
+.lo-ev { margin: .25rem 0 .75rem; padding-left: 1.2rem; } .lo-ev li { margin: .2rem 0; }
+.lo-prio { font-weight: 600; color: var(--load-mid); }
+.lo-offer, .lo-out { margin-top: .9rem; }
+.lo-opts, .lo-own { display: flex; flex-wrap: wrap; gap: .5rem; margin: .5rem 0; }
+.lo-first { font-weight: 500; opacity: .85; }
+.lo-quote { margin: .4rem 0; padding: .5rem .8rem; border-left: 4px solid var(--primary); background: var(--accent-bg); border-radius: 0 12px 12px 0; overflow-wrap: anywhere; }

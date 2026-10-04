@@ -23,6 +23,7 @@ Runs entirely in your browser. No build step, no dependencies, no API key, no se
 - **Onboarding** (`docs/onboarding.html`): three short tasks (~4 min) → a personal profile JSON stored in `localStorage`, shown as a radar/gauge, plus a copyable **Style card** (the profile as a short instruction you can paste into your AI's custom instructions). Today the profile is applied automatically only in the demo page; a browser extension is on the roadmap, not built. Optional photo/video slots live in `docs/media/`.
 - **Conversation** (`docs/conversation.html`): a simulation of a *voice pace and conversation partner*. Text-to-speech only (Web Speech `speechSynthesis`; **no microphone, no speech recognition**): five speed levels, a pause-length slider, stop / summary / "say again" buttons and a measured speed (words or syllables per minute). Buttons simulate short replies, "what do you mean?", virtual silence and rapid turns; signals (reply length, repeats, pauses, explicit requests) feed `docs/js/partner.js`, which answers in a calm, undoable way (a rejected suggestion cools down for 20 minutes / 15 turns, reasons are shown). Checkpoint and resume cards live in `localStorage`. It reuses your onboarding profile (starting pace and length) and the virtual HRV (starting speed, reply length, thresholds). A load meter (Calm / Rising / Break) uses the same colours. Thresholds are **assumptions**, not validated; on-device voices only unless you allow online ones.
 - **Story + mascot** (landing, `docs/js/story.js`, `mascot.js`, `showcase.js`): an 18-second *overload → adjustment → checkpoint → rest → resume → recovered* story with virtual values (also shipped as a ~19 s silent video in `docs/media/`). The optional mascot (a floating bubble-and-arc head; `brand/mascot/`) is a separate variant, the logo stays the default, and arc thickness plus expression carry the state besides colour. With reduced motion there is no autoplay and four still frames are shown.
+- **Loop escape** (`docs/js/loop.js`, `docs/js/loopui.js`, section on the conversation page, short card on the landing page): finds conversations that go round in circles (the same question asked again, the AI repeating the same answer or error, long with no progress, a direction that keeps changing) and offers one way out at a time: restate the problem in one line, list what was tried and what did not work, try a different approach, a key prompt for a new session (with a copy button), or choose your own. **Implemented: rule-based local detection** (word overlap / Jaccard, wording patterns in English and Korean, repeated advice and error text, a progress score). It returns a type, a confidence and the evidence. Suggestions follow the partner rules (R15): one at a time, 20-minute cooldown, reasons shown, undoable, and they go first when the virtual load is high. Pasted text is analysed in the page only (nothing is stored or sent; checked by tests). **Planned, not built:** LLM-based meaning check, browser extension, real chat integration. The rules are assumptions, the confidence is a rough estimate, and the wording is a suggestion, never a diagnosis.
 - **Individual differences** (landing, `docs/js/individuals.js`): four neutral mascot characters (colour, eye shape, one accessory) receive the same virtual conversation; load rises at a personal pace and Attune steps in at a personal point derived from each one's (virtual) baseline. Labelled "Illustrative — individual differences, not age or gender; virtual values".
 - **Demo** (`docs/demo.html`): the same long answer at five density levels, adjusted by your profile and an optional, virtual "today's condition", with a load meter (calm / rising / break).
 - **Engine** (`docs/js/engine.js`, `transform.js`): pure JS modules with unit tests (`node --test`).
@@ -59,8 +60,8 @@ Try it: open Demo, pick "Low-HRV day" or "Long session + low HRV" and watch the 
 ## Repository layout
 
 ```
-docs/       static web app (GitHub Pages root): index.html (landing), onboarding.html, conversation.html, architecture.html, demo.html, css/, js/ (incl. partner, voice, story, mascot, individuals, showcase, conversation), img/ (logos, mascot SVGs), data/ (sample summary + schema), media/ (hero video + optional image slots), favicon.svg
-  js/       profile.js, engine.js, transform.js, adapter.js, partner.js, voice.js, story.js, mascot.js, individuals.js (pure logic, tested) · landing.js, onboarding.js, architecture.js, conversation.js, showcase.js, stylecard.js, charts.js, media.js, demo.js, ui.js, storage.js, i18n.js (browser)
+docs/       static web app (GitHub Pages root): index.html (landing), onboarding.html, conversation.html, architecture.html, demo.html, css/, js/ (incl. partner, voice, story, mascot, individuals, loop, showcase, conversation), img/ (logos, mascot SVGs), data/ (sample summary + schema), media/ (hero video + optional image slots), favicon.svg
+  js/       profile.js, engine.js, transform.js, adapter.js, partner.js, voice.js, story.js, mascot.js, individuals.js, typing.js, loop.js (pure logic, tested) · loopui.js, landing.js, onboarding.js, architecture.js, conversation.js, showcase.js, stylecard.js, charts.js, media.js, demo.js, ui.js, storage.js, i18n.js (browser)
 test/       node:test unit and static checks (npm test)
 scripts/    serve.js (local static server, npm start), gen-mascot.mjs (writes the mascot SVGs)
 brand/      logo work: BRAND.md (spec + comparison), overview.png, concept-2/ (chosen, applied to docs/),
@@ -94,6 +95,7 @@ Optional LLM adapter: implement `{ name, rewrite({ text, settings, systemPrompt 
 3. iPhone on-device preprocessing: only derived values (e.g. change vs. baseline) would leave the device, never raw signals.
 4. Cloud or small on-device model for density control (via the adapter interface).
 5. MCP server integration, after the earlier steps are validated.
+6. Loop escape, next steps (planned, not built): an LLM-based check of whether a chat is really stuck, on-device embeddings, a browser extension and real chat integration. Today only the rule-based local detection exists.
 
 ## Privacy principles
 
@@ -109,6 +111,7 @@ Optional LLM adapter: implement `{ name, rewrite({ text, settings, systemPrompt 
 - Tasks are visual and need keyboard, mouse or touch; not suitable for everyone. Reading/typing time is not normalised for language ability.
 - Single-browser storage: clearing site data deletes the profile.
 - Conversation page: a simulation. Speech is text-to-speech only (no microphone); voice availability and audio differ per browser. Signals, thresholds, cooldowns and wording are design assumptions, not validated and not reviewed by a lawyer. Silence and rapid turns are simulated, not measured.
+- Loop escape is rule-based and local. Word overlap misses paraphrases and can mistake a deliberate follow-up for a repeat; the confidence is a rough estimate, the thresholds are assumptions and nothing has been validated on real conversations. It only reads text you paste; it does not read any chat page.
 - Story and mascot are illustrations with virtual numbers; the four characters in "Individual differences" show that personal baselines differ, not that any group differs. No age or gender claim is made.
 
 ## Contributing & license
@@ -143,6 +146,7 @@ AI 답변을 *내가* 읽는 방식에 맞춥니다: 정보량, 속도, 표현 �
 - **온보딩** (`docs/onboarding.html`): 짧은 과제 3개(약 4분) → 개인 프로파일 JSON을 `localStorage`에 저장하고 레이더/게이지로 보여 주며, AI의 맞춤 설정에 붙여 넣을 수 있는 짧은 지시문 **스타일 카드**를 복사할 수 있음. 현재 자동 적용은 데모 페이지에서만 되며 브라우저 확장은 로드맵(미구현). 선택 사진·영상 슬롯은 `docs/media/`.
 - **대화** (`docs/conversation.html`): *음성 속도·대화 파트너* 시뮬레이션. 텍스트 읽어주기(TTS)만 사용(Web Speech `speechSynthesis`, **마이크·음성 인식 없음**): 속도 5단계, 멈춤 길이 슬라이더, 정지·요약·다시 듣기 버튼, 측정된 속도(분당 단어/음절). 버튼으로 짧은 답, "무슨 말이야?", 가상 침묵, 빠른 연속 턴을 시뮬레이션하고, 신호(답변 길이·반복·멈춤·직접 요청)는 `docs/js/partner.js`가 차분하고 되돌릴 수 있게 처리합니다(거절한 제안은 20분/15턴 동안 쉬고, 이유를 보여 줌). 체크포인트·이어하기 카드는 `localStorage`에 저장됩니다. 온보딩 프로파일(시작 속도·분량)과 가상 HRV(시작 속도·답변 길이·임계값)를 반영하고, 부하 미터(안정/상승/휴식)는 같은 색을 씁니다. 임계값은 **가정**이며 검증되지 않았고, 온라인 음성은 허용할 때만 씁니다.
 - **스토리 + 마스코트** (랜딩, `docs/js/story.js`, `mascot.js`, `showcase.js`): *과부하 → 조정 → 체크포인트 → 휴식 → 이어하기 → 회복* 18초 스토리(가상 값, `docs/media/`에 약 19초 무음 영상도 포함). 선택 마스코트(말풍선+아크 머리만 떠다니는 형태, `brand/mascot/`)는 별도 변형이며 기본은 로고 그대로입니다. 색 외에 아크 두께와 표정으로도 상태를 구분하고, 모션 줄이기 설정에서는 자동 재생 없이 정지 프레임 4장을 보여 줍니다.
+- **루프 탈출** (`docs/js/loop.js`, `docs/js/loopui.js`, 대화 페이지 섹션, 랜딩 카드 1개): 같은 질문이 반복되거나, AI가 같은 답·오류를 되풀이하거나, 길어지는데 진전이 없거나, 방향이 계속 바뀌는 “제자리 맴돌기” 대화를 찾아 한 번에 하나씩 빠져나올 길을 제안합니다(문제 한 줄 재정리, 시도한 것·안 된 것 정리, 다른 접근, 새 세션용 핵심 프롬프트(복사 버튼), 직접 고르기). **구현됨: 규칙 기반 로컬 감지**(단어 겹침/자카드, 영어·한국어 표현 패턴, 반복되는 조언·오류 문구, 진전 점수)로 유형·신뢰도·근거를 돌려줍니다. 제안은 파트너 규칙(R15)을 따릅니다: 한 번에 하나, 20분 쿨다운, 이유 표시, 되돌리기 가능, 가상 부하가 높으면 먼저 제안. 붙여 넣은 글은 이 페이지 안에서만 분석하며 저장·전송하지 않습니다(테스트로 확인). **계획(미구현):** LLM 기반 의미 판정, 브라우저 확장, 실제 챗 연동. 규칙은 가정이고 신뢰도는 대략적 추정이며, 문구는 제안일 뿐 진단이 아닙니다.
 - **개인차** (랜딩, `docs/js/individuals.js`): 색·눈 모양·작은 액세서리만 다른 중립 마스코트 4명이 같은 가상 대화를 받습니다. 부하가 오르는 속도와 Attune가 개입하는 시점은 각자의 (가상) 기준선에서 나옵니다. "예시 — 개인차를 보여 주는 그림이며 연령·성별과는 무관합니다. 가상의 값입니다" 라벨을 붙였습니다.
 - **데모** (`docs/demo.html`): 같은 긴 답변을 5단계 밀도로 보여 주며, 프로파일과 선택적인 가상 "오늘의 컨디션"으로 조절하며, 부하 미터(안정/상승/휴식)를 보여 줌.
 - **엔진** (`docs/js/engine.js`, `transform.js`): 단위 테스트(`node --test`)가 있는 순수 JS 모듈.
@@ -179,8 +183,8 @@ npm start         # http://127.0.0.1:8080  (docs/ 정적 서버)
 ### 저장소 구조
 
 ```
-docs/       정적 웹앱(GitHub Pages 루트): index.html(랜딩), onboarding.html(온보딩), conversation.html(대화), architecture.html(구조), demo.html, css/, js/(partner·voice·story·mascot·individuals·showcase·conversation 포함), img/(로고·마스코트 SVG), data/(요약 샘플·스키마), media/(히어로 영상 + 선택 이미지 슬롯), favicon.svg
-  js/       profile.js, engine.js, transform.js, adapter.js, partner.js, voice.js, story.js, mascot.js, individuals.js (순수 로직, 테스트됨) · landing.js, onboarding.js, architecture.js, conversation.js, showcase.js, stylecard.js, charts.js, media.js, demo.js, ui.js, storage.js, i18n.js (브라우저)
+docs/       정적 웹앱(GitHub Pages 루트): index.html(랜딩), onboarding.html(온보딩), conversation.html(대화), architecture.html(구조), demo.html, css/, js/(partner·voice·story·mascot·individuals·loop·showcase·conversation 포함), img/(로고·마스코트 SVG), data/(요약 샘플·스키마), media/(히어로 영상 + 선택 이미지 슬롯), favicon.svg
+  js/       profile.js, engine.js, transform.js, adapter.js, partner.js, voice.js, story.js, mascot.js, individuals.js, typing.js, loop.js (순수 로직, 테스트됨) · loopui.js, landing.js, onboarding.js, architecture.js, conversation.js, showcase.js, stylecard.js, charts.js, media.js, demo.js, ui.js, storage.js, i18n.js (브라우저)
 test/       node:test 단위·정적 검사 (npm test)
 scripts/    serve.js (로컬 정적 서버, npm start), gen-mascot.mjs (마스코트 SVG 생성)
 brand/      로고 작업: BRAND.md(사양·비교), overview.png, concept-2/(확정, docs/에 적용),
@@ -201,6 +205,7 @@ NOTICE      필수 고지, 이름·로고 제외, 상업 이용 안내
 3. iPhone 온디바이스 전처리: 원시 신호는 기기 밖으로 나가지 않고, 파생 값(예: 기준선 대비 변화량)만 전송 대상.
 4. 클라우드 또는 경량 온디바이스 모델로 밀도 조절(어댑터 인터페이스 활용).
 5. 앞 단계 검증 이후 MCP 서버 연동.
+6. 루프 탈출 다음 단계(계획, 미구현): 챗이 정말 막혔는지 LLM으로 의미 판정, 온디바이스 임베딩, 브라우저 확장, 실제 챗 연동. 지금은 규칙 기반 로컬 감지만 있습니다.
 
 ### 프라이버시 원칙
 
@@ -216,6 +221,7 @@ NOTICE      필수 고지, 이름·로고 제외, 상업 이용 안내
 - 과제는 시각 기반이며 키보드, 마우스, 터치가 필요해 모두에게 적합하지 않습니다. 언어 능력에 따른 읽기·입력 시간은 보정하지 않습니다.
 - 브라우저별 저장이라 사이트 데이터를 지우면 프로파일도 사라집니다.
 - 대화 페이지는 시뮬레이션입니다. 음성은 TTS만 쓰며(마이크 없음) 브라우저마다 음성·소리가 다릅니다. 신호·임계값·쿨다운·문구는 검증되지 않은 설계 가정이며 법률 검토를 받지 않았습니다. 침묵과 빠른 연속 턴은 측정이 아니라 시뮬레이션입니다.
+- 루프 탈출은 규칙 기반 로컬 방식입니다. 단어 겹침은 말바꿈을 놓치거나 의도한 후속 질문을 반복으로 오해할 수 있습니다. 신뢰도는 대략적 추정이고 임계값은 가정이며 실제 대화로 검증하지 않았습니다. 붙여 넣은 글만 읽고 챗 페이지는 읽지 않습니다.
 - 스토리와 마스코트는 가상 수치의 일러스트입니다. "개인차"의 네 캐릭터는 개인 기준선이 서로 다르다는 것을 보여 줄 뿐 어떤 집단이 다르다는 뜻이 아니며, 연령·성별에 관한 주장은 하지 않습니다.
 
 ### 기여 및 라이선스

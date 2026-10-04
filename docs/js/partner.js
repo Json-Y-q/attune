@@ -1,8 +1,8 @@
 // Conversation partner logic: signals (no sensors) -> level L0-L3 -> rule R1-R14 -> adjustments.
 // Pure functions, no DOM, no network, no storage. Spec: cogload-startup/09 (sections 2-C, 3, 4-C, 5).
 // All numbers are ASSUMPTIONS for a prototype, not validated.
-import { computeSettings } from './engine.js?v=0cdcf9d8';
-import { clamp } from './profile.js?v=0cdcf9d8';
+import { computeSettings, THRESHOLDS } from './engine.js?v=03a17e33';
+import { clamp } from './profile.js?v=03a17e33';
 
 export const WINDOW_TURNS = 5; // "recent 5 turns"
 export const COOLDOWN = Object.freeze({ seconds: 20 * 60, turns: 15, spokenSeconds: 10 * 60 });
@@ -10,7 +10,8 @@ export const MAX_L3 = 2;
 export const LONG_REPLY_CHARS = 300;
 export const SILENCE = Object.freeze({ listen: 4, gentle: 8, options: 15, autopause: 25 });
 export const RESUME_DAYS = 7;
-export const SUGGESTION_TYPES = Object.freeze(['lighter', 'checkpoint', 'break']);
+export const SUGGESTION_TYPES = Object.freeze(['lighter', 'checkpoint', 'break', 'loop']);
+export const LOOP_MIN_CONF = Object.freeze({ normal: 0.55, highLoad: 0.45 }); // with a high load index a weaker loop signal is enough, and it goes first
 
 /* ---------- text signals (E1, B1) ---------- */
 const RE = {
@@ -235,6 +236,7 @@ export function respondToSuggestion(prev, type, answer) {
   if (st.pending === type) st.pending = null;
   const out = { state: st, decision: decision({ rule: 'R12', messageKey: null }), resumeCard: false, persistOff: null };
   if (answer === 'accept') {
+    if (type === 'loop') st.cooldown.loop = { untilSec: st.clock + COOLDOWN.seconds, untilTurn: st.turns.length + COOLDOWN.turns }; // opened once: no second automatic offer for 20 minutes
     out.resumeCard = type === 'break';
     if (type === 'break') rest(st, 15);
     return out;
@@ -300,3 +302,24 @@ export function buildResumeCard(st, now = 0) {
   return { v: 1, savedAt: now, topic: 'sleep', turns: st.turns.filter((t) => !t.seed).length, decided: 2, open: 1 };
 }
 export const resumeExpired = (card, now) => !card || typeof card.savedAt !== 'number' || now - card.savedAt > RESUME_DAYS * 86400000;
+
+/**
+ * R15: offer a way out of a conversation loop (see loop.js). One suggestion at a time, 20-minute cooldown, easy to decline or undo,
+ * and the reasons are returned so the UI can show "why". With a high load index a weaker signal is enough and it goes before
+ * the other suggestions (loop + rising load = step in first). The tone is a suggestion, never a diagnosis.
+ * @param analysis result of analyzeLoop()
+ * @returns {{state:object, decision:object, offered:boolean, blockedBy:null|'none'|'weak'|'pending'|'cooldown'|'off', priority:boolean}}
+ */
+export function offerLoopEscape(prev, analysis, { loadIndex = 0 } = {}) {
+  const st = clone(prev);
+  const high = Number.isFinite(loadIndex) && loadIndex >= THRESHOLDS.breakSoon;
+  const stop = (blockedBy) => ({ ...finish(st, decision()), offered: false, blockedBy, priority: high });
+  if (!analysis || !analysis.type) return stop('none');
+  if (analysis.confidence < (high ? LOOP_MIN_CONF.highLoad : LOOP_MIN_CONF.normal)) return stop('weak');
+  if (st.offSession.includes('loop') || st.offForever.includes('loop')) return stop('off');
+  if (blocked(st, 'loop')) return stop('cooldown');
+  if (st.pending && !(high && ['lighter', 'checkpoint'].includes(st.pending))) return stop('pending'); // one at a time
+  st.pending = 'loop'; st.offered.loop = true;
+  const d = decision({ level: 3, rule: 'R15', reasons: ['L1', ...(high ? ['L2'] : [])], messageKey: high ? 'pm_r15b' : 'pm_r15', suggestion: 'loop' });
+  return { ...finish(st, d), offered: true, blockedBy: null, priority: high };
+}

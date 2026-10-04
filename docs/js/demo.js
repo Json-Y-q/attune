@@ -1,11 +1,11 @@
 // Demo page controller: profile + virtual condition -> engine settings -> rule-based transform.
-import { computeSettings } from './engine.js?v=0cdcf9d8';
-import { SAMPLE_PROFILE, DEFAULT_HRV_BASELINE_MS } from './profile.js?v=0cdcf9d8';
-import { rewrite } from './adapter.js?v=0cdcf9d8';
-import { transform } from './transform.js?v=0cdcf9d8';
-import { loadProfile } from './storage.js?v=0cdcf9d8';
-import { typeLive, typingCps } from './typing.js?v=0cdcf9d8';
-import { deliver, initPage, renderBlocks, renderLoadMeter } from './ui.js?v=0cdcf9d8';
+import { computeSettings } from './engine.js?v=03a17e33';
+import { SAMPLE_PROFILE, DEFAULT_HRV_BASELINE_MS } from './profile.js?v=03a17e33';
+import { rewrite } from './adapter.js?v=03a17e33';
+import { transform } from './transform.js?v=03a17e33';
+import { loadProfile } from './storage.js?v=03a17e33';
+import { typeLive, typingCps } from './typing.js?v=03a17e33';
+import { deliver, initPage, renderBlocks, renderLoadMeter } from './ui.js?v=03a17e33';
 
 const $ = (id) => document.getElementById(id);
 const own = loadProfile();
