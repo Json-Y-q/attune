@@ -15,7 +15,7 @@ const INK = '#0D1B2A';
 /** Arc thickness is a second cue besides colour: thin = calm, medium = rising, thick = break zone. */
 export const ARC_SCALE = Object.freeze({ calm: 0.7, mid: 1, high: 1.3 });
 
-export const FACES = ['calm', 'tense', 'tired', 'ease', 'bright'];
+export const FACES = ['calm', 'tense', 'strain', 'tired', 'ease', 'bright'];
 
 const n = (tag, attrs = {}, children = []) => ({ tag, attrs, children });
 const stroke = (d, w = 4.5, extra = {}) => n('path', { d, fill: 'none', stroke: INK, 'stroke-width': w, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', class: 'mc-stroke', ...extra });
@@ -35,6 +35,8 @@ function face(kind, eyes = 'dot') {
   switch (kind) {
     case 'tense': // lowered eyes, worried brows, flat mouth
       return [dot(82, 117, 5.5), dot(118, 117, 5.5), stroke('M70 107 L90 101', 3.8), stroke('M130 107 L110 101', 3.8), stroke('M90 136 Q100 132 110 136', 4.5)];
+    case 'strain': // squinting chevron eyes, pressed brows, tight wavy mouth (about to burst)
+      return [stroke('M70 108 L92 117 L70 124', 5), stroke('M130 108 L108 117 L130 124', 5), stroke('M68 99 L92 104', 3.8), stroke('M132 99 L108 104', 3.8), stroke('M86 138 q3 -5 6 0 t6 0 t6 0 t6 0', 4.2)];
     case 'tired': // heavy lids as short lines, small wavy mouth
       return [stroke('M73 116 H91', 6), stroke('M109 116 H127', 6), stroke('M86 136 q3.5 -4 7 0 t7 0 t7 0', 4.2)];
     case 'ease': // soft closed-smile eyes, small smile
@@ -59,13 +61,21 @@ const ACCESSORIES = Object.freeze({
   none: () => [],
 });
 const drop = (x, y, delay) => n('path', { d: `M${x} ${y} q8 14 0 20 q-8 -6 0 -20z`, fill: ZONE_HEX.calm, class: 'mc-sweat', style: `animation-delay:${delay}s` });
+const DROPS = [[152, 70, 0], [38, 78, 1.1], [166, 106, 2.2]];
+/** Air escaping when the balloon lets go ("pshh"): three small puffs drifting up and to the right, progress t = 0..1. */
+const airAttrs = (t, i) => ({ cx: +(172 + t * (24 + i * 8) + i * 4).toFixed(1), cy: +(70 - t * (20 + i * 10) - i * 12).toFixed(1), r: +(4 + i * 1.6 + t * 3).toFixed(1), opacity: +Math.max(0, 0.75 * (1 - t)).toFixed(2) });
 
-/** pose: { zone:'calm'|'mid'|'high', face, puff (scale), sweat (0-2), breathing (bool) } -> element tree */
+const bodyTransform = (puff) => `translate(100 120) scale(${+(puff ?? 1).toFixed(3)}) translate(-100 -120)`;
+const arcWidth = (w, pose) => +(w * (pose.arc ?? ARC_SCALE[pose.zone])).toFixed(1);
+
+/**
+ * pose: { zone:'calm'|'mid'|'high', face, puff (balloon scale, 1 = normal), arc (arc thickness factor), shake (0..1 tremble),
+ *         sweat (0-3 drops), air (0..1 progress of escaping air, 0 = none), breathing (bool), variant?, tint?, plain? } -> element tree
+ */
 export function mascotTree(pose, { title = null } = {}) {
-  const k = ARC_SCALE[pose.zone];
   const v = pose.variant ? VARIANTS.find((x) => x.id === pose.variant) ?? null : pose.tint ? { tint: pose.tint, eyes: 'dot', accessory: 'none' } : null;
-  const arcs = ARCS.map(([d, w], i) => n('path', { d, fill: 'none', stroke: ZONE_HEX[pose.zone], 'stroke-width': +(w * k).toFixed(1), 'stroke-linecap': 'round', class: `mc-arc z-${pose.zone}`, 'data-i': i }));
-  const body = n('g', { class: pose.breathing ? 'mc-body mc-breathe' : 'mc-body', transform: `translate(100 120) scale(${pose.puff ?? 1}) translate(-100 -120)` }, [
+  const arcs = ARCS.map(([d, w], i) => n('path', { d, fill: 'none', stroke: ZONE_HEX[pose.zone], 'stroke-width': arcWidth(w, pose), 'stroke-linecap': 'round', class: `mc-arc z-${pose.zone}`, 'data-i': i, 'data-w': w }));
+  const body = n('g', { class: 'mc-body', transform: bodyTransform(pose.puff) }, [
     ...(v ? [n('path', { d: BUBBLE, fill: v.tint, 'fill-opacity': 0.3, stroke: 'none', class: 'mc-tint' })] : []),
     n('path', { d: BUBBLE, fill: 'none', stroke: INK, 'stroke-width': 14, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', class: 'mc-stroke' }),
     ...arcs,
@@ -73,33 +83,25 @@ export function mascotTree(pose, { title = null } = {}) {
     ...(v && !pose.plain ? ACCESSORIES[v.accessory]() : []),
   ]);
   const extras = [];
-  if ((pose.sweat ?? 0) >= 1) extras.push(drop(152, 70, 0));
-  if ((pose.sweat ?? 0) >= 2) extras.push(drop(38, 78, 1.1));
+  const drops = Math.min(3, Math.max(0, pose.sweat ?? 0));
+  for (let i = 0; i < drops; i++) extras.push(drop(...DROPS[i]));
+  if ((pose.air ?? 0) > 0) for (let i = 0; i < 3; i++) extras.push(n('circle', { ...airAttrs(pose.air, i), fill: 'none', stroke: INK, 'stroke-width': 2.4, class: 'mc-air mc-stroke', 'data-i': i }));
   if (pose.face === 'bright') extras.push(n('path', { d: 'M158 52 Q160.2 62.8 171 65 Q160.2 67.2 158 78 Q155.8 67.2 145 65 Q155.8 62.8 158 52Z', fill: ZONE_HEX.mid, class: 'mc-spark' }));
-  const kids = [...(title ? [n('title', {}, [title])] : []), body, ...extras];
-  return n('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 200 200', class: 'mc' }, kids);
+  const inner = n('g', { class: pose.breathing ? 'mc-breath mc-breathe' : 'mc-breath' }, [body]);
+  const kids = [...(title ? [n('title', {}, [title])] : []), n('g', { class: 'mc-shake' }, [inner]), ...extras];
+  return n('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 200 200', class: 'mc', style: `overflow:visible;--shake:${pose.shake ?? 0}` }, kids);
 }
 
-/** Pose for a story state (see story.js). Face and thickness carry the state as well as colour. */
+/** Pose for a story state (see story.js). Size, trembling, sweat, face and arc thickness carry the state as well as colour. */
 export function poseFor(s) {
-  const zone = s.zone;
-  let face;
-  if (s.recovered) face = 'bright';
-  else if (s.ms >= 11500 || (s.ms >= 7500 && zone !== 'high')) face = 'ease';
-  else if (zone === 'high') face = 'tired';
-  else if (zone === 'mid' && s.ms < 6000) face = 'tense';
-  else face = s.ms >= 13000 ? 'ease' : 'calm';
-  const breathing = s.ms >= 7500 && !s.recovered;
-  const puff = face === 'tired' ? 1.04 : face === 'tense' ? 1.03 : 1;
-  const sweat = face === 'tired' ? 2 : face === 'tense' ? 1 : 0;
-  return { zone, face, puff, sweat, breathing };
+  return { zone: s.zone, face: s.face, puff: s.puff, arc: s.arc, shake: s.shake, sweat: s.sweat, air: s.air, breathing: s.breathing };
 }
-/** Four still frames (also used when motion is reduced). */
+/** Four still frames (also used when motion is reduced). They show the swelling too, without any movement. */
 export const STILL_POSES = Object.freeze({
-  calm: { zone: 'calm', face: 'calm', puff: 1, sweat: 0, breathing: false },
-  build: { zone: 'mid', face: 'tense', puff: 1.03, sweat: 1, breathing: false },
-  heavy: { zone: 'high', face: 'tired', puff: 1.04, sweat: 2, breathing: false },
-  recovered: { zone: 'calm', face: 'bright', puff: 1, sweat: 0, breathing: false },
+  calm: { zone: 'calm', face: 'calm', puff: 1, arc: 0.7, shake: 0, sweat: 0, air: 0, breathing: false },
+  build: { zone: 'mid', face: 'tense', puff: 1.15, arc: 1.05, shake: 0, sweat: 2, air: 0, breathing: false },
+  heavy: { zone: 'high', face: 'strain', puff: 1.34, arc: 1.45, shake: 0, sweat: 3, air: 0, breathing: false },
+  recovered: { zone: 'calm', face: 'bright', puff: 1, arc: 0.7, shake: 0, sweat: 0, air: 0, breathing: false },
 });
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
@@ -114,10 +116,22 @@ export function toDom(t, doc = document) {
   for (const c of t.children) el.append(typeof c === 'string' ? doc.createTextNode(c) : toDom(c, doc));
   return el;
 }
-/** Draw (replace) the mascot inside `box`. */
+const structKey = (p) => [p.face, p.variant || '', p.tint || '', p.plain ? 1 : 0, p.sweat | 0, (p.air ?? 0) > 0 ? 1 : 0, p.breathing ? 1 : 0, p.zone].join('|');
+/** Draw the mascot inside `box`. If only the continuous values changed (size, thickness, tremble, air) the existing SVG is
+ *  updated in place, so CSS animations (tremble, breathing, sweat) keep running instead of restarting every frame. */
 export function renderMascot(box, pose) {
+  const key = structKey(pose);
+  const old = box.firstElementChild;
+  if (old && box.dataset.mcKey === key) {
+    old.style.setProperty('--shake', String(pose.shake ?? 0));
+    old.querySelector('.mc-body')?.setAttribute('transform', bodyTransform(pose.puff));
+    old.querySelectorAll('.mc-arc').forEach((a) => a.setAttribute('stroke-width', String(arcWidth(Number(a.dataset.w), pose))));
+    old.querySelectorAll('.mc-air').forEach((c) => { const at = airAttrs(pose.air, Number(c.dataset.i)); for (const [k, v] of Object.entries(at)) c.setAttribute(k, String(v)); });
+    return;
+  }
   const svg = toDom(mascotTree(pose));
   svg.setAttribute('aria-hidden', 'true');
   svg.setAttribute('focusable', 'false');
   box.replaceChildren(svg);
+  box.dataset.mcKey = key;
 }

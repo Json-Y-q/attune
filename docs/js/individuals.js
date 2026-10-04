@@ -6,7 +6,7 @@ import { THRESHOLDS } from './engine.js';
 import { clamp } from './profile.js';
 
 /** One shared conversation: same length, same turns, same density for everybody. */
-export const SHARED = Object.freeze({ minutes: 50, turns: 20, charsPerReply: 900, durationMs: 15000 });
+export const SHARED = Object.freeze({ minutes: 50, turns: 20, charsPerReply: 900, durationMs: 24000 });
 
 /**
  * limitMin   = virtual "fatigue limit" from the onboarding baseline (minutes of this kind of conversation until the time part of the load reaches 60).
@@ -30,6 +30,9 @@ export function adjustMinute(p) {
 }
 const zone = (load) => (load >= THRESHOLDS.breakNow ? 'high' : load >= THRESHOLDS.breakSoon ? 'mid' : 'calm');
 
+const smooth = (x) => { const c = clamp(x, 0, 1); return c * c * (3 - 2 * c); };
+const DEFLATE_MS = 1100; // how long the "pshh" takes in animation time
+
 /** State of one persona `ms` into the shared conversation. */
 export function personaAt(p, ms) {
   const m = msToMinutes(ms);
@@ -38,12 +41,26 @@ export function personaAt(p, ms) {
   const adjusted = m >= am;
   const load = adjusted ? clamp(rising - EASE_PER_MIN * (m - am), 0, 100) : rising;
   const lvl = zone(Math.round(load));
-  // Face follows the state: before the adjust point it tracks the meter; after it the face eases and the mascot breathes.
-  const face = adjusted ? 'ease' : lvl === 'high' ? 'tired' : lvl === 'mid' ? 'tense' : 'calm';
-  const puff = adjusted ? 1 : lvl === 'high' ? 1.04 : lvl === 'mid' ? 1.03 : 1;
+  // Everyone swells towards THEIR OWN limit: tension 1 = the personal adjust point, whatever the absolute number is.
+  const tension = clamp(rising / p.adjustAt, 0, 1);
+  const dt = adjusted ? ms - minutesToMs(am) : -1; // animation ms since the adjustment
+  let puff; let shake; let sweat; let face; let air = 0;
+  if (!adjusted) {
+    puff = 1 + 0.34 * Math.pow(tension, 2.2);
+    shake = +clamp((tension - 0.6) / 0.4, 0, 1).toFixed(2);
+    sweat = tension > 0.92 ? 3 : tension > 0.78 ? 2 : tension > 0.55 ? 1 : 0;
+    face = tension > 0.9 ? 'strain' : tension > 0.5 ? 'tense' : 'calm';
+  } else {
+    const peak = 1.34;
+    puff = dt < 380 ? peak + (0.93 - peak) * smooth(dt / 380) : dt < DEFLATE_MS + 700 ? 0.93 + 0.07 * smooth((dt - 380) / (DEFLATE_MS + 320)) : 1;
+    shake = 0;
+    sweat = dt < DEFLATE_MS ? 1 : 0;
+    face = dt < DEFLATE_MS ? 'tired' : 'ease';
+    air = dt < 1500 ? +(dt / 1500).toFixed(3) : 0;
+  }
   return {
-    id: p.id, minute: +m.toFixed(1), load: Math.round(load), zone: lvl, adjusted, adjustedAtMin: am, adjustedAtMs: minutesToMs(am),
-    pose: { zone: lvl, face, puff, sweat: adjusted ? 0 : lvl === 'high' ? 2 : lvl === 'mid' ? 1 : 0, breathing: adjusted, variant: p.variant },
+    id: p.id, minute: +m.toFixed(1), load: Math.round(load), zone: lvl, adjusted, adjustedAtMin: am, adjustedAtMs: minutesToMs(am), tension: +tension.toFixed(3),
+    pose: { zone: lvl, face, puff: +puff.toFixed(3), arc: +(0.7 + 0.75 * (adjusted ? 0.25 + 0.75 * (1 - smooth(dt / 3000)) : tension)).toFixed(2), shake, sweat, air, breathing: adjusted && dt >= DEFLATE_MS, variant: p.variant },
   };
 }
 /** Every persona at once; `order` lists ids from earliest to latest adjustment. */

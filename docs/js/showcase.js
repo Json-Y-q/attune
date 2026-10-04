@@ -7,6 +7,7 @@ import { renderBlocks, renderLoadMeter } from './ui.js';
 import { renderMascot, poseFor, STILL_POSES } from './mascot.js';
 import { PERSONAS, SHARED, allAt, adjustMinute, riseRate, minutesToMs } from './individuals.js';
 import { loadJSON, saveJSON } from './storage.js';
+import { prepareTyping, revealChars, typedChars } from './typing.js';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -14,7 +15,7 @@ const reduced = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)'
 
 export function mountStory(getTr) {
   const tr = (k, p) => getTr()(k, p);
-  const state = { t: 0, playing: false, raf: 0, last: 0, touched: false, viewKey: '', phase: '', poseKey: '', mascotOn: loadJSON('attune.mascot') !== false };
+  const state = { t: 0, playing: false, raf: 0, last: 0, touched: false, viewKey: '', phase: '', poseKey: '', aiEl: null, lastN: -1, mascotOn: loadJSON('attune.mascot') !== false };
 
   function bubble(cls, nodeOrText) {
     const b = el('div', `st-bubble ${cls}`);
@@ -31,11 +32,13 @@ export function mountStory(getTr) {
   function renderChat(s) {
     const chat = $('st-chat');
     chat.replaceChildren();
-    if (s.ms >= 3000) chat.append(bubble('you', tr('st_you1')));
+    if (s.ms >= 12000) chat.append(bubble('you', tr('st_you1')));
     const ai = el('div');
-    renderBlocks(ai, transform(tr('sample_answer'), { amount: s.amount, style: s.style }).blocks, tr);
+    renderBlocks(ai, transform(tr('sample_answer'), { amount: s.reply.amount, style: s.reply.style }).blocks, tr);
+    prepareTyping(ai);
+    state.aiEl = ai; state.lastN = -1;
     chat.append(bubble('ai', ai));
-    if (s.ms >= 7500 && !s.showCheckpoint && !s.showResume) chat.append(bubble('partner', tr('pm_r1')));
+    if (s.ms >= 23500 && !s.showCheckpoint && !s.showResume) chat.append(bubble('partner', tr('pm_r1')));
     if (s.showCheckpoint) {
       chat.append(bubble('partner', tr(s.resting ? 'pm_r8' : 'pm_r7')));
       chat.append(card(tr('st_cp_h'), [tr('st_cp_1'), tr('st_cp_2'), tr('st_cp_3')]));
@@ -44,7 +47,7 @@ export function mountStory(getTr) {
     if (s.showResume) {
       chat.append(card(tr('st_rs_h'), [tr('st_rs_1')], el('span', 'st-fake-btn', tr('st_rs_2'))));
       chat.append(bubble('partner', tr('st_resume_msg')));
-      if (s.ms >= 15000) chat.append(bubble('you', tr('st_you2')));
+      if (s.ms >= 40000) chat.append(bubble('you', tr('st_you2')));
     }
   }
   function renderPhase(s) {
@@ -65,8 +68,11 @@ export function mountStory(getTr) {
     $('st-min').textContent = tr('st_min', { m: s.virtualMinutes });
     $('st-scrub').value = String(Math.round(state.t));
     $('st-scrub').setAttribute('aria-valuetext', `${tr(`st_p_${s.phase}`)}, ${s.load} / 100`);
-    const key = [s.phase, s.amount, s.style, s.showCheckpoint, s.showResume, s.resting, s.ms >= 3000, s.ms >= 7500, s.ms >= 15000, tr('st_you1')].join('|');
+    const key = [s.phase, s.reply.at, s.reply.amount, s.reply.style, s.showCheckpoint, s.showResume, s.resting, s.ms >= 12000, s.ms >= 23500, s.ms >= 40000, tr('st_you1')].join('|');
     if (key !== state.viewKey) { state.viewKey = key; renderChat(s); }
+    // typing: how much of the current reply is visible depends only on the time since it started (instant when motion is reduced)
+    const n = reduced() ? Infinity : typedChars(s.ms - s.reply.at, s.reply.cps);
+    if (state.aiEl && n !== state.lastN) { state.lastN = n; revealChars(state.aiEl, n); }
     if (s.phase + tr('st_h') !== state.phase) { state.phase = s.phase + tr('st_h'); renderPhase(s); }
     $('st-chip').hidden = !s.chip;
     $('st-chip').textContent = tr('st_chip');
@@ -75,8 +81,7 @@ export function mountStory(getTr) {
     mBox.hidden = !state.mascotOn;
     if (state.mascotOn) {
       const pose = poseFor(s);
-      const pk = JSON.stringify(reduced() ? { ...pose, breathing: false } : pose);
-      if (pk !== state.poseKey) { state.poseKey = pk; renderMascot(mBox, JSON.parse(pk)); }
+      renderMascot(mBox, reduced() ? { ...pose, breathing: false, shake: 0, air: 0 } : pose);
     }
     $('st-play').textContent = state.playing ? tr('st_pause') : tr(state.t >= STORY_MS ? 'st_replay' : 'st_play');
   }
@@ -100,7 +105,7 @@ export function mountStory(getTr) {
 
   $('st-play').addEventListener('click', () => { state.touched = true; if (state.playing) pause(); else play(); });
   $('st-scrub').addEventListener('input', (e) => seek(Number(e.target.value)));
-  document.querySelectorAll('#st-steps button').forEach((b) => b.addEventListener('click', () => seek(PHASES.find((p) => p.id === b.dataset.phase).at + 400)));
+  document.querySelectorAll('#st-steps button').forEach((b) => b.addEventListener('click', () => seek(PHASES.find((p) => p.id === b.dataset.phase).at + 700)));
   $('st-mascot-toggle').checked = state.mascotOn;
   $('st-mascot-toggle').addEventListener('change', (e) => { state.mascotOn = e.target.checked; saveJSON('attune.mascot', state.mascotOn); state.poseKey = ''; render(); document.dispatchEvent(new CustomEvent('attune:mascot', { detail: { on: state.mascotOn } })); });
   document.addEventListener('attune:mascot', (e) => { if (e.detail.on !== state.mascotOn) { state.mascotOn = e.detail.on; $('st-mascot-toggle').checked = state.mascotOn; state.poseKey = ''; render(); } });
@@ -169,9 +174,8 @@ export function mountIndividuals(getTr) {
       row.state.textContent = r.adjusted ? tr('in_state_adj', { m: Math.round(r.adjustedAtMin) }) : tr('in_state_wait');
       row.card.classList.toggle('adjusted', r.adjusted);
       row.head.style.left = `${(st.t / SHARED.durationMs) * 100}%`;
-      const pose = { ...r.pose, plain: !st.on, variant: st.on ? r.pose.variant : null, breathing: r.pose.breathing && !reduced() };
-      const key = JSON.stringify(pose);
-      if (key !== st.poseKeys[r.id]) { st.poseKeys[r.id] = key; renderMascot(row.mascot, pose); }
+      const pose = { ...r.pose, plain: !st.on, variant: st.on ? r.pose.variant : null, breathing: r.pose.breathing && !reduced(), ...(reduced() ? { shake: 0, air: 0 } : {}) };
+      renderMascot(row.mascot, pose);
     }
     $('in-min').textContent = tr('in_min', { m: Math.round(s.minute), t: SHARED.minutes });
     $('in-scrub').value = String(Math.round(st.t));

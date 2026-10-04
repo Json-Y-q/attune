@@ -9,7 +9,8 @@ import {
   activeSignals, implicitCount, loadIndexFor, effective, density, thresholdsFor, initialSettings, buildResumeCard, resumeExpired, sessionMinutes,
   COOLDOWN, MAX_L3, RESUME_DAYS,
 } from '../docs/js/partner.js';
-import { storyAt, STORY_MS, PHASES, DEFAULT_LEVELS } from '../docs/js/story.js';
+import { storyAt, STORY_MS, PHASES, DEFAULT_LEVELS, REPLIES } from '../docs/js/story.js';
+import { TYPING_CPS, typingCps, typedChars } from '../docs/js/typing.js';
 import { SPEECH_LEVELS, levelInfo, measureSpeed, countSyllables, isChunkEnd } from '../docs/js/voice.js';
 import { mascotTree, toSvgString, poseFor, STILL_POSES, ARC_SCALE } from '../docs/js/mascot.js';
 import { transform } from '../docs/js/transform.js';
@@ -251,30 +252,69 @@ test('resume card: no conversation text, expires after 7 days', () => {
 });
 
 /* ---------- story ---------- */
-test('story: load climbs to the break zone, falls back to calm, and the label reads Recovered', () => {
+test('story: about 40 seconds; load climbs to the break zone, falls back to calm, and the label reads Recovered', () => {
+  assert.ok(STORY_MS >= 35000 && STORY_MS <= 45000);
   const frames = Array.from({ length: STORY_MS / 100 + 1 }, (_, i) => storyAt(i * 100));
   const peak = Math.max(...frames.map((f) => f.load));
   const peakAt = frames.find((f) => f.load === peak).ms;
-  assert.ok(peak >= 75, 'reaches the break zone');
+  assert.ok(peak >= 85, 'reaches the break zone');
   assert.equal(frames[0].zone, 'calm');
-  assert.equal(frames.find((f) => f.ms === peakAt).zone, 'high');
   const zones = frames.map((f) => f.zone).filter((z, i, a) => z !== a[i - 1]);
   assert.deepEqual(zones, ['calm', 'mid', 'high', 'mid', 'calm'], 'blue -> orange -> magenta -> orange -> blue');
+  // every stage stays long enough to read, and the zones change slowly
+  const dwell = (z) => frames.filter((f) => f.zone === z).length * 100;
+  assert.ok(dwell('calm') >= 12000 && dwell('mid') >= 9000 && dwell('high') >= 6000, 'long dwell per zone');
   for (let i = frames.findIndex((f) => f.ms === peakAt) + 1; i < frames.length; i++) assert.ok(frames[i].load <= frames[i - 1].load, 'falls monotonically after the peak');
+  for (let i = 1; i < frames.length; i++) assert.ok(Math.abs(frames[i].load - frames[i - 1].load) <= 2, 'no jumps in the meter');
   const last = frames.at(-1);
   assert.equal(last.recovered, true);
   assert.equal(last.amount, DEFAULT_LEVELS.amount);
   assert.equal(last.pace, DEFAULT_LEVELS.pace);
   assert.ok(last.load < 35);
-  assert.equal(frames.filter((f) => f.recovered).every((f) => f.ms >= 15000), true);
+  assert.equal(frames.filter((f) => f.recovered).every((f) => f.ms >= 38000), true);
   assert.ok(frames.some((f) => f.amount < DEFAULT_LEVELS.amount), 'answers get lighter');
   assert.ok(frames.some((f) => f.style === 'bullets'));
-  assert.equal(PHASES.length, 7);
+  assert.equal(PHASES.length, 8);
+  for (let i = 1; i < PHASES.length; i++) assert.ok(PHASES[i].at - PHASES[i - 1].at >= 3500, 'each stage lasts at least 3.5 s');
 });
 
 test('story: lengths and pace return gradually (never jump back in one step)', () => {
-  let prev = storyAt(13000).amount;
-  for (let ms = 13000; ms <= STORY_MS; ms += 100) { const a = storyAt(ms).amount; assert.ok(a >= prev && a - prev <= 1); prev = a; }
+  let prev = storyAt(34000).amount;
+  for (let ms = 34000; ms <= STORY_MS; ms += 100) { const a = storyAt(ms).amount; assert.ok(a >= prev && a - prev <= 1); prev = a; }
+});
+
+test('story: the balloon swells towards bursting, hangs there, then lets the air out and settles', () => {
+  const f = Array.from({ length: STORY_MS / 100 + 1 }, (_, i) => storyAt(i * 100));
+  const maxPuff = Math.max(...f.map((x) => x.puff));
+  assert.ok(maxPuff >= 1.3 && maxPuff <= 1.4);
+  const rise = f.filter((x) => x.ms <= 22000).map((x) => x.puff);
+  for (let i = 1; i < rise.length; i++) assert.ok(rise[i] >= rise[i - 1] - 1e-9, 'swells monotonically');
+  assert.ok(f.filter((x) => x.puff >= 1.3).length * 100 >= 1500, 'hangs at the edge for a moment');
+  assert.ok(f.some((x) => x.ms > 22200 && x.puff < 1), 'goes slightly below normal when the air is let out');
+  assert.equal(storyAt(26000).puff, 1);
+  assert.equal(storyAt(42000).puff, 1);
+  assert.ok(Math.max(...f.map((x) => x.shake)) === 1 && storyAt(30000).shake === 0 && storyAt(2000).shake === 0);
+  assert.equal(Math.max(...f.map((x) => x.sweat)), 3);
+  assert.equal(storyAt(30000).sweat, 0);
+  assert.ok(f.filter((x) => x.air > 0).length > 10 && storyAt(22000 + 900).air > 0 && storyAt(30000).air === 0, 'air puffs while deflating');
+  const arcs = f.filter((x) => x.ms <= 22000).map((x) => x.arc);
+  assert.ok(arcs.at(-1) > arcs[0] + 0.6, 'arcs get thicker as the load rises');
+  assert.deepEqual([storyAt(1000).face, storyAt(12000).face, storyAt(19000).face, storyAt(23200).face, storyAt(30000).face, storyAt(41000).face], ['calm', 'tense', 'strain', 'tired', 'ease', 'bright']);
+});
+
+test('story: replies are typed at 15-25 characters per second at first, then slower and shorter', () => {
+  const r = REPLIES;
+  assert.ok(r[0].cps >= 15 && r[0].cps <= 25 && r[0].amount === DEFAULT_LEVELS.amount);
+  assert.ok(r[1].cps < r[0].cps && r[1].amount < r[0].amount, 'after the adjustment: slower and shorter');
+  assert.ok(r.at(-1).cps >= 15 && r.at(-1).amount === DEFAULT_LEVELS.amount, 'back to normal at the end');
+  assert.equal(storyAt(5000).reply.at, 0);
+  assert.equal(storyAt(23000).reply.at, 22000);
+  assert.deepEqual(TYPING_CPS.map((c) => c >= 10 && c <= 25), [true, true, true, true, true]);
+  assert.equal(typingCps(4), 20);
+  assert.ok(typingCps(2) < typingCps(4) && typingCps(1) < typingCps(2));
+  assert.equal(typedChars(1000, 20), 20);
+  assert.equal(typedChars(2500, 12), 30);
+  assert.equal(typedChars(-5, 20), 0);
 });
 
 /* ---------- voice ---------- */
@@ -309,14 +349,24 @@ test('mascot: four still frames differ in shape (arc thickness, face), not only 
   assert.ok(readFileSync(new URL('../docs/img/logo.svg', import.meta.url), 'utf8').includes('Attune logo'));
 });
 
-test('mascot follows the story: tired in the break zone, breathing while adjusting, bright when recovered', () => {
+test('mascot follows the story: swells, trembles and sweats at the edge, lets the air out, breathes, brightens', () => {
   assert.equal(poseFor(storyAt(500)).face, 'calm');
-  assert.equal(poseFor(storyAt(4500)).face, 'tense');
-  assert.equal(poseFor(storyAt(6500)).face, 'tired');
-  assert.equal(poseFor(storyAt(9500)).breathing, true);
-  assert.equal(poseFor(storyAt(18000)).face, 'bright');
-  assert.equal(poseFor(storyAt(18000)).breathing, false);
-  assert.equal(poseFor(storyAt(14000)).face, 'ease');
+  assert.equal(poseFor(storyAt(12000)).face, 'tense');
+  const edge = poseFor(storyAt(21000));
+  assert.deepEqual([edge.face, edge.zone], ['strain', 'high']);
+  assert.ok(edge.puff > 1.3 && edge.shake > 0.8 && edge.sweat === 3 && edge.arc > 1.35);
+  assert.ok(poseFor(storyAt(22800)).air > 0 && poseFor(storyAt(22800)).face === 'tired');
+  assert.equal(poseFor(storyAt(30000)).breathing, true);
+  assert.equal(poseFor(storyAt(30000)).puff, 1);
+  assert.equal(poseFor(storyAt(42000)).face, 'bright');
+  assert.equal(poseFor(storyAt(42000)).breathing, false);
+  assert.equal(poseFor(storyAt(33000)).face, 'ease');
+  // the tree really carries the size and the tremble
+  const svg = toSvgString(mascotTree(edge));
+  assert.match(svg, /scale\(1\.3\d*\)/);
+  assert.match(svg, /--shake:0\.\d+|--shake:1/);
+  assert.equal((svg.match(/mc-sweat/g) || []).length, 3);
+  assert.match(toSvgString(mascotTree(poseFor(storyAt(22900)))), /mc-air/);
 });
 
 test('conversation.html wires every control the script uses and offers a Text/Voice mode', () => {
@@ -353,17 +403,19 @@ test('individuals: same conversation, different rise speed and different adjust 
 test('individuals: load rises until the persona-specific point, then eases; adjusted state is flagged', () => {
   for (const p of PERSONAS) {
     const at = minutesToMs(adjustMinute(p));
-    const before = personaAt(p, Math.max(0, at - 150)), after = personaAt(p, Math.min(SHARED.durationMs, at + 600)), end = personaAt(p, SHARED.durationMs);
+    const before = personaAt(p, Math.max(0, at - 150)), after = personaAt(p, Math.min(SHARED.durationMs, at + 300)), end = personaAt(p, SHARED.durationMs);
     assert.equal(personaAt(p, 0).adjusted, false);
     assert.equal(before.adjusted, false);
     assert.equal(after.adjusted, true);
     assert.ok(after.load < before.load + 4 && end.load < before.load, 'eases after lighter answers');
-    assert.equal(after.pose.breathing, true);
-    assert.equal(after.pose.face, 'ease');
+    const later = personaAt(p, Math.min(SHARED.durationMs, at + 2500));
+    assert.equal(later.pose.breathing, true);
+    assert.equal(later.pose.face, 'ease');
+    assert.equal(later.pose.puff, 1);
     assert.ok(personaAt(p, 0).load <= 20);
     for (let ms = 0; ms < at - 100; ms += 100) assert.ok(personaAt(p, ms + 100).load >= personaAt(p, ms).load);
   }
-  const mid = allAt(5000);
+  const mid = allAt(9000);
   assert.equal(mid.list.length, PERSONAS.length);
   assert.notEqual(new Set(mid.list.map((x) => x.adjusted)).size, 1, 'at the same moment some are adjusted and some are not');
   assert.equal(mid.order.length, PERSONAS.length);
@@ -403,4 +455,22 @@ test('individuals: no names or accessory words in any visible text (cards, capti
   // short, human lines on the cards; numbers live in a collapsed <details>
   for (const id of ['a', 'b', 'c', 'd']) assert.ok(STRINGS.en[`in_t_${id}`].length < 40 && STRINGS.ko[`in_t_${id}`]);
   assert.match(js, /el\('details', 'in-more'\)/);
+});
+
+test('individuals: each mascot swells, trembles and sweats towards ITS OWN limit, then lets the air out', () => {
+  for (const p of PERSONAS) {
+    const at = minutesToMs(adjustMinute(p));
+    const near = personaAt(p, at - 60).pose;
+    assert.ok(near.puff > 1.28 && near.shake > 0.8 && near.sweat >= 2 && near.face === 'strain', `${p.id} near its own edge`);
+    assert.ok(personaAt(p, 0).pose.puff < 1.05 && personaAt(p, 0).pose.shake === 0);
+    const out = personaAt(p, at + 600).pose;
+    assert.ok(out.puff < 1.05 && out.air > 0 && out.shake === 0, 'deflating');
+    assert.ok(Math.min(...[300, 500, 700, 900].map((d) => personaAt(p, at + d).pose.puff)) < 1, 'dips below normal');
+    assert.equal(personaAt(p, at + 3000).pose.puff, 1);
+    for (let ms = 0; ms < at - 100; ms += 100) assert.ok(personaAt(p, ms + 100).pose.puff >= personaAt(p, ms).pose.puff - 1e-9, 'swells steadily');
+  }
+  // same moment, different state: the quick riser is already swollen while the slow one is still relaxed
+  const t = 3600;
+  const fast = PERSONAS.reduce((a, b) => (riseRate(a) > riseRate(b) ? a : b)), slow = PERSONAS.reduce((a, b) => (riseRate(a) < riseRate(b) ? a : b));
+  assert.ok(personaAt(fast, t).pose.puff > personaAt(slow, t).pose.puff + 0.1);
 });

@@ -151,3 +151,12 @@ test('hero video assets: small, with poster and captions (landing story + onboar
   assert.match(read('index.html'), /data-media-slot="hero" data-media-ready="true"/);
   for (const f of ['hero.en.vtt', 'hero.ko.vtt']) assert.match(readFileSync(new URL(`../docs/media/${f}`, import.meta.url), 'utf8'), /^WEBVTT/);
 });
+
+test('hero headline: gradient text keeps room for descenders (line-height >= 1.1, bottom padding, no overflow clipping)', () => {
+  const css = readFileSync(new URL('../docs/css/style.css', import.meta.url), 'utf8');
+  const rules = [...css.matchAll(/\.lp-hero h1\s*\{([^}]*)\}/g)].map((m) => m[1]).join(';');
+  const last = (prop) => [...rules.matchAll(new RegExp(`(?:^|;|\\s)${prop}:\\s*([^;]+)`, 'g'))].map((m) => m[1].trim()).pop();
+  assert.ok(parseFloat(last('line-height')) >= 1.1);
+  assert.match(last('padding-bottom') ?? '', /^\.?\d+(\.\d+)?(em|rem|px)$/);
+  assert.doesNotMatch(rules, /overflow:\s*(hidden|clip|auto)/);
+});

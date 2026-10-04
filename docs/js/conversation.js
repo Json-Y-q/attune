@@ -8,6 +8,7 @@ import {
   newSession, userTurn, aiReplied, control, respondToSuggestion, undoAdjust, skipAhead, addSilence, silenceStage,
   activeSignals, loadIndexFor, density, effective, sessionMinutes, buildResumeCard, resumeExpired, SILENCE, SUGGESTION_TYPES,
 } from './partner.js';
+import { typeLive, typingCps } from './typing.js';
 import { levelInfo, ttsSupported, pickVoices, createSpeaker, speechSentences } from './voice.js';
 
 const $ = (id) => document.getElementById(id);
@@ -50,7 +51,7 @@ function produceReply({ decision }, push) {
   const eff = effective(session);
   const idx = replyIdx % AI_KEYS.length;
   const oneLine = Boolean(decision?.oneLine);
-  const item = { role: 'ai', idx, amount: oneLine ? 1 : eff.amount, style: oneLine ? 'summary' : eff.style, pick: idx === 2 && eff.optionsMax != null, short: eff.amount < session.base.amount || oneLine };
+  const item = { role: 'ai', at: performance.now(), cps: typingCps(eff.speech), done: false, idx, amount: oneLine ? 1 : eff.amount, style: oneLine ? 'summary' : eff.style, pick: idx === 2 && eff.optionsMax != null, short: eff.amount < session.base.amount || oneLine };
   replyIdx += 1;
   const shown = replyText(item);
   session = aiReplied(session, shown.length);
@@ -110,10 +111,14 @@ function act(a) {
 }
 
 /* ---------- rendering ---------- */
+let typer = null; // typing of the newest AI reply (restarted on every redraw from the time it began, so it never jumps)
 function renderLog() {
   const box = $('cv-log');
   box.replaceChildren();
-  for (const it of log.slice(-8)) {
+  typer?.cancel(); typer = null;
+  const shown = log.slice(-8);
+  const lastAi = [...shown].reverse().find((x) => x.role === 'ai' && !x.pick);
+  for (const it of shown) {
     const row = el('div', `cv-row ${it.role}`);
     const who = it.role === 'you' ? tr('cv_you') : it.role === 'ai' ? tr('cv_ai') : tr('cv_partner');
     row.append(el('span', 'cv-who', who));
@@ -130,6 +135,11 @@ function renderLog() {
         const inner = el('div');
         renderBlocks(inner, replyBlocks(it), tr);
         body.append(inner);
+        if (it === lastAi && it.at && !it.done && !reduced()) {
+          inner.setAttribute('aria-hidden', 'true'); // screen readers get the whole reply at once, not letter by letter
+          body.append(el('span', 'sr-only', replyText(it)));
+          typer = typeLive(inner, { cps: it.cps, startedAt: it.at, onDone: () => { it.done = true; inner.removeAttribute('aria-hidden'); body.querySelector(':scope > .sr-only')?.remove(); } });
+        }
       }
       if (it.idx === 1) {
         const imp = el('p', 'cv-important');
