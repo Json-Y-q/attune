@@ -566,3 +566,8 @@ body.lp main::before { content: none; }
   background: radial-gradient(60% 70% at 8% 0%, rgb(47 93 168 / .22), transparent 70%), radial-gradient(55% 70% at 100% 10%, rgb(242 166 90 / .30), transparent 70%), radial-gradient(60% 60% at 70% 100%, rgb(179 18 79 / .14), transparent 72%), color-mix(in srgb, var(--surface) 70%, var(--bg)); }
 @media (prefers-color-scheme: dark) { .st-grid { background: radial-gradient(60% 70% at 8% 0%, rgb(142 180 255 / .22), transparent 70%), radial-gradient(55% 70% at 100% 10%, rgb(255 184 76 / .16), transparent 70%), radial-gradient(60% 60% at 70% 100%, rgb(255 107 154 / .16), transparent 72%), var(--surface); } }
 html { overflow-x: clip; }
+.in-tag { margin: 0 0 .4rem; font-size: 1.15rem; font-weight: 650; letter-spacing: -.015em; text-align: center; }
+.in-state { min-height: 0; font-size: .95rem; color: var(--muted); margin-top: .35rem; }
+.in-more { margin-top: .6rem; text-align: left; font-size: .85rem; }
+.in-more summary { cursor: pointer; min-height: 36px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-weight: 600; }
+.in-more .in-line { text-align: left; margin-top: .25rem; }

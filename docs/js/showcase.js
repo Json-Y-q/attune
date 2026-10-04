@@ -121,25 +121,25 @@ export function mountIndividuals(getTr) {
   const st = { t: 0, playing: false, raf: 0, last: 0, touched: false, on: loadJSON('attune.mascot') !== false, poseKeys: {} };
   const grid = $('in-grid');
   const rows = {};
-  const desc = (id) => tr(`in_desc_${id}`); // neutral description for assistive tech and the text version; no names on screen
+  const desc = (id) => tr(`in_desc_${id}`); // neutral description for assistive tech only (aria-label); nothing like it is shown on screen
   const mini = (id, pose = {}) => { const b = el('span', 'in-mini'); b.setAttribute('aria-hidden', 'true'); renderMascot(b, { zone: 'calm', face: 'calm', puff: 1, sweat: 0, breathing: false, variant: id, ...pose }); return b; };
 
   function build() {
     grid.replaceChildren();
     $('in-tl').replaceChildren();
-    $('in-sum').replaceChildren();
     for (const p of PERSONAS) {
       const card = el('article', 'in-card glass');
       card.dataset.id = p.id;
       card.setAttribute('aria-label', desc(p.id));
       const mascot = el('div', 'in-mascot'); mascot.setAttribute('aria-hidden', 'true');
-      const base = el('p', 'muted in-line', tr('in_base', { l: p.limitMin, p: p.adjustAt }));
-      const rate = el('p', 'in-line', tr('in_rate', { r: riseRate(p) }));
+      const tag = el('p', 'in-tag', tr(`in_t_${p.id}`));
+      const more = el('details', 'in-more');
+      more.append(el('summary', null, tr('in_more')), el('p', 'muted in-line', tr('in_base', { l: p.limitMin, p: p.adjustAt })), el('p', 'muted in-line', tr('in_rate', { r: riseRate(p) })));
       const meter = el('div', 'meter');
       const badge = el('span', 'st-badge');
       const state = el('p', 'in-line in-state');
-      card.append(mascot, meter, el('p', 'in-badge-row'), rate, base, state);
-      card.children[2].append(badge);
+      card.append(mascot, tag, meter, el('p', 'in-badge-row'), state, more);
+      card.children[3].append(badge);
       grid.append(card);
       rows[p.id] = { card, mascot, meter, badge, state };
       // timeline row
@@ -152,8 +152,6 @@ export function mountIndividuals(getTr) {
       row.append(track, el('span', 'in-row-m', `${adjustMinute(p)}′`));
       $('in-tl').append(row);
       rows[p.id].head = head;
-      const li = el('li', null, tr('in_sum', { name: desc(p.id), r: riseRate(p), m: adjustMinute(p) }));
-      $('in-sum').append(li);
     }
     const first = $('in-first');
     first.replaceChildren(el('span', null, tr('in_order')));
@@ -168,7 +166,7 @@ export function mountIndividuals(getTr) {
       renderLoadMeter(row.meter, r.load, tr);
       row.badge.textContent = tr(`dm_zone_${r.zone}`);
       row.badge.className = `st-badge z-${r.zone}`;
-      row.state.textContent = r.adjusted ? tr('in_state_adj', { n: r.load, m: r.adjustedAtMin }) : tr('in_state_wait', { n: r.load });
+      row.state.textContent = r.adjusted ? tr('in_state_adj', { m: Math.round(r.adjustedAtMin) }) : tr('in_state_wait');
       row.card.classList.toggle('adjusted', r.adjusted);
       row.head.style.left = `${(st.t / SHARED.durationMs) * 100}%`;
       const pose = { ...r.pose, plain: !st.on, variant: st.on ? r.pose.variant : null, breathing: r.pose.breathing && !reduced() };

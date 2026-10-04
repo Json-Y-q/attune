@@ -384,10 +384,23 @@ test('individuals copy: carries the "illustrative / not age or gender / virtual"
   assert.match(STRINGS.en.in_label, /Illustrative — individual differences, not age or gender; virtual values/);
   assert.match(STRINGS.ko.in_label, /연령·성별과는 무관/);
   assert.match(STRINGS.en.in_msg, /baseline/);
-  const keys = Object.keys(STRINGS.en).filter((k) => k.startsWith('in_') && k !== 'in_label');
+  const keys = Object.keys(STRINGS.en).filter((k) => k.startsWith('in_') && k !== 'in_label' && !k.startsWith('in_desc_')); // in_desc_* are aria-labels only
   const text = keys.flatMap((k) => [STRINGS.en[k], STRINGS.ko[k]]).join(' ');
   assert.doesNotMatch(text, /\b(age|aged|gender|male|female|men|women|boy|girl|elderly|old|older|young|younger|teen)\b|나이|연령|성별|남성|여성|노인|청년|어린이|젊은|세대/i);
   const html = readFileSync(new URL('../docs/index.html', import.meta.url), 'utf8');
   assert.match(html, /id="individuals"/);
   assert.match(html, /data-i18n="in_label"/);
+});
+
+test('individuals: no names or accessory words in any visible text (cards, captions, text blocks); descriptions are aria-only', () => {
+  const visible = Object.entries(STRINGS).flatMap(([lang, o]) => Object.entries(o).filter(([k]) => /^(in_|mc_|st_|lp_story)/.test(k) && !k.startsWith('in_desc_')).map(([k, v]) => [lang, k, v]));
+  for (const [lang, k, v] of visible) assert.doesNotMatch(String(v), /mascot [a-d]\b|마스코트 [A-D]|glasses|headphones|sprout|안경|헤드폰|새싹/i, `${lang}.${k}`);
+  const js = readFileSync(new URL('../docs/js/showcase.js', import.meta.url), 'utf8');
+  assert.match(js, /setAttribute\('aria-label', desc\(p\.id\)\)/);
+  assert.doesNotMatch(js, /textContent[^;\n]*desc\(|el\([^)]*desc\(/); // desc() never becomes visible text
+  const html = readFileSync(new URL('../docs/index.html', import.meta.url), 'utf8');
+  assert.doesNotMatch(html.slice(html.indexOf('id="individuals"'), html.indexOf('lp-prob-h')), /glasses|headphones|sprout|Mascot [A-D]/);
+  // short, human lines on the cards; numbers live in a collapsed <details>
+  for (const id of ['a', 'b', 'c', 'd']) assert.ok(STRINGS.en[`in_t_${id}`].length < 40 && STRINGS.ko[`in_t_${id}`]);
+  assert.match(js, /el\('details', 'in-more'\)/);
 });
