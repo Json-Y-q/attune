@@ -1,9 +1,9 @@
 // Loop escape UI (conversation.html). Everything stays in this tab: the pasted text is read from the text box, analysed by loop.js
 // (rules only, no network, no storage) and drawn with textContent. Nothing is saved, so a reload or "Clear" removes it.
-import { analyzeLoop, parseConversation, escapeOptions, optionContent, MAX_TURNS, EXAMPLES } from './loop.js?v=6972a45f';
-import { offerLoopEscape, respondToSuggestion, detectText } from './partner.js?v=6972a45f';
-import { t } from './i18n.js?v=6972a45f';
-import { getLang } from './storage.js?v=6972a45f';
+import { analyzeLoop, parseConversation, escapeOptions, optionContent, MAX_TURNS, EXAMPLES } from './loop.js?v=f2a7a765';
+import { offerLoopEscape, respondToSuggestion, detectText } from './partner.js?v=f2a7a765';
+import { t } from './i18n.js?v=f2a7a765';
+import { getLang } from './storage.js?v=f2a7a765';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };

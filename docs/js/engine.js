@@ -1,6 +1,6 @@
 // Density engine: profile (+ optional "today's condition") -> output settings.
 // Pure functions, no DOM, no network. Thresholds are ASSUMPTIONS, not validated.
-import { DEFAULT_HRV_BASELINE_MS, STYLES, clamp, validateProfile } from './profile.js?v=6972a45f';
+import { DEFAULT_HRV_BASELINE_MS, STYLES, clamp, validateProfile } from './profile.js?v=f2a7a765';
 
 export const THRESHOLDS = Object.freeze({
   hrvDropStep1: 0.2, // HRV >= 20% below baseline -> one level lower

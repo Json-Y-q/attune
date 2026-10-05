@@ -1,6 +1,6 @@
 // Optional LLM adapter interface. This repo ships NO network code and needs NO API key:
 // without an adapter (or when it fails) the rule-based transform is used.
-import { transform } from './transform.js?v=6972a45f';
+import { transform } from './transform.js?v=f2a7a765';
 
 /**
  * @typedef {Object} DensityAdapter

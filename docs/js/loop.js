@@ -2,7 +2,7 @@
 // Input: an array of turns { role: 'user' | 'ai', text }. Output: a loop type with confidence and evidence, plus escape options.
 // Similarity is plain token overlap (Jaccard) over words and Korean character bigrams, plus simple wording patterns (EN/KO).
 // It is an assumption-based heuristic for a prototype, not a validated measurement, and it never states what a person feels or thinks.
-import { t } from './i18n.js?v=6972a45f';
+import { t } from './i18n.js?v=f2a7a765';
 
 export const LOOP_TYPES = Object.freeze(['reask', 'same_answer', 'wavering', 'stalled']);
 export const LOOP_THRESHOLD = 0.55; // minimum confidence to call something a loop

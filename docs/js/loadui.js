@@ -1,7 +1,7 @@
 // Overload button + local label log UI for conversation.html. Browser only; labels stay in localStorage.
-import { loadJSON, saveJSON, removeKey } from './storage.js?v=6972a45f';
-import { reportOverload, activeSignals, loadIndexFor, density, sessionMinutes, effective } from './partner.js?v=6972a45f';
-import { makeLabel, appendLabel, normalizeLabels, exportLabelsJSON, LABEL_KEY, newSessionId } from './labels.js?v=6972a45f';
+import { loadJSON, saveJSON, removeKey } from './storage.js?v=f2a7a765';
+import { reportOverload, activeSignals, loadIndexFor, density, sessionMinutes, effective } from './partner.js?v=f2a7a765';
+import { makeLabel, appendLabel, normalizeLabels, exportLabelsJSON, LABEL_KEY, newSessionId } from './labels.js?v=f2a7a765';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
