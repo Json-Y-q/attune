@@ -10,8 +10,8 @@
   <meta property="og:type" content="website">
   <title data-i18n="lp_title">Attune — AI that attunes to you</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=f2a7a765">
-  <script type="module" src="js/landing.js?v=f2a7a765"></script>
+  <link rel="stylesheet" href="css/style.css?v=395c86ef">
+  <script type="module" src="js/landing.js?v=395c86ef"></script>
 </head>
 <body class="lp">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -203,81 +203,30 @@
     </section>
 
 
-    <section id="feedback-flow" class="lp-band lp-fb" aria-labelledby="fb-h">
+        <section id="feedback-flow" class="lp-band lp-fb" aria-labelledby="fb-h">
       <div class="lp-mesh" aria-hidden="true"><i class="m-calm"></i><i class="m-mid"></i><i class="m-warm"></i></div>
       <div class="lp-inner">
-        <p class="lp-eyebrow" data-i18n="fb_eyebrow">Real-time load feedback · prototype</p>
-        <h2 id="fb-h" data-i18n="fb_h">Press overloaded → lighter answers</h2>
-        <p class="lp-lead" data-i18n="fb_p">A local feedback loop: you tap when a chat feels heavy, Attune records a private label and shortens the next replies. MCP to any LLM is planned — not submitted anywhere yet.</p>
-        <div id="fb-flow" class="fb-flow" data-active="0" role="list" aria-label="Feedback loop steps">
-          <svg class="fb-svg" viewBox="0 0 1100 280" role="img" aria-hidden="true" focusable="false">
-            <defs>
-              <linearGradient id="fb-g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2F5DA8"/><stop offset="100%" stop-color="#8EB4FF"/></linearGradient>
-              <linearGradient id="fb-g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#B45F06"/><stop offset="100%" stop-color="#FFB84C"/></linearGradient>
-              <linearGradient id="fb-g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#B3124F"/><stop offset="100%" stop-color="#FF6B9A"/></linearGradient>
-              <filter id="fb-soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-            </defs>
-            <path class="fb-rail" d="M90 140 H1010" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="6 10" opacity=".35"/>
-            <path class="fb-pulse" d="M90 140 H1010" fill="none" stroke="url(#fb-g1)" stroke-width="3" stroke-linecap="round" pathLength="100"/>
-            <!-- mascot bubble hint -->
-            <g class="fb-mascot" transform="translate(20 18)" opacity=".9">
-              <path d="M8 42 A10 10 0 0 1 14 28 A12 12 0 0 1 28 16 A16 16 0 0 1 52 16 A12 12 0 0 1 66 28 A10 10 0 0 1 72 42 C72 56 62 64 46 64 Q36 66 24 76 Q26 68 30 64 C20 62 8 54 8 42Z" fill="none" stroke="#2F5DA8" stroke-width="4" stroke-linejoin="round"/>
-              <circle cx="32" cy="40" r="2.2" fill="#0D1B2A"/><circle cx="48" cy="40" r="2.2" fill="#0D1B2A"/>
-              <path d="M34 48 Q40 52 46 48" fill="none" stroke="#0D1B2A" stroke-width="2" stroke-linecap="round"/>
-            </g>
-          </svg>
-          <ol class="fb-steps">
-            <li class="fb-step is-active" data-fb-step="0" role="listitem" aria-current="step">
-              <span class="fb-badge impl" data-i18n="fb_impl">Implemented</span>
-              <span class="fb-ico" aria-hidden="true">
-                <svg viewBox="0 0 48 48"><rect x="6" y="14" width="36" height="20" rx="10" fill="url(#fb-g3)"/><text x="24" y="28" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">!</text></svg>
-              </span>
-              <h3 data-i18n="fb_s1_t">Overload button</h3>
-              <p data-i18n="fb_s1_d">You press “I’m overloaded” when the chat feels too heavy.</p>
-            </li>
-            <li class="fb-step" data-fb-step="1" role="listitem" aria-current="false">
-              <span class="fb-badge impl" data-i18n="fb_impl">Implemented</span>
-              <span class="fb-ico" aria-hidden="true">
-                <svg viewBox="0 0 48 48"><rect x="10" y="8" width="28" height="34" rx="4" fill="none" stroke="#2F5DA8" stroke-width="3"/><path d="M16 18h16M16 26h12M16 34h8" stroke="#2F5DA8" stroke-width="2.5" stroke-linecap="round"/></svg>
-              </span>
-              <h3 data-i18n="fb_s2_t">Label recorded</h3>
-              <p data-i18n="fb_s2_d">Timestamp, session id and a signal snapshot stay in this browser only.</p>
-            </li>
-            <li class="fb-step" data-fb-step="2" role="listitem" aria-current="false">
-              <span class="fb-badge impl" data-i18n="fb_impl">Implemented</span>
-              <span class="fb-ico" aria-hidden="true">
-                <svg viewBox="0 0 48 48"><path d="M8 14h32v6H8zm0 12h20v6H8zm0 12h14v6H8z" fill="#2F5DA8" opacity=".9"/><path class="fb-type" d="M28 36h12" stroke="#B45F06" stroke-width="3" stroke-linecap="round"/></svg>
-              </span>
-              <h3 data-i18n="fb_s3_t">Shorter, slower replies</h3>
-              <p data-i18n="fb_s3_d">Density and pace drop at once; typing eases so answers feel lighter.</p>
-            </li>
-            <li class="fb-step" data-fb-step="3" role="listitem" aria-current="false">
-              <span class="fb-badge plan" data-i18n="fb_plan">Planned</span>
-              <span class="fb-ico" aria-hidden="true">
-                <svg viewBox="0 0 48 48"><rect x="8" y="12" width="32" height="24" rx="6" fill="none" stroke="#B45F06" stroke-width="3" stroke-dasharray="4 3"/><path d="M16 24h16M20 30h8" stroke="#B45F06" stroke-width="2.5" stroke-linecap="round"/></svg>
-              </span>
-              <h3 data-i18n="fb_s4_t">MCP middleware</h3>
-              <p data-i18n="fb_s4_d">A local adapter could hand the load context to tools. Marketplace listing stays deferred.</p>
-            </li>
-            <li class="fb-step" data-fb-step="4" role="listitem" aria-current="false">
-              <span class="fb-badge plan" data-i18n="fb_plan">Planned</span>
-              <span class="fb-ico" aria-hidden="true">
-                <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="14" fill="none" stroke="#B3124F" stroke-width="3" stroke-dasharray="5 4"/><path d="M24 14v10l7 4" stroke="#B3124F" stroke-width="2.5" stroke-linecap="round"/></svg>
-              </span>
-              <h3 data-i18n="fb_s5_t">Any LLM</h3>
-              <p data-i18n="fb_s5_d">Vendor-neutral: the same load note could reach whichever model you use.</p>
-            </li>
-          </ol>
+        <p class="lp-eyebrow" data-i18n="fb_eyebrow">Real-time load feedback · mascot · prototype</p>
+        <h2 id="fb-h" data-i18n="fb_h">Tap the mascot → replies lighten at once</h2>
+        <p class="lp-lead" data-i18n="fb_p">One tap on the brain-balloon face sets your load, records a local label, and switches the next answer mode immediately. MCP to any LLM stays planned and unsubmitted.</p>
+        <div class="fb-stage" id="fb-flow" data-active="0">
+          <div class="fb-live">
+            <div class="fb-live-mascot" id="fb-live-host"></div>
+            <div id="fb-live-out" class="lp-out" aria-live="polite"></div>
+          </div>
+          <div class="fb-stage-steps" role="list">
+            <span class="fb-pill is-active" data-fb-step="0" role="listitem"><span data-i18n="fb_s1_t">Mascot click</span> <span class="fb-badge impl" data-i18n="fb_impl">Implemented</span></span>
+            <span class="fb-pill" data-fb-step="1" role="listitem"><span data-i18n="fb_s2_t">Reply mode switches</span> <span class="fb-badge impl" data-i18n="fb_impl">Implemented</span></span>
+            <span class="fb-pill" data-fb-step="2" role="listitem"><span data-i18n="fb_s3_t">Local label</span> <span class="fb-badge impl" data-i18n="fb_impl">Implemented</span></span>
+            <span class="fb-pill" data-fb-step="3" role="listitem"><span data-i18n="fb_s4_t">MCP → any LLM</span> <span class="fb-badge plan" data-i18n="fb_plan">Planned</span></span>
+          </div>
+          <p class="muted lp-micro" data-i18n="fb_why">Why a 3-face picker: each level is visible, works with keyboard, and matches the mascot’s colour — multi-click and long-press are easy to miss or hard to undo.</p>
         </div>
-        <figure class="fb-anim">
-          <img src="img/feedback-loop.webp" width="960" height="320" alt="" loading="lazy" decoding="async" data-i18n-attr="alt:fb_anim_alt">
-          <figcaption class="muted lp-micro" data-i18n="fb_anim_cap">Short silent loop of the same flow (CSS animation still runs if the image is missing).</figcaption>
-        </figure>
         <p class="lp-cta-row">
-          <a class="btn" href="conversation.html#loadbtn" data-i18n="fb_cta">Try the overload button</a>
+          <a class="btn" href="conversation.html#loadbtn" data-i18n="fb_cta">Try the mascot on the conversation page</a>
           <a class="btn secondary" href="architecture.html" data-i18n="fb_cta_arch">See it on the architecture page</a>
         </p>
-        <p class="muted lp-micro" data-i18n="fb_note">Prototype / not submitted to any store or marketplace. Labels never leave your device. Separate from PrivacyGate.</p>
+        <p class="muted lp-micro" data-i18n="fb_note">Prototype / not submitted. One click applies load and reply mode. Separate from PrivacyGate.</p>
       </div>
     </section>
 

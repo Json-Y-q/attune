@@ -1,17 +1,17 @@
 // Conversation page controller: scripted partner simulation + text-to-speech (no microphone, no AI model, no network).
-import { computeSettings } from './engine.js?v=f2a7a765';
-import { SAMPLE_PROFILE } from './profile.js?v=f2a7a765';
-import { transform, toPlainText } from './transform.js?v=f2a7a765';
-import { loadProfile, loadJSON, saveJSON, removeKey } from './storage.js?v=f2a7a765';
-import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=f2a7a765';
+import { computeSettings } from './engine.js?v=395c86ef';
+import { SAMPLE_PROFILE } from './profile.js?v=395c86ef';
+import { transform, toPlainText } from './transform.js?v=395c86ef';
+import { loadProfile, loadJSON, saveJSON, removeKey } from './storage.js?v=395c86ef';
+import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=395c86ef';
 import {
   newSession, userTurn, aiReplied, control, respondToSuggestion, undoAdjust, skipAhead, addSilence, silenceStage,
   activeSignals, loadIndexFor, density, effective, sessionMinutes, buildResumeCard, resumeExpired, SILENCE, SUGGESTION_TYPES,
-} from './partner.js?v=f2a7a765';
-import { typeLive, typingCps } from './typing.js?v=f2a7a765';
-import { mountLoop } from './loopui.js?v=f2a7a765';
-import { mountLoadButton, newSessionId } from './loadui.js?v=f2a7a765';
-import { levelInfo, ttsSupported, pickVoices, createSpeaker, speechSentences } from './voice.js?v=f2a7a765';
+} from './partner.js?v=395c86ef';
+import { typeLive, typingCps } from './typing.js?v=395c86ef';
+import { mountLoop } from './loopui.js?v=395c86ef';
+import { mountMascotLoad, newSessionId } from './loadui.js?v=395c86ef';
+import { levelInfo, ttsSupported, pickVoices, createSpeaker, speechSentences } from './voice.js?v=395c86ef';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -374,19 +374,24 @@ if (ttsSupported()) globalThis.speechSynthesis.addEventListener?.('voiceschanged
 
 startSession();
 mountLoop({ getSession: () => session, setSession: (s, off) => { session = s; if (off) saveJSON(PREFS_KEY, { off }); renderAll(); }, getLoad: () => loadIndexFor(session, profile, cond()) });
-mountLoadButton({
+mountMascotLoad({
   getSession: () => session,
   setSession: (s) => { session = s; },
   getProfile: () => profile,
   getCond: () => cond(),
   getSessionId: () => sessionId,
   tr,
-  onChange: () => {
-    const d = session.lastDecision;
-    if (d?.messageKey) say(d.messageKey);
-    produceReply({ decision: d }, true);
+  onChange: ({ decision }) => {
+    if (decision?.messageKey) say(decision.messageKey);
+    // one click: regenerate the simulated reply immediately in the new mode (virtual AI, typed)
+    produceReply({ decision }, true);
     if (log.length > 14) log = log.slice(-14);
     renderAll();
+    const last = log.filter((x) => x.role === 'ai').at(-1);
+    if (last && !reduced()) {
+      // restart typing on the newest AI bubble at the new pace
+      renderAll();
+    }
   },
 });
 app.start();

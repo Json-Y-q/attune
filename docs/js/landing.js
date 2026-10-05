@@ -1,15 +1,16 @@
 // Landing page controller: an interactive preview of the same answer at different (virtual) conditions.
 // Reuses the engine and the rule-based transform; no network, no storage, text via textContent only.
-import { computeSettings, THRESHOLDS } from './engine.js?v=f2a7a765';
-import { renderMascot } from './mascot.js?v=f2a7a765';
-import { loadJSON } from './storage.js?v=f2a7a765';
-import { SAMPLE_PROFILE } from './profile.js?v=f2a7a765';
-import { transform } from './transform.js?v=f2a7a765';
-import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=f2a7a765';
-import { typeLive, typingCps } from './typing.js?v=f2a7a765';
-import { mountStory, mountIndividuals } from './showcase.js?v=f2a7a765';
-import { mountFlow } from './flow.js?v=f2a7a765';
-import { mountMedia } from './media.js?v=f2a7a765';
+import { computeSettings, THRESHOLDS } from './engine.js?v=395c86ef';
+import { renderMascot } from './mascot.js?v=395c86ef';
+import { loadJSON } from './storage.js?v=395c86ef';
+import { SAMPLE_PROFILE } from './profile.js?v=395c86ef';
+import { transform } from './transform.js?v=395c86ef';
+import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=395c86ef';
+import { typeLive, typingCps } from './typing.js?v=395c86ef';
+import { mountStory, mountIndividuals } from './showcase.js?v=395c86ef';
+import { mountMascotLoad } from './loadui.js?v=395c86ef';
+import { mountFlow } from './flow.js?v=395c86ef';
+import { mountMedia } from './media.js?v=395c86ef';
 
 const $ = (id) => document.getElementById(id);
 const BASELINE_HRV_MS = 55; // virtual baseline for the preview
@@ -85,4 +86,64 @@ document.querySelectorAll('.lp-pick').forEach((b) => b.addEventListener('click',
 
 document.addEventListener('attune:mascot', (e) => { mascotOn = e.detail.on; render(); });
 mountFlow();
+
+/* Landing live mascot: one click applies level + regenerates the sample answer (local only). */
+const liveHost = $('fb-live-host');
+const liveOut = $('fb-live-out');
+let liveLevel = 'calm';
+let liveTyper = null;
+function renderLiveAnswer(level) {
+  if (!liveOut) return;
+  const amount = level === 'overloaded' ? 1 : level === 'rising' ? 2 : 3;
+  const pace = level === 'overloaded' ? 2 : level === 'rising' ? 3 : 4;
+  liveTyper?.cancel?.();
+  renderBlocks(liveOut, transform(tr('sample_answer'), { amount, style: amount <= 1 ? 'summary' : 'prose' }).blocks, tr);
+  if (!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    liveTyper = typeLive(liveOut, { cps: typingCps(pace) });
+  }
+}
+if (liveHost) {
+  mountMascotLoad({
+    host: liveHost,
+    tr,
+    getSession: () => null,
+    setSession: () => {},
+    getProfile: () => SAMPLE_PROFILE,
+    getCond: () => ({ baselineHrvMs: BASELINE_HRV_MS, hrvMs: state.hrvMs }),
+    getSessionId: () => 'landing',
+    onChange: ({ level }) => {
+      liveLevel = level;
+      renderLiveAnswer(level);
+      const flow = $('fb-flow');
+      if (flow) flow.dataset.active = level === 'overloaded' ? '1' : '0';
+      document.querySelectorAll('#fb-flow [data-fb-step]').forEach((el) => {
+        el.classList.toggle('is-active', el.dataset.fbStep === (level === 'calm' ? '0' : '1'));
+      });
+    },
+  });
+  renderLiveAnswer('calm');
+}
+
+/* Hero mascot click = same local try-out (no network). */
+const hero = $('lp-hero-art');
+if (hero) {
+  hero.setAttribute('role', 'button');
+  hero.tabIndex = 0;
+  hero.setAttribute('aria-label', 'Try load faces on the hero mascot');
+  const cycle = ['calm', 'rising', 'overloaded'];
+  let hi = 0;
+  const applyHero = () => {
+    hi = (hi + 1) % cycle.length;
+    const lv = cycle[hi];
+    state.hrvMs = lv === 'overloaded' ? 30 : lv === 'rising' ? 40 : 55;
+    state.sessionMinutes = lv === 'overloaded' ? 45 : lv === 'rising' ? 25 : 15;
+    render();
+    renderLiveAnswer(lv);
+  };
+  hero.addEventListener('click', applyHero);
+  hero.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); applyHero(); }
+  });
+}
+
 app.start();

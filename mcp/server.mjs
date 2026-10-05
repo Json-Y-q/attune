@@ -89,13 +89,20 @@ function callTool(name, args = {}) {
       sessionId,
       recentTurns: args.recentTurns ?? 0,
       source: 'mcp',
-      kind: level === 'overloaded' ? 'overloaded' : 'adaptation',
+      kind: 'load',
+      level,
       signals: { level, overloaded: level === 'overloaded' },
       note: args.note || '',
     });
     const next = appendLabel(labels, label); labels.length = 0; labels.push(...next);
-    const adapt = getAdaptation({ overloaded: level === 'overloaded', loadIndex: level === 'high' ? 80 : level === 'rising' ? 55 : level === 'overloaded' ? 90 : 20, lang: 'en' });
-    return { content: [{ type: 'text', text: JSON.stringify({ label, adaptation: adapt, labelCount: labels.length }, null, 2) }] };
+    const turns = resolveTurns(args);
+    const adaptation = getAdaptation({
+      overloaded: level === 'overloaded',
+      loadIndex: level === 'overloaded' ? 90 : level === 'rising' ? 55 : level === 'high' ? 80 : 20,
+      turns,
+      lang: args.lang === 'ko' ? 'ko' : 'en',
+    });
+    return { content: [{ type: 'text', text: JSON.stringify({ label, adaptation, systemContext: adaptation.context, params: adaptation.params, labelCount: labels.length }, null, 2) }] };
   }
   if (name === 'get_adaptation') {
     const turns = resolveTurns(args);
@@ -158,6 +165,6 @@ if (process.argv.includes('--self-test')) {
   const a = callTool('report_load', { level: 'overloaded', recentTurns: 3 });
   const b = callTool('get_adaptation', { overloaded: true, loadIndex: 80 });
   const c = callTool('get_loop_status', { conversation: 'You: how?\nAI: try A\nYou: how?\nAI: try A\nYou: still how?\nAI: try A again\nYou: same problem\nAI: try A' });
-  console.error(JSON.stringify({ ok: true, tools: TOOLS.map((t) => t.name), sample: { report: JSON.parse(a.content[0].text).label.kind, level: JSON.parse(b.content[0].text).level, loopKeys: Object.keys(JSON.parse(c.content[0].text)) } }));
+  console.error(JSON.stringify({ ok: true, tools: TOOLS.map((t) => t.name), sample: { report: JSON.parse(a.content[0].text).label.level || JSON.parse(a.content[0].text).label.kind, hasAdaptation: Boolean(JSON.parse(a.content[0].text).systemContext), level: JSON.parse(b.content[0].text).level, loopKeys: Object.keys(JSON.parse(c.content[0].text)) } }));
   process.exit(0);
 }

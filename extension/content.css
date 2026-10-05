@@ -1,15 +1,8 @@
-#attune-load-fab {
-  position: fixed;
-  right: 16px;
-  bottom: 88px;
-  z-index: 2147483646;
-  padding: 10px 14px;
-  border-radius: 999px;
-  border: none;
-  background: #2F5DA8;
-  color: #fff;
-  font: 600 13px/1.2 system-ui, sans-serif;
-  box-shadow: 0 4px 14px rgba(0,0,0,.25);
-  cursor: pointer;
-}
-#attune-load-fab:hover { filter: brightness(1.08); }
+#attune-load-fab { position: fixed; right: 16px; bottom: 88px; z-index: 2147483646; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; font: 600 13px/1.2 system-ui,sans-serif; }
+#attune-load-fab .attune-mc { width: 52px; height: 52px; border-radius: 50%; border: none; background: #2F5DA8; color: #fff; font-size: 22px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+#attune-load-fab .attune-faces { display: flex; gap: 4px; background: #fff; padding: 6px; border-radius: 12px; box-shadow: 0 6px 16px rgba(0,0,0,.2); }
+#attune-load-fab .attune-faces[hidden] { display: none !important; }
+#attune-load-fab .attune-faces button { width: 40px; height: 40px; border-radius: 10px; border: 1px solid #c5cede; background: #f4f7fb; cursor: pointer; font-size: 18px; }
+#attune-load-fab .attune-chip { display: flex; gap: 8px; align-items: center; background: #E4ECFA; color: #14172B; padding: 6px 10px; border-radius: 999px; font-size: 12px; max-width: 220px; }
+#attune-load-fab .attune-chip[hidden] { display: none !important; }
+#attune-load-fab .attune-undo { border: none; background: transparent; color: #2F5DA8; font-weight: 700; cursor: pointer; }

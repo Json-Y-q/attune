@@ -7,8 +7,8 @@
   <meta name="theme-color" content="#2F5DA8">
   <title data-i18n="cv_title">Attune — Voice pace &amp; conversation partner (simulation)</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=f2a7a765">
-  <script type="module" src="js/conversation.js?v=f2a7a765"></script>
+  <link rel="stylesheet" href="css/style.css?v=395c86ef">
+  <script type="module" src="js/conversation.js?v=395c86ef"></script>
 </head>
 <body class="ob cv">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -115,19 +115,12 @@
 
 
     <section id="loadbtn" class="panel ob-card" aria-labelledby="ld-h">
-      <h2 id="ld-h" data-i18n="ld_h">Load feedback button</h2>
-      <p data-i18n="ld_intro">Press when a chat feels too heavy. Attune immediately shortens and slows the simulated reply, and records a local label (timestamp, session id, recent turn count, signal snapshot). Labels stay in this browser only.</p>
-      <p class="ob-honest" data-i18n="ld_privacy">Nothing is sent anywhere. Export downloads a JSON file to your device. Clear deletes the local log.</p>
-      <div class="row ld-row">
-        <button id="ld-overload" class="btn" type="button" data-i18n="ld_btn">I'm overloaded</button>
-        <button id="ld-export" class="btn secondary" type="button" data-i18n="ld_export">Export labels (JSON)</button>
-        <button id="ld-clear" class="btn secondary" type="button" data-i18n="ld_clear">Delete labels</button>
-      </div>
-      <p id="ld-count" class="status" role="status"></p>
-      <p id="ld-status" class="status" role="status"></p>
-      <ul id="ld-list" class="ld-list" aria-label="Recent labels"></ul>
-      <p class="muted lp-help" data-i18n="ld_help">Prototype label schema for training a feedback loop later. Not a medical measurement.</p>
+      <h2 id="ld-h" data-i18n="ld_h">Tell the mascot how heavy it feels</h2>
+      <p data-i18n="ld_intro">Tap the floating brain-balloon mascot, then pick a face (calm / a bit heavy / overloaded). One choice records a private label and immediately regenerates the next simulated reply in that mode. Hover or focus a face to preview length and pace — nothing changes until you click.</p>
+      <p class="ob-honest" data-i18n="ld_privacy">Nothing is sent anywhere. Export and delete live in the small settings control next to the mascot.</p>
+      <p class="muted lp-help" data-i18n="ld_help">Prototype label schema for training a feedback loop later. Not a medical measurement. Design: a 3-face picker (not multi-click or long-press) so each level is explicit, keyboard-friendly, and maps 1:1 to the mascot’s colour and expression.</p>
     </section>
+    <div id="ld-mascot-host" class="ld-float-host" aria-live="polite"></div>
 
     <section id="loop" class="panel ob-card" aria-labelledby="lo-h">
       <h2 id="lo-h" data-i18n="lo_h">Loop escape</h2>

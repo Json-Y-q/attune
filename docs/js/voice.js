@@ -1,6 +1,6 @@
 // Text-to-speech wrapper (Web Speech API, speech OUTPUT only; the microphone and speech recognition are never used).
 // The pure helpers at the top are unit-tested in Node; the browser part below is guarded.
-import { splitSentences } from './transform.js?v=f2a7a765';
+import { splitSentences } from './transform.js?v=395c86ef';
 
 /** Level 1-5 table (spec 4-A). rate never goes below 0.8; use pauses and shorter sentences to go gentler. */
 export const SPEECH_LEVELS = Object.freeze([

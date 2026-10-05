@@ -1,20 +1,11 @@
-// Content script: floating load button + optional prompt-prefix insertion.
-// Selectors come from selectors.json (fragile — vendor DOM changes often).
-// Conversation text stays on-device; only the last N turns are read locally. No fetch.
-
+// Floating mascot: pick a load face → label + attach instruction to next send (no confirm when instantApply).
 const N_TURNS = 8;
 const HOST = location.hostname.replace(/^www\./, '');
 
 async function loadSelectors() {
-  try {
-    const url = chrome.runtime.getURL('selectors.json');
-    const res = await fetch(url);
-    return await res.json();
-  } catch {
-    return {};
-  }
+  try { return await (await fetch(chrome.runtime.getURL('selectors.json'))).json(); }
+  catch { return {}; }
 }
-
 function pickInput(sel) {
   if (!sel?.input) return null;
   for (const part of sel.input.split(',').map((s) => s.trim())) {
@@ -23,81 +14,87 @@ function pickInput(sel) {
   }
   return null;
 }
-
 function extractTurns(sel) {
   const turns = [];
   if (!sel?.messages) return turns;
-  const nodes = document.querySelectorAll(sel.messages);
-  for (const n of nodes) {
-    const text = (n.innerText || n.textContent || '').trim().slice(0, 2000);
+  for (const n of document.querySelectorAll(sel.messages)) {
+    const text = (n.innerText || '').trim().slice(0, 2000);
     if (!text) continue;
-    let role = 'ai';
-    if (sel.userRoleAttr) {
-      const v = n.getAttribute(sel.userRoleAttr) || n.closest(`[${sel.userRoleAttr}]`)?.getAttribute(sel.userRoleAttr);
-      role = v === sel.userRoleValue ? 'user' : 'ai';
-    } else {
-      const blob = (n.className + ' ' + (n.outerHTML || '').slice(0, 200)).toLowerCase();
-      if (sel.userHint && new RegExp(sel.userHint, 'i').test(blob)) role = 'user';
-    }
-    turns.push({ role, text });
+    turns.push({ role: 'ai', text });
   }
   return turns.slice(-N_TURNS);
 }
-
 function setInputText(el, text) {
   if (!el) return false;
   if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
-    el.value = text;
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-    return true;
+    el.value = text; el.dispatchEvent(new Event('input', { bubbles: true })); return true;
   }
   if (el.isContentEditable) {
     el.focus();
-    // Prefer execCommand for editors that listen to it; fall back to textContent.
-    try {
-      document.execCommand('selectAll', false, null);
-      document.execCommand('insertText', false, text);
-    } catch {
-      el.textContent = text;
-      el.dispatchEvent(new InputEvent('input', { bubbles: true }));
-    }
+    try { document.execCommand('selectAll', false, null); document.execCommand('insertText', false, text); }
+    catch { el.textContent = text; el.dispatchEvent(new InputEvent('input', { bubbles: true })); }
     return true;
   }
   return false;
 }
+function getInputText(el) {
+  if (!el) return '';
+  return el.value ?? el.innerText ?? '';
+}
 
-function ensureButton(onClick) {
+function ensureUI(onPick) {
   if (document.getElementById('attune-load-fab')) return;
-  const b = document.createElement('button');
-  b.id = 'attune-load-fab';
-  b.type = 'button';
-  b.textContent = "I'm overloaded";
-  b.title = 'Attune prototype — records a local label and can prepend a short load note (preview first).';
-  b.addEventListener('click', onClick);
-  document.documentElement.appendChild(b);
+  const root = document.createElement('div');
+  root.id = 'attune-load-fab';
+  root.innerHTML = `
+    <button type="button" class="attune-mc" aria-label="Open load faces" title="Attune mascot — pick how heavy it feels">🎈</button>
+    <div class="attune-faces" hidden>
+      <button type="button" data-lv="calm" title="Calm">😌</button>
+      <button type="button" data-lv="rising" title="A bit heavy">😐</button>
+      <button type="button" data-lv="overloaded" title="Overloaded">😣</button>
+    </div>
+    <div class="attune-chip" hidden><span class="attune-chip-txt"></span><button type="button" class="attune-undo">Undo</button></div>
+  `;
+  // Use textContent for faces via emoji as lightweight stand-in (full SVG mascot ships on the docs site).
+  document.documentElement.appendChild(root);
+  const faces = root.querySelector('.attune-faces');
+  root.querySelector('.attune-mc').addEventListener('click', () => { faces.hidden = !faces.hidden; });
+  faces.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { faces.hidden = true; onPick(b.dataset.lv); }));
+  root.querySelector('.attune-undo').addEventListener('click', async () => {
+    await chrome.runtime.sendMessage({ type: 'clear_pending' });
+    root.querySelector('.attune-chip').hidden = true;
+  });
+}
+
+function showChip(text) {
+  const chip = document.querySelector('#attune-load-fab .attune-chip');
+  const txt = document.querySelector('#attune-load-fab .attune-chip-txt');
+  if (!chip || !txt) return;
+  txt.textContent = text ? 'Load note ready for next send' : '';
+  chip.hidden = !text;
 }
 
 (async () => {
   const all = await loadSelectors();
   const sel = all[HOST] || all['chatgpt.com'];
-  ensureButton(async () => {
+  ensureUI(async (level) => {
     const turns = extractTurns(sel);
-    const status = await chrome.runtime.sendMessage({
-      type: 'record_overload',
-      recentTurns: turns.filter((t) => t.role === 'user').length,
-      signals: { host: HOST, turnSample: turns.length, overloaded: true },
+    const res = await chrome.runtime.sendMessage({
+      type: 'record_load',
+      level,
+      recentTurns: turns.length,
+      signals: { host: HOST, turnSample: turns.length },
     });
-    const prefs = status?.prefs || {};
-    if (prefs.insertEnabled !== false) {
-      const prefix = "The user reported high cognitive load. Keep the next answer short (about 3 key lines), one thing at a time, plain language. At most 2 options.\n\n";
-      const input = pickInput(sel);
-      const current = input?.value ?? input?.innerText ?? '';
-      const next = prefix + current;
-      if (prefs.confirmBeforeInsert !== false) {
-        const ok = confirm(`Attune will put this note in front of your next message (you can edit or cancel):\n\n${prefix}\nContinue?`);
-        if (!ok) return;
-      }
-      setInputText(input, next);
+    const prefix = res?.pendingPrefix || '';
+    showChip(prefix);
+    if (!prefix) return;
+    const input = pickInput(sel);
+    const current = getInputText(input).trim();
+    if (!current) {
+      // optional fill rewrite request — user still sends
+      setInputText(input, prefix + 'Please rewrite your last answer more shortly and simply.');
+    } else if (!current.startsWith(prefix.trim())) {
+      setInputText(input, prefix + current);
     }
   });
 })();

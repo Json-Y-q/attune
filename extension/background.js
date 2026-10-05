@@ -1,5 +1,4 @@
-// Service worker: label log in chrome.storage.local. No network.
-import { makeLabel, appendLabel, normalizeLabels, exportLabelsJSON, LABEL_SCHEMA_VERSION } from './lib/labels.js';
+import { makeLabel, appendLabel, normalizeLabels, exportLabelsJSON, LABEL_SCHEMA_VERSION, prefixForLevel } from './lib/labels.js';
 
 const STORE = 'attune.ext.labels.v1';
 const PREFS = 'attune.ext.prefs.v1';
@@ -13,34 +12,50 @@ async function setLabels(labels) {
 }
 async function getPrefs() {
   const r = await chrome.storage.local.get(PREFS);
-  return { insertEnabled: true, confirmBeforeInsert: true, sessionId: null, ...(r[PREFS] || {}) };
+  return {
+    instantApply: true, // mascot click = attach to next message (default ON)
+    insertEnabled: true,
+    confirmBeforeInsert: false, // steering: no confirm step when instantApply
+    pendingPrefix: '',
+    sessionId: null,
+    ...(r[PREFS] || {}),
+  };
 }
-async function setPrefs(p) {
-  await chrome.storage.local.set({ [PREFS]: p });
-}
+async function setPrefs(p) { await chrome.storage.local.set({ [PREFS]: p }); }
 
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, _s, sendResponse) => {
   (async () => {
-    if (msg?.type === 'record_overload') {
+    if (msg?.type === 'record_load') {
       const prefs = await getPrefs();
       const sid = prefs.sessionId || `ext_${Date.now().toString(36)}`;
-      if (!prefs.sessionId) { prefs.sessionId = sid; await setPrefs(prefs); }
+      if (!prefs.sessionId) { prefs.sessionId = sid; }
+      const level = msg.level || 'overloaded';
       const label = makeLabel({
         sessionId: sid,
         recentTurns: msg.recentTurns ?? 0,
-        signals: msg.signals || { overloaded: true },
-        source: 'extension',
-        kind: 'overloaded',
+        signals: { ...(msg.signals || {}), overloaded: level === 'overloaded' },
+        level,
       });
       const labels = appendLabel(await getLabels(), label);
       await setLabels(labels);
-      sendResponse({ ok: true, count: labels.length, label, prefs });
+      let pendingPrefix = '';
+      if (prefs.instantApply !== false && prefs.insertEnabled !== false) {
+        pendingPrefix = prefixForLevel(level);
+        prefs.pendingPrefix = pendingPrefix;
+      }
+      await setPrefs(prefs);
+      sendResponse({ ok: true, count: labels.length, label, prefs, pendingPrefix });
       return;
     }
     if (msg?.type === 'get_status') {
-      const labels = await getLabels();
+      sendResponse({ ok: true, count: (await getLabels()).length, prefs: await getPrefs() });
+      return;
+    }
+    if (msg?.type === 'clear_pending') {
       const prefs = await getPrefs();
-      sendResponse({ ok: true, count: labels.length, prefs });
+      prefs.pendingPrefix = '';
+      await setPrefs(prefs);
+      sendResponse({ ok: true, prefs });
       return;
     }
     if (msg?.type === 'export_labels') {

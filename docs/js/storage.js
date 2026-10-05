@@ -1,5 +1,5 @@
 // localStorage wrapper. Everything stays in the browser; falls back to memory if storage is blocked.
-import { validateProfile } from './profile.js?v=f2a7a765';
+import { validateProfile } from './profile.js?v=395c86ef';
 
 const PROFILE_KEY = 'attune.profile.v1';
 const LANG_KEY = 'attune.lang';

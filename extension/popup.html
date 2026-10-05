@@ -1,27 +1,21 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Attune load (prototype)</title>
-  <style>
-    body { font: 13px/1.4 system-ui, sans-serif; margin: 12px; width: 280px; color: #1a2233; }
-    h1 { font-size: 14px; margin: 0 0 8px; }
-    .muted { color: #5a6577; font-size: 11px; }
-    button { margin: 4px 4px 4px 0; padding: 6px 10px; border-radius: 8px; border: 1px solid #c5cede; background: #f4f7fb; cursor: pointer; }
-    button.primary { background: #2F5DA8; color: #fff; border-color: #2F5DA8; }
-    label { display: flex; gap: 6px; align-items: center; margin: 6px 0; }
-    #status { margin-top: 8px; white-space: pre-wrap; }
-  </style>
-</head>
-<body>
-  <h1>Attune load feedback</h1>
-  <p class="muted">Prototype — not in the Chrome Web Store. Labels stay in chrome.storage.local. No external send.</p>
-  <button id="btn" class="primary" type="button">I'm overloaded</button>
-  <button id="export" type="button">Export JSON</button>
-  <button id="clear" type="button">Clear labels</button>
-  <label><input id="insert" type="checkbox" checked> Insert load note on next send</label>
-  <label><input id="confirm" type="checkbox" checked> Confirm before insert (default on)</label>
-  <p id="status" class="muted"></p>
-  <script type="module" src="popup.js"></script>
-</body>
-</html>
+<html lang="en"><head><meta charset="utf-8"><title>Attune load</title>
+<style>
+ body{font:13px/1.4 system-ui,sans-serif;margin:12px;width:280px}
+ button{margin:4px 4px 4px 0;padding:6px 10px;border-radius:8px;border:1px solid #c5cede;background:#f4f7fb;cursor:pointer}
+ button.primary{background:#2F5DA8;color:#fff;border-color:#2F5DA8}
+ label{display:flex;gap:6px;align-items:center;margin:6px 0}
+ .muted{color:#5a6577;font-size:11px}
+</style></head><body>
+ <h1 style="font-size:14px;margin:0 0 8px">Attune mascot load</h1>
+ <p class="muted">Prototype — not in the Chrome Web Store. Mascot click applies a load note to your next send (default ON). Never auto-sends.</p>
+ <button class="primary" data-lv="overloaded" type="button">Overloaded</button>
+ <button data-lv="rising" type="button">A bit heavy</button>
+ <button data-lv="calm" type="button">Calm</button>
+ <label><input id="instant" type="checkbox" checked> Mascot click = apply immediately</label>
+ <label><input id="insert" type="checkbox" checked> Attach load note to next message</label>
+ <button id="export" type="button">Export JSON</button>
+ <button id="clear" type="button">Clear labels</button>
+ <p id="status" class="muted"></p>
+ <script type="module" src="popup.js"></script>
+</body></html>
