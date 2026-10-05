@@ -7,8 +7,8 @@
   <meta name="theme-color" content="#2F5DA8">
   <title data-i18n="cv_title">Attune — Voice pace &amp; conversation partner (simulation)</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=03a17e33">
-  <script type="module" src="js/conversation.js?v=03a17e33"></script>
+  <link rel="stylesheet" href="css/style.css?v=6972a45f">
+  <script type="module" src="js/conversation.js?v=6972a45f"></script>
 </head>
 <body class="ob cv">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -111,6 +111,22 @@
           <p class="muted lp-help" data-i18n="cv_sig_note">Signals are simple rules on counts and timing. The thresholds are assumptions, not validated.</p>
         </div>
       </div>
+    </section>
+
+
+    <section id="loadbtn" class="panel ob-card" aria-labelledby="ld-h">
+      <h2 id="ld-h" data-i18n="ld_h">Load feedback button</h2>
+      <p data-i18n="ld_intro">Press when a chat feels too heavy. Attune immediately shortens and slows the simulated reply, and records a local label (timestamp, session id, recent turn count, signal snapshot). Labels stay in this browser only.</p>
+      <p class="ob-honest" data-i18n="ld_privacy">Nothing is sent anywhere. Export downloads a JSON file to your device. Clear deletes the local log.</p>
+      <div class="row ld-row">
+        <button id="ld-overload" class="btn" type="button" data-i18n="ld_btn">I'm overloaded</button>
+        <button id="ld-export" class="btn secondary" type="button" data-i18n="ld_export">Export labels (JSON)</button>
+        <button id="ld-clear" class="btn secondary" type="button" data-i18n="ld_clear">Delete labels</button>
+      </div>
+      <p id="ld-count" class="status" role="status"></p>
+      <p id="ld-status" class="status" role="status"></p>
+      <ul id="ld-list" class="ld-list" aria-label="Recent labels"></ul>
+      <p class="muted lp-help" data-i18n="ld_help">Prototype label schema for training a feedback loop later. Not a medical measurement.</p>
     </section>
 
     <section id="loop" class="panel ob-card" aria-labelledby="lo-h">

@@ -617,3 +617,9 @@ html:lang(ko) .lp-hero h1 { line-height: 1.2; }
 .lo-opts, .lo-own { display: flex; flex-wrap: wrap; gap: .5rem; margin: .5rem 0; }
 .lo-first { font-weight: 500; opacity: .85; }
 .lo-quote { margin: .4rem 0; padding: .5rem .8rem; border-left: 4px solid var(--primary); background: var(--accent-bg); border-radius: 0 12px 12px 0; overflow-wrap: anywhere; }
+
+/* Load feedback button */
+.ld-row { flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
+.ld-list { list-style: none; padding: 0; margin: .5rem 0 0; font-size: .85rem; color: var(--muted, #5a6577); }
+.ld-list li { padding: .25rem 0; border-bottom: 1px solid color-mix(in srgb, var(--line, #d8dee8) 70%, transparent); font-family: ui-monospace, monospace; word-break: break-all; }
+#ld-overload { font-weight: 600; }

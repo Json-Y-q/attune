@@ -1,0 +1,9 @@
+{
+  "name": "attune-mcp-local",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Attune cognitive-load MCP middleware — local stdio prototype only. Not for remote deploy or marketplace submission.",
+  "bin": { "attune-mcp": "./server.mjs" },
+  "engines": { "node": ">=18" }
+}

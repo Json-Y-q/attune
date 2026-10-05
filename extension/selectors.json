@@ -1,0 +1,24 @@
+{
+  "_comment": "DOM selectors for chatgpt.com / claude.ai / gemini.google.com. These break often when vendors redesign. Edit this file; do not hard-code in content.js.",
+  "chatgpt.com": {
+    "input": "#prompt-textarea, textarea[data-id], div[contenteditable='true']#prompt-textarea, form textarea",
+    "messages": "[data-message-author-role], .agent-turn, main article",
+    "userRoleAttr": "data-message-author-role",
+    "userRoleValue": "user",
+    "assistantRoleValue": "assistant"
+  },
+  "claude.ai": {
+    "input": "div[contenteditable='true'].ProseMirror, fieldset textarea, div[contenteditable='true']",
+    "messages": "[data-test-render-count], .font-claude-message, div[data-is-streaming]",
+    "userRoleAttr": null,
+    "userHint": "human|user",
+    "assistantHint": "assistant|claude"
+  },
+  "gemini.google.com": {
+    "input": "rich-textarea textarea, .ql-editor, div[contenteditable='true']",
+    "messages": "message-content, .model-response-text, .user-query-bubble-with-background",
+    "userRoleAttr": null,
+    "userHint": "user-query",
+    "assistantHint": "model-response"
+  }
+}

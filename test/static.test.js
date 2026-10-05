@@ -64,7 +64,7 @@ test('t() keys used in JS exist in the dictionary', () => {
 });
 
 test('no innerHTML / eval / network calls in shipped JS', () => {
-  for (const f of ['profile', 'engine', 'transform', 'adapter', 'i18n', 'storage', 'ui', 'onboarding', 'demo', 'landing', 'media', 'charts', 'stylecard', 'architecture', 'partner', 'voice', 'story', 'mascot', 'showcase', 'conversation', 'individuals', 'loop', 'loopui']) {
+  for (const f of ['profile', 'engine', 'transform', 'adapter', 'i18n', 'storage', 'ui', 'onboarding', 'demo', 'landing', 'media', 'charts', 'stylecard', 'architecture', 'partner', 'voice', 'story', 'mascot', 'showcase', 'conversation', 'individuals', 'loop', 'loopui', 'labels', 'adapt', 'loadui']) {
     const src = read(`js/${f}.js`);
     assert.doesNotMatch(src, /innerHTML|eval\(|new Function|fetch\(|XMLHttpRequest|sendBeacon|WebSocket/, f);
   }
@@ -169,7 +169,7 @@ test('i18n: every key used by data-i18n, data-i18n-attr and literal tr()/t() cal
     for (const m of html.matchAll(/data-i18n="([^"]+)"/g)) need(`${f}.html`, m[1]);
     for (const m of html.matchAll(/data-i18n-attr="([^"]+)"/g)) for (const pair of m[1].split(';')) need(`${f}.html`, pair.split(':')[1]);
   }
-  for (const f of ['landing', 'showcase', 'conversation', 'demo', 'onboarding', 'ui', 'partner', 'story', 'individuals', 'typing', 'voice', 'loopui', 'loop']) {
+  for (const f of ['landing', 'showcase', 'conversation', 'demo', 'onboarding', 'ui', 'partner', 'story', 'individuals', 'typing', 'voice', 'loopui', 'loop', 'labels', 'adapt', 'loadui']) {
     const js = readFileSync(new URL(`../docs/js/${f}.js`, import.meta.url), 'utf8');
     for (const m of js.matchAll(/\btr\(\s*'([a-z0-9_]+)'/g)) need(`${f}.js`, m[1]);
     // template keys such as tr(`in_t_${id}`): every key with that prefix must exist in both languages with the same set

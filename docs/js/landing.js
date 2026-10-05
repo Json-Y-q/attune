@@ -1,14 +1,14 @@
 // Landing page controller: an interactive preview of the same answer at different (virtual) conditions.
 // Reuses the engine and the rule-based transform; no network, no storage, text via textContent only.
-import { computeSettings, THRESHOLDS } from './engine.js?v=03a17e33';
-import { renderMascot } from './mascot.js?v=03a17e33';
-import { loadJSON } from './storage.js?v=03a17e33';
-import { SAMPLE_PROFILE } from './profile.js?v=03a17e33';
-import { transform } from './transform.js?v=03a17e33';
-import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=03a17e33';
-import { typeLive, typingCps } from './typing.js?v=03a17e33';
-import { mountStory, mountIndividuals } from './showcase.js?v=03a17e33';
-import { mountMedia } from './media.js?v=03a17e33';
+import { computeSettings, THRESHOLDS } from './engine.js?v=6972a45f';
+import { renderMascot } from './mascot.js?v=6972a45f';
+import { loadJSON } from './storage.js?v=6972a45f';
+import { SAMPLE_PROFILE } from './profile.js?v=6972a45f';
+import { transform } from './transform.js?v=6972a45f';
+import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=6972a45f';
+import { typeLive, typingCps } from './typing.js?v=6972a45f';
+import { mountStory, mountIndividuals } from './showcase.js?v=6972a45f';
+import { mountMedia } from './media.js?v=6972a45f';
 
 const $ = (id) => document.getElementById(id);
 const BASELINE_HRV_MS = 55; // virtual baseline for the preview

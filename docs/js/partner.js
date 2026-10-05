@@ -1,8 +1,8 @@
-// Conversation partner logic: signals (no sensors) -> level L0-L3 -> rule R1-R14 -> adjustments.
+// Conversation partner logic: signals (no sensors) -> level L0-L3 -> rule R1-R15 + E3 overload button -> adjustments.
 // Pure functions, no DOM, no network, no storage. Spec: cogload-startup/09 (sections 2-C, 3, 4-C, 5).
 // All numbers are ASSUMPTIONS for a prototype, not validated.
-import { computeSettings, THRESHOLDS } from './engine.js?v=03a17e33';
-import { clamp } from './profile.js?v=03a17e33';
+import { computeSettings, THRESHOLDS } from './engine.js?v=6972a45f';
+import { clamp } from './profile.js?v=6972a45f';
 
 export const WINDOW_TURNS = 5; // "recent 5 turns"
 export const COOLDOWN = Object.freeze({ seconds: 20 * 60, turns: 15, spokenSeconds: 10 * 60 });
@@ -302,6 +302,21 @@ export function buildResumeCard(st, now = 0) {
   return { v: 1, savedAt: now, topic: 'sleep', turns: st.turns.filter((t) => !t.seed).length, decided: 2, open: 1 };
 }
 export const resumeExpired = (card, now) => !card || typeof card.savedAt !== 'number' || now - card.savedAt > RESUME_DAYS * 86400000;
+
+
+/** E3: user pressed "I'm overloaded". Immediately lower density and pace (chip + deltas). No cooldown gate. */
+export function reportOverload(prev) {
+  const st = clone(prev);
+  st.controls.push({ turnIndex: st.turns.length - 1, name: 'overloaded' });
+  st.adjust = {
+    amountDelta: Math.min(st.adjust.amountDelta, -2),
+    paceDelta: Math.min(st.adjust.paceDelta, -1),
+    optionsMax: 2,
+    chip: 'short',
+  };
+  st.userPace = Math.min(st.userPace, -1);
+  return finish(st, decision({ level: 2, rule: 'E3', reasons: ['E3'], messageKey: 'pm_e3' }));
+}
 
 /**
  * R15: offer a way out of a conversation loop (see loop.js). One suggestion at a time, 20-minute cooldown, easy to decline or undo,

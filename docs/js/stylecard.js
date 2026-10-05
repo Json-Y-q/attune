@@ -1,6 +1,6 @@
 // "Style card": the profile written as a short natural-language instruction an AI can read directly.
 // Pure function (no DOM, no network). Text comes from the i18n dictionary (sc_* keys).
-import { t } from './i18n.js?v=03a17e33';
+import { t } from './i18n.js?v=6972a45f';
 
 export function styleCard(profile, lang = 'en') {
   const { amount, pace, style } = profile.levels;
