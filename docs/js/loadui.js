@@ -1,12 +1,12 @@
 // Floating mascot load input: click opens 3 faces; choosing one records a label and switches reply mode at once.
 // Hover/focus on a face shows a preview only (no mode change). No separate overload button.
-import { loadJSON, saveJSON, removeKey } from './storage.js?v=395c86ef';
-import { reportLoad, activeSignals, loadIndexFor, density, sessionMinutes, effective } from './partner.js?v=395c86ef';
-import { renderMascot } from './mascot.js?v=395c86ef';
+import { loadJSON, saveJSON, removeKey } from './storage.js?v=e04ec2aa';
+import { reportLoad, activeSignals, loadIndexFor, density, sessionMinutes, effective } from './partner.js?v=e04ec2aa';
+import { renderMascot } from './mascot.js?v=e04ec2aa';
 import {
   makeLabel, appendLabel, normalizeLabels, exportLabelsJSON, LABEL_KEY, newSessionId,
   poseForLevel, LOAD_LEVELS,
-} from './labels.js?v=395c86ef';
+} from './labels.js?v=e04ec2aa';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -278,6 +278,4 @@ export function mountMascotLoad(api) {
   };
 }
 
-/** @deprecated */
-export function mountLoadButton(api) { return mountMascotLoad(api); }
 export { newSessionId, LABEL_KEY, paintPreview, PREVIEW };

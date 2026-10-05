@@ -1,17 +1,17 @@
 // Conversation page controller: scripted partner simulation + text-to-speech (no microphone, no AI model, no network).
-import { computeSettings } from './engine.js?v=395c86ef';
-import { SAMPLE_PROFILE } from './profile.js?v=395c86ef';
-import { transform, toPlainText } from './transform.js?v=395c86ef';
-import { loadProfile, loadJSON, saveJSON, removeKey } from './storage.js?v=395c86ef';
-import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=395c86ef';
+import { computeSettings } from './engine.js?v=e04ec2aa';
+import { SAMPLE_PROFILE } from './profile.js?v=e04ec2aa';
+import { transform, toPlainText } from './transform.js?v=e04ec2aa';
+import { loadProfile, loadJSON, saveJSON, removeKey } from './storage.js?v=e04ec2aa';
+import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=e04ec2aa';
 import {
   newSession, userTurn, aiReplied, control, respondToSuggestion, undoAdjust, skipAhead, addSilence, silenceStage,
   activeSignals, loadIndexFor, density, effective, sessionMinutes, buildResumeCard, resumeExpired, SILENCE, SUGGESTION_TYPES,
-} from './partner.js?v=395c86ef';
-import { typeLive, typingCps } from './typing.js?v=395c86ef';
-import { mountLoop } from './loopui.js?v=395c86ef';
-import { mountMascotLoad, newSessionId } from './loadui.js?v=395c86ef';
-import { levelInfo, ttsSupported, pickVoices, createSpeaker, speechSentences } from './voice.js?v=395c86ef';
+} from './partner.js?v=e04ec2aa';
+import { typeLive, typingCps } from './typing.js?v=e04ec2aa';
+import { mountLoop } from './loopui.js?v=e04ec2aa';
+import { mountMascotLoad, newSessionId } from './loadui.js?v=e04ec2aa';
+import { levelInfo, ttsSupported, pickVoices, createSpeaker, speechSentences } from './voice.js?v=e04ec2aa';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };

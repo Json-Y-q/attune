@@ -1,11 +1,11 @@
 // Onboarding page controller: 3 short tasks -> profile JSON -> localStorage (browser only).
-import { DigitSpanSession, buildProfile, validateProfile } from './profile.js?v=395c86ef';
-import { transform } from './transform.js?v=395c86ef';
-import { clearProfile, loadProfile, saveProfile } from './storage.js?v=395c86ef';
-import { deliver, initPage, levelBar, renderBlocks } from './ui.js?v=395c86ef';
-import { mountMedia } from './media.js?v=395c86ef';
-import { styleCard } from './stylecard.js?v=395c86ef';
-import { renderRadar, renderGauge } from './charts.js?v=395c86ef';
+import { DigitSpanSession, buildProfile, validateProfile } from './profile.js?v=e04ec2aa';
+import { transform } from './transform.js?v=e04ec2aa';
+import { clearProfile, loadProfile, saveProfile } from './storage.js?v=e04ec2aa';
+import { deliver, initPage, levelBar, renderBlocks } from './ui.js?v=e04ec2aa';
+import { mountMedia } from './media.js?v=e04ec2aa';
+import { styleCard } from './stylecard.js?v=e04ec2aa';
+import { renderRadar, renderGauge } from './charts.js?v=e04ec2aa';
 
 const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

@@ -16,6 +16,6 @@ $('export').onclick = async () => {
   a.download = `attune-ext-labels-${Date.now()}.json`; a.click();
 };
 $('clear').onclick = async () => { await chrome.runtime.sendMessage({ type: 'clear_labels' }); refresh(); };
-$('instant').onchange = async (e) => { await chrome.runtime.sendMessage({ type: 'set_prefs', prefs: { instantApply: e.target.checked, confirmBeforeInsert: !e.target.checked } }); refresh(); };
+$('instant').onchange = async (e) => { await chrome.runtime.sendMessage({ type: 'set_prefs', prefs: { instantApply: e.target.checked } }); refresh(); };
 $('insert').onchange = async (e) => { await chrome.runtime.sendMessage({ type: 'set_prefs', prefs: { insertEnabled: e.target.checked } }); refresh(); };
 refresh();

@@ -1,8 +1,8 @@
 // Shared UI helpers: page init (language toggle) and block rendering / paced delivery.
 // Text is always inserted with textContent.
-import { applyI18n, t } from './i18n.js?v=395c86ef';
-import { THRESHOLDS } from './engine.js?v=395c86ef';
-import { getLang, setLang } from './storage.js?v=395c86ef';
+import { applyI18n, t } from './i18n.js?v=e04ec2aa';
+import { THRESHOLDS } from './engine.js?v=e04ec2aa';
+import { getLang, setLang } from './storage.js?v=e04ec2aa';
 
 /** Wire the language toggle; `onLang(lang)` runs after every (re)render of static strings. */
 export function initPage(onLang = () => {}) {

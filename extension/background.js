@@ -15,7 +15,6 @@ async function getPrefs() {
   return {
     instantApply: true, // mascot click = attach to next message (default ON)
     insertEnabled: true,
-    confirmBeforeInsert: false, // steering: no confirm step when instantApply
     pendingPrefix: '',
     sessionId: null,
     ...(r[PREFS] || {}),
