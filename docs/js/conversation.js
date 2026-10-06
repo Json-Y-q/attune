@@ -1,17 +1,22 @@
 // Conversation page controller: scripted partner simulation + text-to-speech (no microphone, no AI model, no network).
-import { computeSettings } from './engine.js?v=e04ec2aa';
-import { SAMPLE_PROFILE } from './profile.js?v=e04ec2aa';
-import { transform, toPlainText } from './transform.js?v=e04ec2aa';
-import { loadProfile, loadJSON, saveJSON, removeKey } from './storage.js?v=e04ec2aa';
-import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=e04ec2aa';
+import { computeSettings } from './engine.js?v=e86ad124';
+import { SAMPLE_PROFILE } from './profile.js?v=e86ad124';
+import { transform, toPlainText } from './transform.js?v=e86ad124';
+import { loadProfile, loadJSON, saveJSON, removeKey } from './storage.js?v=e86ad124';
+import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=e86ad124';
 import {
   newSession, userTurn, aiReplied, control, respondToSuggestion, undoAdjust, skipAhead, addSilence, silenceStage,
   activeSignals, loadIndexFor, density, effective, sessionMinutes, buildResumeCard, resumeExpired, SILENCE, SUGGESTION_TYPES,
-} from './partner.js?v=e04ec2aa';
-import { typeLive, typingCps } from './typing.js?v=e04ec2aa';
-import { mountLoop } from './loopui.js?v=e04ec2aa';
-import { mountMascotLoad, newSessionId } from './loadui.js?v=e04ec2aa';
-import { levelInfo, ttsSupported, pickVoices, createSpeaker, speechSentences } from './voice.js?v=e04ec2aa';
+  reportLoad,
+} from './partner.js?v=e86ad124';
+import { canSuggest, markShown, recordOutcome, suggestTrigger, suggestKey } from './suggest.js?v=e86ad124';
+import { softView, summarySentences } from './soften.js?v=e86ad124';
+import { makeLabel } from './labels.js?v=e86ad124';
+import { mountRhythm, readSuggest, writeSuggest } from './rhythmui.js?v=e86ad124';
+import { typeLive, typingCps } from './typing.js?v=e86ad124';
+import { mountLoop } from './loopui.js?v=e86ad124';
+import { mountMascotLoad, newSessionId, pushLabel } from './loadui.js?v=e86ad124';
+import { levelInfo, ttsSupported, pickVoices, createSpeaker, speechSentences } from './voice.js?v=e86ad124';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -30,6 +35,9 @@ let log = []; // {role:'you'|'ai'|'partner', ...} keys only, rendered on demand
 let replyIdx = 0;
 let suggestion = null; // pending suggestion type
 let showCp = false;
+let sessionStart = Date.now(); // real clock, for label sessionMin
+let pendingAuto = null; // { kind: 'mascot'|'card', trigger, type? } — an automatic offer waiting for an answer
+let mascot = null;
 
 const app = initPage(() => renderAll());
 const tr = (k, p) => app.tr(k, p);
@@ -38,6 +46,9 @@ const cond = () => ({ baselineHrvMs: BASELINE_HRV, hrvMs: ui.hrv });
 /* ---------- session ---------- */
 function startSession() {
   sessionId = newSessionId();
+  sessionStart = Date.now();
+  pendingAuto = null;
+  mascot?.clearOffer?.();
   session = newSession({ profile, cond: cond(), mode: ui.mode, lateNight: ui.late, prefsOff: loadJSON(PREFS_KEY)?.off ?? [] });
   log = [];
   replyIdx = 0;
@@ -56,6 +67,8 @@ function produceReply({ decision }, push) {
   const idx = replyIdx % AI_KEYS.length;
   const oneLine = Boolean(decision?.oneLine);
   const item = { role: 'ai', at: performance.now(), cps: typingCps(eff.speech), done: false, idx, amount: oneLine ? 1 : eff.amount, style: oneLine ? 'summary' : eff.style, pick: idx === 2 && eff.optionsMax != null, short: eff.amount < session.base.amount || oneLine };
+  // Soft transition: in a lighter mode, show a 1–2 sentence summary and keep the full original folded (nothing dropped).
+  item.soft = !oneLine && !item.pick && eff.amount < session.base.amount;
   replyIdx += 1;
   const shown = replyText(item);
   session = aiReplied(session, shown.length);
@@ -64,7 +77,9 @@ function produceReply({ decision }, push) {
   return item;
 }
 function replyBlocks(item) { return transform(tr(AI_KEYS[item.idx]), { amount: item.amount, style: item.style }).blocks; }
+function softOf(item) { return softView(tr(AI_KEYS[item.idx]), { sentences: summarySentences(item.amount) }); }
 function replyText(item) {
+  if (item.soft) return `${softOf(item).summary}${item.idx === 1 ? `\n${tr('cv_important')}` : ''}`;
   let t = toPlainText(replyBlocks(item), { tldr: tr('tldr'), step: (i, n) => `${i}/${n}` });
   if (item.idx === 1) t += `\n${tr('cv_important')}`;
   if (item.pick) t = tr('cv_pick');
@@ -74,7 +89,15 @@ function replyText(item) {
 function say(key) { if (key) log.push({ role: 'partner', key }); }
 function afterDecision(d, { reply = true } = {}) {
   if (d.messageKey) say(d.messageKey);
-  suggestion = d.suggestion ?? suggestion;
+  if (d.suggestion) {
+    // Partner suggestion cards share the same daily cap and backoff as automatic offers.
+    const g = canSuggest(readSuggest(), Date.now());
+    if (g.ok && !pendingAuto) {
+      writeSuggest(markShown(readSuggest(), Date.now()));
+      suggestion = d.suggestion;
+      pendingAuto = { kind: 'card', trigger: 'signals', type: d.suggestion };
+    } else if (session.pending) session = { ...session, pending: null };
+  }
   if (reply && !d.handoff) {
     const item = produceReply({ decision: d }, true);
     if (item.idx === 1 && item.short && d.rule !== 'R14') say('pm_r13'); // R13: keep the important line, say so
@@ -86,10 +109,55 @@ const USER_TEXT = { short: 'cv_u_short', clarify: 'cv_u_clarify', shorter: 'cv_u
 function sendUser(text, key, gapSec = 40) {
   ui.speakStop?.();
   log.push({ role: 'you', key, text });
+  settleIgnored();
   const r = userTurn(session, { text, gapSec });
   session = r.state;
   if (ui.silenceTimer) stopSilence();
   afterDecision(r.decision);
+  maybeAutoSuggest(r.decision);
+  renderAll();
+}
+
+/* ---------- automatic suggestions (manual mascot input always stays available) ---------- */
+function recordAuto(p, outcome) {
+  writeSuggest(recordOutcome(readSuggest(), outcome, Date.now()));
+  pushLabel(makeLabel({
+    sessionId, recentTurns: session.turns.filter((t) => !t.seed).length, source: 'web', kind: 'suggest',
+    level: 'rising', origin: 'auto', outcome, sessionStart,
+    signals: { trigger: p.trigger, type: p.type ?? 'summary', loadIndex: loadIndexFor(session, profile, cond()), active: activeSignals(session) },
+  }));
+}
+/** The user moved on without answering: count it as "ignore" (backoff applies). */
+function settleIgnored() {
+  if (!pendingAuto) return;
+  const p = pendingAuto;
+  pendingAuto = null;
+  recordAuto(p, 'ignore');
+  if (p.kind === 'mascot') mascot?.clearOffer();
+  else { suggestion = null; session = { ...session, pending: null }; }
+}
+function maybeAutoSuggest(d) {
+  if (pendingAuto || !mascot?.offer) return;
+  const repeats = session.turns.slice(-3).filter((t) => t.repeat).length;
+  const trigger = suggestTrigger({ decision: d, loop: { detected: repeats >= 2 }, loadIndex: loadIndexFor(session, profile, cond()) });
+  if (!trigger || effective(session).chip === 'short') return;
+  if (!canSuggest(readSuggest(), Date.now()).ok) return;
+  writeSuggest(markShown(readSuggest(), Date.now()));
+  pendingAuto = { kind: 'mascot', trigger };
+  mascot.offer({ key: suggestKey(trigger), whyKey: `sg_r_${trigger}`, onAnswer: answerAuto });
+}
+function answerAuto(ans) {
+  const p = pendingAuto;
+  pendingAuto = null;
+  if (!p) return;
+  recordAuto(p, ans);
+  if (ans === 'accept') {
+    const r = reportLoad(session, 'rising');
+    session = r.state;
+    say('pm_e3_rising');
+    produceReply({ decision: r.decision }, true);
+    if (log.length > 14) log = log.slice(-14);
+  }
   renderAll();
 }
 
@@ -97,15 +165,21 @@ function act(a) {
   if (a === 'skip') { session = skipAhead(session, 10); renderAll(); return; }
   if (a === 'silence') { startSilence(); return; }
   if (a === 'rapid') {
+    settleIgnored();
     for (let i = 0; i < 10; i++) {
       const text = tr(USER_TEXT.rapid);
       const r = userTurn(session, { text, gapSec: 8 });
       session = r.state;
       if (i === 0) log.push({ role: 'you', key: 'cv_u_rapid', text, many: 10 });
       if (r.decision.messageKey && i > 0) say(r.decision.messageKey);
-      suggestion = r.decision.suggestion ?? suggestion;
+      if (r.decision.suggestion && !pendingAuto && canSuggest(readSuggest(), Date.now()).ok) {
+        writeSuggest(markShown(readSuggest(), Date.now()));
+        suggestion = r.decision.suggestion;
+        pendingAuto = { kind: 'card', trigger: 'signals', type: r.decision.suggestion };
+      }
       const item = produceReply({ decision: r.decision }, i === 9);
       if (i === 9 && item.idx === 1 && item.short) say('pm_r13');
+      if (i === 9) maybeAutoSuggest(r.decision);
     }
     if (log.length > 14) log = log.slice(-14);
     renderAll();
@@ -135,6 +209,23 @@ function renderLog() {
         const det = el('details');
         det.append(el('summary', null, tr('cv_options_fold')), el('p', null, tr(AI_KEYS[it.idx])));
         body.append(det);
+      } else if (it.soft) {
+        const v = softOf(it);
+        body.classList.add('cv-soft');
+        const inner = el('div', 'cv-soft-sum');
+        inner.append(el('p', null, v.summary));
+        body.append(inner);
+        const det = el('details', 'cv-soft-full');
+        const sum = el('summary', null, tr('soft_more'));
+        const full = el('div', 'cv-soft-body');
+        v.full.split(/\n+/).filter(Boolean).forEach((para) => full.append(el('p', null, para)));
+        det.append(sum, full);
+        body.append(det);
+        if (it === lastAi && it.at && !it.done && !reduced()) {
+          inner.setAttribute('aria-hidden', 'true');
+          body.append(el('span', 'sr-only', v.summary));
+          typer = typeLive(inner, { cps: it.cps, startedAt: it.at, onDone: () => { it.done = true; inner.removeAttribute('aria-hidden'); body.querySelector(':scope > .sr-only')?.remove(); } });
+        }
       } else {
         const inner = el('div');
         renderBlocks(inner, replyBlocks(it), tr);
@@ -175,6 +266,7 @@ function renderSuggest() {
 function answerSuggestion(ans) {
   const type = suggestion;
   suggestion = null;
+  if (pendingAuto?.kind === 'card') { const p = pendingAuto; pendingAuto = null; recordAuto(p, ans === 'accept' ? 'accept' : 'reject'); }
   const r = respondToSuggestion(session, type, ans);
   session = r.state;
   if (r.persistOff) saveJSON(PREFS_KEY, { off: r.persistOff });
@@ -374,14 +466,17 @@ if (ttsSupported()) globalThis.speechSynthesis.addEventListener?.('voiceschanged
 
 startSession();
 mountLoop({ getSession: () => session, setSession: (s, off) => { session = s; if (off) saveJSON(PREFS_KEY, { off }); renderAll(); }, getLoad: () => loadIndexFor(session, profile, cond()) });
-mountMascotLoad({
+mascot = mountMascotLoad({
   getSession: () => session,
   setSession: (s) => { session = s; },
   getProfile: () => profile,
   getCond: () => cond(),
   getSessionId: () => sessionId,
+  getSessionStart: () => sessionStart,
   tr,
   onChange: ({ decision }) => {
+    // A manual pick supersedes an open automatic offer (no outcome recorded for it).
+    if (pendingAuto?.kind === 'mascot') { pendingAuto = null; mascot?.clearOffer(); }
     if (decision?.messageKey) say(decision.messageKey);
     // one click: regenerate the simulated reply immediately in the new mode (virtual AI, typed)
     produceReply({ decision }, true);
@@ -394,4 +489,5 @@ mountMascotLoad({
     }
   },
 });
+mountRhythm({ tr, lang: () => app.lang });
 app.start();

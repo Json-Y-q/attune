@@ -7,14 +7,17 @@ export const LABEL_SCHEMA_VERSION = 1;
 export const MAX_LABELS = 500;
 export const MAX_RECENT_TURNS = 8;
 export const LOAD_LEVELS = Object.freeze(['calm', 'rising', 'overloaded']);
+export const OUTCOMES = Object.freeze(['accept', 'reject', 'ignore']);
 
 /**
  * @typedef {{
  *   v: number, id: string, ts: string, sessionId: string,
  *   source: 'web'|'extension'|'mcp'|'mascot',
- *   kind: 'overloaded'|'adaptation'|'loop'|'load',
+ *   kind: 'overloaded'|'adaptation'|'loop'|'load'|'suggest',
  *   level?: 'calm'|'rising'|'overloaded',
- *   recentTurns: number, signals: object, note?: string
+ *   recentTurns: number, signals: object, note?: string,
+ *   origin: 'manual'|'auto', outcome: null|'accept'|'reject'|'ignore',
+ *   dow: number, hour: number, sessionMin: number|null
  * }} LoadLabel
  */
 
@@ -25,17 +28,25 @@ export function newSessionId(now = Date.now()) {
 export function makeLabel({
   sessionId, recentTurns = 0, signals = {}, source = 'mascot', kind = 'load',
   level = 'overloaded', note = '', now = Date.now(), id = null,
+  origin = 'manual', outcome = null, sessionStart = null,
 } = {}) {
   const sid = String(sessionId || newSessionId(now)).slice(0, 64);
   const turns = Math.max(0, Math.min(MAX_RECENT_TURNS * 4, Number(recentTurns) || 0));
   const lv = LOAD_LEVELS.includes(level) ? level : 'overloaded';
+  const d = new Date(now);
+  const sessionMin = typeof sessionStart === 'number' && sessionStart <= now ? Math.round((now - sessionStart) / 60000) : null;
   return {
     v: LABEL_SCHEMA_VERSION,
     id: id || `l_${now.toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
     ts: new Date(now).toISOString(),
     sessionId: sid,
     source: ['web', 'extension', 'mcp', 'mascot'].includes(source) ? source : 'mascot',
-    kind: ['overloaded', 'adaptation', 'loop', 'load'].includes(kind) ? kind : 'load',
+    kind: ['overloaded', 'adaptation', 'loop', 'load', 'suggest'].includes(kind) ? kind : 'load',
+    origin: origin === 'auto' ? 'auto' : 'manual',
+    outcome: OUTCOMES.includes(outcome) ? outcome : null,
+    dow: d.getDay(), // local weekday 0=Sun
+    hour: d.getHours(), // local hour
+    sessionMin,
     level: lv,
     recentTurns: turns,
     signals: signals && typeof signals === 'object' ? { ...signals, level: lv } : { level: lv },

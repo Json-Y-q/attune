@@ -1,16 +1,17 @@
 // Landing page controller: an interactive preview of the same answer at different (virtual) conditions.
 // Reuses the engine and the rule-based transform; no network, no storage, text via textContent only.
-import { computeSettings, THRESHOLDS } from './engine.js?v=e04ec2aa';
-import { renderMascot } from './mascot.js?v=e04ec2aa';
-import { loadJSON } from './storage.js?v=e04ec2aa';
-import { SAMPLE_PROFILE } from './profile.js?v=e04ec2aa';
-import { transform } from './transform.js?v=e04ec2aa';
-import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=e04ec2aa';
-import { typeLive, typingCps } from './typing.js?v=e04ec2aa';
-import { mountStory, mountIndividuals } from './showcase.js?v=e04ec2aa';
-import { mountMascotLoad } from './loadui.js?v=e04ec2aa';
-import { mountFlow } from './flow.js?v=e04ec2aa';
-import { mountMedia } from './media.js?v=e04ec2aa';
+import { computeSettings, THRESHOLDS } from './engine.js?v=e86ad124';
+import { renderMascot } from './mascot.js?v=e86ad124';
+import { loadJSON } from './storage.js?v=e86ad124';
+import { SAMPLE_PROFILE } from './profile.js?v=e86ad124';
+import { transform } from './transform.js?v=e86ad124';
+import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=e86ad124';
+import { typeLive, typingCps } from './typing.js?v=e86ad124';
+import { mountStory, mountIndividuals } from './showcase.js?v=e86ad124';
+import { softView, summarySentences } from './soften.js?v=e86ad124';
+import { mountMascotLoad } from './loadui.js?v=e86ad124';
+import { mountFlow } from './flow.js?v=e86ad124';
+import { mountMedia } from './media.js?v=e86ad124';
 
 const $ = (id) => document.getElementById(id);
 const BASELINE_HRV_MS = 55; // virtual baseline for the preview
@@ -97,10 +98,32 @@ function renderLiveAnswer(level) {
   const amount = level === 'overloaded' ? 1 : level === 'rising' ? 2 : 3;
   const pace = level === 'overloaded' ? 2 : level === 'rising' ? 3 : 4;
   liveTyper?.cancel?.();
-  renderBlocks(liveOut, transform(tr('sample_answer'), { amount, style: amount <= 1 ? 'summary' : 'prose' }).blocks, tr);
-  if (!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
-    liveTyper = typeLive(liveOut, { cps: typingCps(pace) });
+  const reduce = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  if (level === 'calm') {
+    liveOut.classList.remove('cv-soft');
+    renderBlocks(liveOut, transform(tr('sample_answer'), { amount, style: 'prose' }).blocks, tr);
+    if (!reduce) liveTyper = typeLive(liveOut, { cps: typingCps(pace) });
+    return;
   }
+  // Soft transition: 1–2 sentence summary first, full original folded below (nothing dropped).
+  const v = softView(tr('sample_answer'), { sentences: summarySentences(amount) });
+  liveOut.replaceChildren();
+  liveOut.classList.add('cv-soft');
+  const sum = document.createElement('div');
+  sum.className = 'cv-soft-sum';
+  const p = document.createElement('p');
+  p.textContent = v.summary;
+  sum.append(p);
+  const det = document.createElement('details');
+  det.className = 'cv-soft-full';
+  const s = document.createElement('summary');
+  s.textContent = tr('soft_more');
+  const body = document.createElement('div');
+  body.className = 'cv-soft-body';
+  v.full.split(/\n+/).filter(Boolean).forEach((para) => { const q = document.createElement('p'); q.textContent = para; body.append(q); });
+  det.append(s, body);
+  liveOut.append(sum, det);
+  if (!reduce) liveTyper = typeLive(sum, { cps: typingCps(pace) });
 }
 if (liveHost) {
   mountMascotLoad({

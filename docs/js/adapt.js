@@ -2,8 +2,8 @@
 // Pure, no network. Used by the web overload button, Chrome extension (prompt prefix), and local MCP.
 // Numbers and wording are ASSUMPTIONS for a prototype.
 
-import { THRESHOLDS } from './engine.js?v=e04ec2aa';
-import { analyzeLoop } from './loop.js?v=e04ec2aa';
+import { THRESHOLDS } from './engine.js?v=e86ad124';
+import { analyzeLoop } from './loop.js?v=e86ad124';
 
 export const LOAD_LEVELS = Object.freeze(['calm', 'rising', 'high', 'overloaded']);
 
@@ -26,12 +26,12 @@ export function buildAdaptationContext({ level = 'calm', loopType = null, lang =
   const lines = [];
   if (level === 'overloaded' || level === 'high') {
     lines.push(ko
-      ? '사용자가 지금 인지 부하가 높다고 알렸습니다. 답을 짧게(핵심 3줄 이내), 한 가지씩, 쉬운 말로 해주세요. 선택지는 최대 2개.'
-      : 'The user reported high cognitive load. Keep answers short (about 3 key lines), one thing at a time, plain language. At most 2 options.');
+      ? '사용자가 지금 인지 부하가 높다고 알렸습니다. 먼저 한 문장 요약으로 시작하고, 그 아래에 전체 내용을 접어 둘 수 있게 "자세히" 부분으로 이어 주세요. 내용은 빼지 마세요. 한 가지씩, 쉬운 말로, 선택지는 최대 2개.'
+      : 'The user reported high cognitive load. Start with a one-sentence summary, then give the full details below under a "Details" part that can be folded. Do not drop content. One thing at a time, plain language, at most 2 options.');
   } else if (level === 'rising') {
     lines.push(ko
-      ? '사용자가 부담이 오르고 있다고 느꼈습니다. 분량을 조금 줄이고, 먼저 요지를 말한 뒤 필요할 때만 자세히 적어 주세요.'
-      : 'The user felt load rising. Shorten a little: lead with the gist, add detail only if needed.');
+      ? '사용자가 부담이 오르고 있다고 알렸습니다. 먼저 1~2문장 요약으로 시작하고, 그 아래에 전체 내용을 "자세히" 부분으로 이어 주세요. 내용은 빼지 마세요.'
+      : 'The user reported rising load. Start with a 1–2 sentence summary, then the full details below under a "Details" part. Do not drop content.');
   } else {
     lines.push(ko
       ? '일반 밀도·속도로 답해도 됩니다. 사용자가 짧게 해 달라고 하면 맞춰 주세요.'
@@ -43,20 +43,31 @@ export function buildAdaptationContext({ level = 'calm', loopType = null, lang =
       : `The chat may be looping (${loopType}). Do not repeat the same suggestion; restate the problem in one line or offer a different approach.`);
   }
   lines.push(ko
-    ? '단정·진단 표현은 쓰지 마세요. 제안 어조로 말하세요.'
-    : 'Do not sound diagnostic. Keep a suggestive tone.');
+    ? '사용자 상태를 단정하지 마세요("지친 것 같아요" 금지). "짧게 요약해 줄까요?"처럼 행동 제안으로만 말하세요.'
+    : 'Never state how the user is (no "you seem tired"). Offer actions only, e.g. "Want a short summary?".');
   return lines.join(' ');
 }
 
-/** Soft generation hints (not binding on any vendor). */
+/**
+ * Soft generation hints (not binding on any vendor).
+ * Lighter levels change the STRUCTURE (summary first, full details kept), not a hard token cut, so nothing is lost.
+ */
 export function generationHints(level) {
   if (level === 'overloaded' || level === 'high') {
-    return { max_tokens: 256, pace: 'slow', tone: 'plain', amount: 1 };
+    return { structure: 'summary_then_details', summary_sentences: 1, keep_full_details: true, pace: 'slow', tone: 'plain', amount: 1, max_options: 2 };
   }
   if (level === 'rising') {
-    return { max_tokens: 512, pace: 'steady', tone: 'plain', amount: 2 };
+    return { structure: 'summary_then_details', summary_sentences: 2, keep_full_details: true, pace: 'steady', tone: 'plain', amount: 2, max_options: 3 };
   }
-  return { max_tokens: 1024, pace: 'normal', tone: 'default', amount: 3 };
+  return { structure: 'normal', summary_sentences: null, keep_full_details: true, pace: 'normal', tone: 'default', amount: 3, max_options: null };
+}
+
+/** Action-only suggestion line for a level (never a statement about the person). */
+export function suggestionFor(level, lang = 'en') {
+  const ko = lang === 'ko';
+  if (level === 'overloaded' || level === 'high') return ko ? '짧게 요약해 줄까요?' : 'Want a short summary?';
+  if (level === 'rising') return ko ? '핵심만 먼저 볼까요?' : 'See the key point first?';
+  return null;
 }
 
 /**
@@ -81,6 +92,7 @@ export function getAdaptation(input = {}) {
     loop: loop ? { detected: loop.detected, type: loop.type, confidence: loop.confidence } : null,
     context,
     params,
+    suggestion: suggestionFor(level, lang),
     preview: context,
   };
 }

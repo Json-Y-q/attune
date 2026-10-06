@@ -7,8 +7,8 @@
   <meta name="theme-color" content="#2F5DA8">
   <title data-i18n="cv_title">Attune — Voice pace &amp; conversation partner (simulation)</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=e04ec2aa">
-  <script type="module" src="js/conversation.js?v=e04ec2aa"></script>
+  <link rel="stylesheet" href="css/style.css?v=e86ad124">
+  <script type="module" src="js/conversation.js?v=e86ad124"></script>
 </head>
 <body class="ob cv">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -121,6 +121,42 @@
       <p class="muted lp-help" data-i18n="ld_help">Prototype label schema for training a feedback loop later. Not a medical measurement. Design: a 3-face picker (not multi-click or long-press) so each level is explicit, keyboard-friendly, and maps 1:1 to the mascot’s colour and expression.</p>
     </section>
     <div id="ld-mascot-host" class="ld-float-host" aria-live="polite"></div>
+
+    <section id="rhythm" class="panel ob-card" aria-labelledby="rh-h">
+      <h2 id="rh-h" data-i18n="rh_h">Work rhythm</h2>
+      <p data-i18n="rh_intro">Built only from your own mascot presses and suggestion answers stored in this browser. It shows facts (counts, times, rates), not a diagnosis.</p>
+      <p class="muted" id="rh-total"></p>
+      <p class="rh-sparse" id="rh-sparse" role="status"></p>
+      <div id="rh-body" class="rh-body" hidden>
+        <div class="rh-block">
+          <h3 data-i18n="rh_heat_h">When load presses happened (weekday × time of day)</h3>
+          <div id="rh-heat" class="rh-heat"></div>
+          <p id="rh-fact-peak" class="rh-fact"></p>
+        </div>
+        <div class="rh-block">
+          <h3 data-i18n="rh_session_h">Minute into a session</h3>
+          <ol id="rh-session" class="rh-session"></ol>
+          <p id="rh-fact-session" class="rh-fact"></p>
+        </div>
+      </div>
+      <div class="rh-block">
+        <h3 data-i18n="rh_accept_h">Suggestion answers</h3>
+        <div id="rh-accept" class="rh-accept"></div>
+      </div>
+      <div class="rh-block rh-settings">
+        <h3 data-i18n="sg_set_h">Automatic suggestions</h3>
+        <label class="rh-toggle"><input type="checkbox" id="sg-enabled" checked> <span data-i18n="sg_set_on">Offer suggestions automatically</span></label>
+        <label class="rh-max"><span data-i18n="sg_set_max">At most per day</span> <select id="sg-max"></select></label>
+        <p class="muted lp-help" data-i18n="sg_rule">Passing once = 1 quiet day, twice in a row = 3 days, three times = 7 days. Saying yes shortens it. The mascot always works.</p>
+        <p id="sg-status" class="status"></p>
+        <div class="row">
+          <button type="button" class="btn secondary" id="sg-reset" data-i18n="sg_set_reset">Reset learning</button>
+          <button type="button" class="btn secondary" id="rh-export" data-i18n="rh_export">Export JSON</button>
+          <button type="button" class="btn secondary" id="rh-clear" data-i18n="rh_clear">Delete records</button>
+        </div>
+        <p id="rh-status" class="status" role="status"></p>
+      </div>
+    </section>
 
     <section id="loop" class="panel ob-card" aria-labelledby="lo-h">
       <h2 id="lo-h" data-i18n="lo_h">Loop escape</h2>

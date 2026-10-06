@@ -1,12 +1,12 @@
 // Floating mascot load input: click opens 3 faces; choosing one records a label and switches reply mode at once.
 // Hover/focus on a face shows a preview only (no mode change). No separate overload button.
-import { loadJSON, saveJSON, removeKey } from './storage.js?v=e04ec2aa';
-import { reportLoad, activeSignals, loadIndexFor, density, sessionMinutes, effective } from './partner.js?v=e04ec2aa';
-import { renderMascot } from './mascot.js?v=e04ec2aa';
+import { loadJSON, saveJSON, removeKey } from './storage.js?v=e86ad124';
+import { reportLoad, activeSignals, loadIndexFor, density, sessionMinutes, effective } from './partner.js?v=e86ad124';
+import { renderMascot } from './mascot.js?v=e86ad124';
 import {
   makeLabel, appendLabel, normalizeLabels, exportLabelsJSON, LABEL_KEY, newSessionId,
   poseForLevel, LOAD_LEVELS,
-} from './labels.js?v=e04ec2aa';
+} from './labels.js?v=e86ad124';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -14,7 +14,10 @@ const HINT_KEY = 'attune.mascot.hint.v1';
 const LEVEL_KEY = 'attune.mascot.level.v1';
 
 function readLabels() { return normalizeLabels(loadJSON(LABEL_KEY)?.labels); }
-function writeLabels(labels) { saveJSON(LABEL_KEY, { v: 1, labels }); }
+function writeLabels(labels) { saveJSON(LABEL_KEY, { v: 1, labels }); document.dispatchEvent(new CustomEvent('attune:labels')); }
+/** Append one label to the local log (also used for automatic-suggestion outcomes). */
+export function pushLabel(label) { writeLabels(appendLabel(readLabels(), label)); }
+export { readLabels };
 
 const PREVIEW = {
   calm: { lines: 5, pace: 'fast', key: 'ld_prev_long' },
@@ -110,7 +113,13 @@ export function mountMascotLoad(api) {
 
   const a11y = el('p', 'ld-a11y muted lp-help');
 
-  wrap.append(btn, hint, preview, menu, gear, settings);
+  // Automatic suggestion bubble (action phrasing only; see phrases.js). Never steals focus.
+  const offerBox = el('div', 'ld-offer');
+  offerBox.hidden = true;
+  offerBox.setAttribute('role', 'group');
+  let offerState = null;
+
+  wrap.append(btn, hint, preview, offerBox, menu, gear, settings);
   host.append(wrap, a11y);
 
   const reduced = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -184,13 +193,15 @@ export function mountMascotLoad(api) {
         source: 'mascot',
         kind: 'load',
         level: lv,
+        origin: 'manual',
+        sessionStart: api.getSessionStart?.() ?? null,
         signals: {
           loadIndex: load, densityLevel: dens.level, amount: eff.amount, speech: eff.speech,
           active: activeSignals(r.state), sessionMinutes: sessionMinutes(r.state),
           rule: decision?.rule ?? 'E3', level: lv,
         },
       });
-      writeLabels(appendLabel(readLabels(), label));
+      pushLabel(label);
       status.textContent = api.tr(lv === 'calm' ? 'ld_recorded_calm' : 'ld_recorded');
       refreshList();
     }
@@ -264,7 +275,34 @@ export function mountMascotLoad(api) {
     refreshList();
   });
 
-  document.addEventListener('attune:lang', i18nChrome);
+  function paintOffer() {
+    offerBox.replaceChildren();
+    if (!offerState) { offerBox.hidden = true; offerBox.classList.remove('show'); return; }
+    offerBox.setAttribute('aria-label', api.tr('sg_aria'));
+    offerBox.append(el('p', 'ld-offer-text', api.tr(offerState.key)));
+    if (offerState.whyKey) offerBox.append(el('p', 'ld-offer-why', api.tr('sg_why', { r: api.tr(offerState.whyKey) })));
+    const row = el('div', 'ld-offer-row');
+    [['accept', 'sg_yes', 'btn'], ['reject', 'sg_no', 'btn secondary']].forEach(([ans, key, cls]) => {
+      const b = el('button', `${cls} ld-offer-${ans}`, api.tr(key));
+      b.type = 'button';
+      b.addEventListener('click', () => {
+        const cb = offerState?.onAnswer;
+        clearOffer();
+        cb?.(ans);
+      });
+      row.append(b);
+    });
+    offerBox.append(row);
+    offerBox.hidden = false;
+    offerBox.classList.toggle('static', reduced());
+    requestAnimationFrame(() => offerBox.classList.add('show'));
+  }
+  /** Show an automatic suggestion next to the mascot. onAnswer('accept'|'reject'). */
+  function offer({ key, whyKey = null, onAnswer }) { offerState = { key, whyKey, onAnswer }; paintOffer(); }
+  function clearOffer() { offerState = null; paintOffer(); }
+
+  document.addEventListener('attune:lang', () => { i18nChrome(); paintOffer(); });
+  document.addEventListener('attune:labels', refreshList);
   document.addEventListener('pointerdown', (e) => {
     if (open && !wrap.contains(e.target)) closePicker();
   });
@@ -275,6 +313,9 @@ export function mountMascotLoad(api) {
     refresh: i18nChrome,
     setLevel: (lv) => applyLevel(lv),
     getLevel: () => level,
+    offer,
+    clearOffer,
+    hasOffer: () => Boolean(offerState),
   };
 }
 

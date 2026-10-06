@@ -14,6 +14,12 @@
  <button data-lv="calm" type="button">Calm</button>
  <label><input id="instant" type="checkbox" checked> Mascot click = apply immediately</label>
  <label><input id="insert" type="checkbox" checked> Attach load note to next message</label>
+ <h2 style="font-size:13px;margin:10px 0 4px">Automatic suggestions</h2>
+ <label><input id="sg-on" type="checkbox" checked> Offer suggestions automatically</label>
+ <label>At most per day <select id="sg-max"><option value="2">2</option><option value="3" selected>3</option></select></label>
+ <p class="muted">Passing once = 1 quiet day, twice in a row = 3 days, three times = 7 days. Saying yes shortens it.</p>
+ <button id="sg-reset" type="button">Reset learning</button>
+ <p id="sg-status" class="muted"></p>
  <button id="export" type="button">Export JSON</button>
  <button id="clear" type="button">Clear labels</button>
  <p id="status" class="muted"></p>

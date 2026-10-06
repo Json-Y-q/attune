@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { SAMPLE_PROFILE } from '../docs/js/profile.js';
-import { newSession, reportLoad, effective } from '../docs/js/partner.js';
+import { newSession, reportLoad, effective, userTurn } from '../docs/js/partner.js';
 import {
   makeLabel, appendLabel, exportLabelsJSON, LABEL_SCHEMA_VERSION, newSessionId,
   poseForLevel, LOAD_LEVELS, deltasForLevel,
@@ -27,7 +27,7 @@ test('labels: source=mascot and level field on schema', () => {
   assert.equal(poseForLevel('calm').puff, 1);
 });
 
-test('reportLoad: three faces change reply mode; calm restores (immediate mode switch)', () => {
+test('reportLoad: three faces change reply mode at once, density steps one level per turn; calm restores softly', () => {
   let st = newSession({ profile: SAMPLE_PROFILE });
   const baseAmt = effective(st).amount;
   const baseSpeech = effective(st).speech;
@@ -40,9 +40,22 @@ test('reportLoad: three faces change reply mode; calm restores (immediate mode s
   st = r2.state;
   assert.ok(effective(st).amount < baseAmt || effective(st).speech < baseSpeech);
   assert.equal(st.adjust.chip, 'short');
+  assert.equal(st.adjust.amountDelta, -2, 'rising (-1) → overloaded: one more level now');
+  assert.equal(st.adjust.paceDelta, -1, 'pace: first step only (soft)');
+  st = userTurn(st, { text: 'ok, go on', gapSec: 20 }).state;
+  assert.equal(st.adjust.paceDelta, -2, 'second pace step on the next turn');
+  // From calm straight to overloaded: density also moves one level per turn.
+  let s2 = reportLoad(newSession({ profile: SAMPLE_PROFILE }), 'overloaded').state;
+  assert.equal(s2.adjust.amountDelta, -1);
+  s2 = userTurn(s2, { text: 'next', gapSec: 20 }).state;
+  assert.equal(s2.adjust.amountDelta, -2);
   st = reportLoad(st, 'calm').state;
   assert.equal(st.adjust.chip, null);
+  assert.equal(st.adjust.amountDelta, -1, 'calm also eases back one level at a time');
+  st = userTurn(st, { text: 'thanks', gapSec: 20 }).state;
   assert.equal(st.adjust.amountDelta, 0);
+  assert.equal(st.adjust.paceDelta, 0);
+  assert.equal(st.target, null);
 });
 
 test('hover preview map: Long/Normal/Short line counts; preview helpers do not mutate session', () => {
@@ -146,7 +159,9 @@ test('mcp report_load returns label + systemContext + params in one call', () =>
   const payload = JSON.parse(body.result.content[0].text);
   assert.equal(payload.label.level, 'overloaded');
   assert.ok(payload.systemContext.length > 10);
-  assert.ok(payload.params.max_tokens <= 256);
+  assert.equal(payload.params.structure, 'summary_then_details');
+  assert.equal(payload.params.summary_sentences, 1);
+  assert.equal(payload.params.keep_full_details, true);
   assert.ok(payload.adaptation);
 });
 

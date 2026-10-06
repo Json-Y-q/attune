@@ -1,15 +1,22 @@
 {
   "manifest_version": 3,
   "name": "Attune Load Feedback (prototype)",
-  "version": "0.1.0",
-  "description": "Local cognitive-load button for ChatGPT, Claude, and Gemini. Prototype only — not submitted to the Chrome Web Store. No data leaves the browser.",
-  "permissions": ["storage", "activeTab"],
+  "version": "0.2.0",
+  "description": "Local cognitive-load mascot for ChatGPT, Claude, Gemini, and Grok. Prototype only \u2014 not submitted to the Chrome Web Store. No data leaves the browser.",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
   "host_permissions": [
     "https://chatgpt.com/*",
     "https://claude.ai/*",
-    "https://gemini.google.com/*"
+    "https://gemini.google.com/*",
+    "https://grok.com/*"
   ],
-  "background": { "service_worker": "background.js", "type": "module" },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
   "action": {
     "default_title": "Attune load feedback",
     "default_popup": "popup.html"
@@ -19,20 +26,29 @@
       "matches": [
         "https://chatgpt.com/*",
         "https://claude.ai/*",
-        "https://gemini.google.com/*"
+        "https://gemini.google.com/*",
+        "https://grok.com/*"
       ],
-      "js": ["content.js"],
-      "css": ["content.css"],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
       "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["selectors.json", "lib/*"],
+      "resources": [
+        "selectors.json",
+        "lib/*"
+      ],
       "matches": [
         "https://chatgpt.com/*",
         "https://claude.ai/*",
-        "https://gemini.google.com/*"
+        "https://gemini.google.com/*",
+        "https://grok.com/*"
       ]
     }
   ]

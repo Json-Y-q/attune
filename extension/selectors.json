@@ -1,5 +1,5 @@
 {
-  "_comment": "DOM selectors for chatgpt.com / claude.ai / gemini.google.com. These break often when vendors redesign. Edit this file; do not hard-code in content.js.",
+  "_comment": "DOM selectors for chatgpt.com / claude.ai / gemini.google.com / grok.com. These break often when vendors redesign. Edit this file; do not hard-code in content.js.",
   "chatgpt.com": {
     "input": "#prompt-textarea, textarea[data-id], div[contenteditable='true']#prompt-textarea, form textarea",
     "messages": "[data-message-author-role], .agent-turn, main article",
@@ -20,5 +20,14 @@
     "userRoleAttr": null,
     "userHint": "user-query",
     "assistantHint": "model-response"
+  },
+  "grok.com": {
+    "_verified": "2026-10-07: logged-out grok.com composer is textarea[aria-label='Ask Grok anything'] inside a form. Logged-in message DOM not verified; selectors below are fallbacks.",
+    "input": "textarea[aria-label='Ask Grok anything'], form textarea, div[contenteditable='true'].ProseMirror, div[contenteditable='true']",
+    "submit": "form button[type='submit'], button[aria-label='Submit']",
+    "messages": "[class*='message-bubble'], [data-testid*='message'], main article",
+    "userRoleAttr": null,
+    "userHint": "items-end|user",
+    "assistantHint": "items-start|assistant|grok"
   }
 }

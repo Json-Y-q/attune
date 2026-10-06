@@ -2,7 +2,7 @@
 // Each slot is <figure data-media-slot data-media-ready="false"> holding an inline SVG placeholder (.ob-ph)
 // and a <template data-media-template> with the real <picture>/<video>. The template is inert, so no file is
 // requested until you set data-media-ready="true" (see docs/media/README.md). No network code here.
-import { applyI18n, t } from './i18n.js?v=e04ec2aa';
+import { applyI18n, t } from './i18n.js?v=e86ad124';
 
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

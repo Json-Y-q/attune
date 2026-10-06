@@ -6,3 +6,10 @@
 #attune-load-fab .attune-chip { display: flex; gap: 8px; align-items: center; background: #E4ECFA; color: #14172B; padding: 6px 10px; border-radius: 999px; font-size: 12px; max-width: 220px; }
 #attune-load-fab .attune-chip[hidden] { display: none !important; }
 #attune-load-fab .attune-undo { border: none; background: transparent; color: #2F5DA8; font-weight: 700; cursor: pointer; }
+#attune-load-fab .attune-offer { width: 230px; background: #fff; color: #14172B; border: 2px solid #2F5DA8; border-radius: 12px; padding: 8px 10px; box-shadow: 0 6px 16px rgba(0,0,0,.2); font-weight: 600; }
+#attune-load-fab .attune-offer[hidden] { display: none !important; }
+#attune-load-fab .attune-offer-txt { margin: 0 0 6px; }
+#attune-load-fab .attune-offer-row { display: flex; gap: 6px; }
+#attune-load-fab .attune-offer-row button { border-radius: 8px; border: 1px solid #c5cede; background: #f4f7fb; padding: 4px 8px; cursor: pointer; font: inherit; }
+#attune-load-fab .attune-offer-yes { background: #2F5DA8 !important; color: #fff; border-color: #2F5DA8 !important; }
+@media (prefers-reduced-motion: no-preference) { #attune-load-fab .attune-offer:not([hidden]) { animation: attune-in .3s ease both; } @keyframes attune-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } } }

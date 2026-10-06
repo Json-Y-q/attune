@@ -1,8 +1,8 @@
 // Conversation partner logic: signals (no sensors) -> level L0-L3 -> rule R1-R15 + E3 overload button -> adjustments.
 // Pure functions, no DOM, no network, no storage. Spec: cogload-startup/09 (sections 2-C, 3, 4-C, 5).
 // All numbers are ASSUMPTIONS for a prototype, not validated.
-import { computeSettings, THRESHOLDS } from './engine.js?v=e04ec2aa';
-import { clamp } from './profile.js?v=e04ec2aa';
+import { computeSettings, THRESHOLDS } from './engine.js?v=e86ad124';
+import { clamp } from './profile.js?v=e86ad124';
 
 export const WINDOW_TURNS = 5; // "recent 5 turns"
 export const COOLDOWN = Object.freeze({ seconds: 20 * 60, turns: 15, spokenSeconds: 10 * 60 });
@@ -150,6 +150,7 @@ export function userTurn(prev, { text, gapSec = 30 }) {
   const st = clone(prev);
   st.clock += Math.max(0, gapSec);
   st.silence = { sec: 0, said: {}, paused: false };
+  easeAdjust(st);
   const det = detectText(text);
   const lens = st.turns.slice(-10).map((t) => t.len);
   const words = wordCount(text);
@@ -167,7 +168,7 @@ export function userTurn(prev, { text, gapSec = 30 }) {
     return finish(st, decision({ rule: 'R14', messageKey: 'pm_r14', handoff: true }));
   }
   if (det.explicit === 'dismiss') { // R12: back to L0 at once, start cooldowns
-    st.adjust = { amountDelta: 0, paceDelta: 0, optionsMax: null, chip: null };
+    st.adjust = { amountDelta: 0, paceDelta: 0, optionsMax: null, chip: null }; st.target = null;
     st.pending = null;
     for (const t of SUGGESTION_TYPES) st.cooldown[t] = { untilSec: st.clock + COOLDOWN.seconds, untilTurn: st.turns.length + COOLDOWN.turns };
     return finish(st, decision({ rule: 'R12', messageKey: 'pm_r12' }));
@@ -253,7 +254,7 @@ export function respondToSuggestion(prev, type, answer) {
 /** "Back to normal": undo quiet adjustments; counts as declining the 'lighter' adjustment. */
 export function undoAdjust(prev) {
   const st = clone(prev);
-  st.adjust = { amountDelta: 0, paceDelta: 0, optionsMax: null, chip: null };
+  st.adjust = { amountDelta: 0, paceDelta: 0, optionsMax: null, chip: null }; st.target = null;
   st.rejects.lighter = (st.rejects.lighter ?? 0) + 1;
   st.cooldown.lighter = { untilSec: st.clock + COOLDOWN.seconds, untilTurn: st.turns.length + COOLDOWN.turns };
   if (st.rejects.lighter >= 2 && !st.offSession.includes('lighter')) st.offSession.push('lighter');
@@ -266,7 +267,7 @@ export function rest(st, minutes) {
   if (minutes >= 5) {
     st.sessionStart = st.clock;
     st.turns = st.turns.map((t) => ({ ...t, seed: true })); // old turns no longer count as signals
-    st.adjust = { amountDelta: 0, paceDelta: 0, optionsMax: null, chip: null };
+    st.adjust = { amountDelta: 0, paceDelta: 0, optionsMax: null, chip: null }; st.target = null;
     st.restedAt = st.clock;
   }
   return st;
@@ -309,17 +310,45 @@ export function reportLoad(prev, level = 'overloaded') {
   const st = clone(prev);
   const lv = ['calm', 'rising', 'overloaded'].includes(level) ? level : 'overloaded';
   st.controls.push({ turnIndex: st.turns.length - 1, name: `load:${lv}` });
+  const a = st.adjust;
+  // Soft transition: set a target, move one level now, then one level per user turn (easeAdjust in userTurn).
   if (lv === 'calm') {
-    st.adjust = { amountDelta: 0, paceDelta: 0, optionsMax: null, chip: null };
+    setTarget(st, 0, 0);
+    st.adjust = { ...a, optionsMax: null, chip: null };
   } else if (lv === 'rising') {
-    st.adjust = { amountDelta: Math.min(st.adjust.amountDelta, -1), paceDelta: Math.min(st.adjust.paceDelta, 0), optionsMax: 3, chip: 'lighter' };
+    setTarget(st, Math.min(a.amountDelta, -1), Math.min(a.paceDelta, 0));
+    st.adjust = { ...a, optionsMax: 3, chip: 'lighter' };
   } else {
-    st.adjust = { amountDelta: Math.min(st.adjust.amountDelta, -2), paceDelta: Math.min(st.adjust.paceDelta, -1), optionsMax: 2, chip: 'short' };
-    st.userPace = Math.min(st.userPace, -1);
+    setTarget(st, Math.min(a.amountDelta, -2), Math.min(a.paceDelta, -2));
+    st.adjust = { ...a, optionsMax: 2, chip: 'short' };
   }
+  easeAdjust(st);
   const msg = lv === 'calm' ? 'pm_e3_calm' : lv === 'rising' ? 'pm_e3_rising' : 'pm_e3';
   return finish(st, decision({ level: lv === 'calm' ? 1 : 2, rule: 'E3', reasons: ['E3'], messageKey: msg }));
 }
+
+function setTarget(st, amountDelta, paceDelta) {
+  const sign = (x) => Math.sign(x);
+  st.target = { amountDelta, paceDelta, dir: { amountDelta: sign(amountDelta - st.adjust.amountDelta), paceDelta: sign(paceDelta - st.adjust.paceDelta) } };
+}
+
+/** One level per call toward st.target (density and pace). Clears the target once reached. */
+export function easeAdjust(st) {
+  const t = st.target;
+  if (!t) return st;
+  let done = true;
+  for (const k of ['amountDelta', 'paceDelta']) {
+    const d = t.dir?.[k] ?? 0;
+    const cur = st.adjust[k];
+    if ((d < 0 && cur > t[k]) || (d > 0 && cur < t[k])) st.adjust = { ...st.adjust, [k]: cur + d };
+    const now = st.adjust[k];
+    if ((d < 0 && now > t[k]) || (d > 0 && now < t[k])) done = false;
+  }
+  if (done) st.target = null;
+  return st;
+}
+/** True while density/pace is still stepping toward the reported level. */
+export const isEasing = (st) => Boolean(st && st.target);
 /** @deprecated use reportLoad(prev, 'overloaded') */
 export function reportOverload(prev) { return reportLoad(prev, 'overloaded'); }
 
