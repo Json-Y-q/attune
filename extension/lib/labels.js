@@ -42,9 +42,9 @@ export function exportLabelsJSON(list) {
 export function prefixForLevel(level) {
   if (level === 'calm') return '';
   if (level === 'rising') {
-    return 'The user reported rising cognitive load. Start with a 1–2 sentence summary, then the full details below under "Details". Do not drop content. Offer actions, never statements about the user.\n\n';
+    return 'The user reported rising cognitive load. Start with a 1–2 sentence summary, then the full details below under "Details". Do not drop content. Offer actions, never statements about the user. '; // one line on purpose: an inserted line break can send in rich composers
   }
-  return 'The user reported high cognitive load. Start with a one-sentence summary, then the full details below under "Details" (do not drop content). One thing at a time, plain language, at most 2 options. Offer actions, never statements about the user.\n\n';
+  return 'The user reported high cognitive load. Start with a one-sentence summary, then the full details below under "Details" (do not drop content). One thing at a time, plain language, at most 2 options. Offer actions, never statements about the user. '; // one line on purpose: an inserted line break can send in rich composers
 }
 export function rewritePrompt() {
   return 'Please rewrite your last answer more shortly and simply.';

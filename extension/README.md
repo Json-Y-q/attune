@@ -1,6 +1,6 @@
 # Attune Chrome extension (MV3 prototype)
 
-**Status: prototype (v0.3.0) / not submitted to the Chrome Web Store.** Loaded by hand as an unpacked extension. Nothing leaves the browser (`chrome.storage.local` only), and it never sends a message for you.
+**Status: prototype (v0.3.1) / not submitted to the Chrome Web Store.** Loaded by hand as an unpacked extension. Nothing leaves the browser (`chrome.storage.local` only), and it never sends a message for you.
 
 Supported sites: **chatgpt.com, claude.ai, gemini.google.com, grok.com**.
 (`x.com/i/grok` is not included: X is a single-page app, so a path-limited content script would not load reliably, and a host permission for all of `x.com` would be far broader than needed. Use grok.com.)
@@ -27,6 +27,13 @@ UI text is English by default and Korean when the page (`<html lang>`) or the br
 
 Composer detection tries a list of candidates in order (Grok's `textarea[aria-label='Ask Grok anything']`, other `aria-label`/`placeholder` textareas, ProseMirror/`contenteditable` boxes, any form textarea) and uses the first visible, editable one. If none is found (e.g. a new logged-in layout), the mascot still floats at the bottom right, a chip says **"Couldn't find the chat box"** ("입력창을 찾지 못함" in Korean), and the note is copied to the clipboard (with a **Copy** button as a second path) so you can paste it yourself. To fix it for good, add a selector to the `grok.com` list in `selectors.json` and reload the extension.
 
+## Never sends (0.3.1 fix)
+0.3.0 could **send a message by itself** on grok.com: a heavy pick on an empty box put the note + "Please rewrite your last answer…" into the composer with a `\n\n` line break (`execCommand('insertText')`). Grok's composer is ProseMirror/tiptap, which reads an inserted paragraph as an Enter key press, and Enter = send. 0.3.1:
+- The note and the rewrite request are **one line** (no line-break characters, ever; anything carrying one is flattened first and refused otherwise).
+- The composer is only ever edited in two ways: insert one line **at the start**, or delete **our own** leading note (Undo / swapping notes). Your draft, including its Shift+Enter line breaks, is never re-typed.
+- Every key pressed inside the mascot (Escape, Enter, Space, arrows, Home/End, Tab) is stopped before the page sees it; after a keyboard pick or Undo, focus goes back to the mascot, not the chat box. Held (auto-repeat) Enter is ignored.
+- There is no form submit, send-button press or synthetic Enter anywhere; the send watcher only observes your own (trusted) Enter / send click. Checked by `test/nosend.test.js` and by `node --experimental-websocket scripts/ext-harness-check.mjs` (headless Chrome, real keys and mouse, hostile fake composers that send on Enter or on any inserted line break: expected 0 submits).
+
 ## Interaction rules
 - Floating **mascot**, not a text button. Default ON: a pick immediately prepares the note for the **next** message (no confirm dialog). Never auto-sends.
 - Notes ask the model for a 1–2 sentence summary first and the full details below. Nothing is dropped.
@@ -36,6 +43,7 @@ Composer detection tries a list of candidates in order (Grok's `textarea[aria-la
 ## How the mascot is built
 - `lib/mascot.js` is a **verbatim copy** of `docs/js/mascot.js` (checked by a test), so the extension draws exactly the website's head. `lib/widget.js` holds the pure logic (level → colour/pose, "pshh" deflate and inflate frames, preview wording EN/KO, docking above the composer) and is covered by `node --test`.
 - `content.js` loads both with `import(chrome.runtime.getURL(...))` (they are listed under `web_accessible_resources`) and renders the widget inside an open **Shadow DOM**, so the chat site's CSS cannot restyle it. If the modules cannot load, a plain coloured circle with the same three choices is shown instead.
+- Never-send check: `node --experimental-websocket scripts/ext-harness-check.mjs` (Node 22+: no flag) drives the harness below in headless Chrome with `composer=pm` (ProseMirror-like) and `composer=textarea`, through hover, pick, Escape, Undo and keyboard picking, and fails on any submit.
 - Visual check without installing: serve the repo root (`python3 -m http.server 8099`) and open `http://localhost:8099/scripts/ext-harness.html?level=overloaded&state=open` (states: `idle`, `hover`, `open`, `face`; add `&lang=ko` or `&dark=1`). The harness stubs the `chrome.*` APIs; nothing is sent anywhere.
 
 ## Permissions

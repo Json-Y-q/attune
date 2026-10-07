@@ -2,12 +2,16 @@
 // drawn inside a Shadow DOM so the chat page's CSS cannot touch it.
 // Click = open three faces (light / medium / heavy). Picking one labels the moment and attaches a note to the NEXT
 // message only (never sends). Hover = preview of the next reply's shape (preview only, nothing changes). Undo chip.
+// NEVER SENDS: no form submit, no send-button press, no synthetic Enter key, and no line break is ever inserted into
+// the composer (ProseMirror/tiptap composers turn an inserted line break into Enter = send). See lib/widget.js planPick/keyAction.
 const N_TURNS = 8;
 const HOST = location.hostname.replace(/^www\./, '');
 const FAB_ID = 'attune-load-fab';
 const POS_KEY = 'attune.ext.pos.v1';
 const PREFS_KEY = 'attune.ext.prefs.v1';
-const REWRITE = 'Please rewrite your last answer more shortly and simply.';
+const REWRITE = 'Please rewrite your last answer more shortly and simply.'; // only PLACED in an empty box; the user sends it
+const REWRITE_OFFER = 'Please rewrite your last answer as a short summary first, with the full details below.';
+const FILLS = [REWRITE, REWRITE_OFFER];
 
 async function loadSelectors() {
   try { return await (await fetch(chrome.runtime.getURL('selectors.json'))).json(); }
@@ -44,18 +48,86 @@ function extractTurns(sel) {
   }
   return turns.slice(-N_TURNS);
 }
-function setInputText(el, text) {
-  if (!el) return false;
-  if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
-    el.value = text; el.dispatchEvent(new Event('input', { bubbles: true })); return true;
-  }
-  if (el.isContentEditable) {
-    el.focus();
-    try { document.execCommand('selectAll', false, null); document.execCommand('insertText', false, text); }
-    catch { el.textContent = text; el.dispatchEvent(new InputEvent('input', { bubbles: true })); }
+/* ---------- composer writes: insert-only, single line, never sends ----------
+   Only two edits ever happen: insert ONE line of our own text at the very start, or delete our own leading note.
+   The user's draft (which may hold Shift+Enter line breaks) is never re-typed, so no line break is ever inserted. */
+const SUBMIT_CHARS = /[\r\n\v\f\u0085\u2028\u2029]/;
+const flat = (t) => (W ? W.oneLine(t) : String(t ?? '').replace(/[ \t]*[\r\n\v\f\u0085\u2028\u2029]+[ \t]*/g, ' '));
+const isField = (el) => el?.tagName === 'TEXTAREA' || el?.tagName === 'INPUT';
+/** React-controlled textareas ignore a plain .value write; use the native setter, then a plain input event (no key events). */
+function setFieldValue(el, v) {
+  const proto = el.tagName === 'TEXTAREA' ? globalThis.HTMLTextAreaElement?.prototype : globalThis.HTMLInputElement?.prototype;
+  const desc = proto && Object.getOwnPropertyDescriptor(proto, 'value');
+  if (desc?.set && proto.isPrototypeOf(el)) desc.set.call(el, v); else el.value = v;
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+}
+function textNodes(el) {
+  const out = [];
+  const walk = document.createTreeWalker(el, 4 /* NodeFilter.SHOW_TEXT */);
+  for (let n = walk.nextNode(); n; n = walk.nextNode()) out.push(n);
+  return out;
+}
+function selectRange(r) { const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+function caretToEnd(el) {
+  if (isField(el)) { try { el.setSelectionRange(el.value.length, el.value.length); } catch { /* type without selection */ } return; }
+  const r = document.createRange(); r.selectNodeContents(el); r.collapse(false); selectRange(r);
+}
+/** Insert one line of text at the very start of the composer. Refuses anything with a line break. */
+function insertAtStart(el, text) {
+  const t = flat(text);
+  if (!el || !t || SUBMIT_CHARS.test(t)) return false;
+  if (isField(el)) { setFieldValue(el, t + (el.value || '')); return true; }
+  if (!el.isContentEditable) return false;
+  el.focus();
+  const r = document.createRange();
+  const first = textNodes(el)[0];
+  if (first) r.setStart(first, 0);
+  else { let n = el; while (n.firstElementChild && !/^(BR|IMG)$/.test(n.firstElementChild.tagName)) n = n.firstElementChild; r.setStart(n, 0); }
+  r.collapse(true);
+  selectRange(r);
+  try { return document.execCommand('insertText', false, t) !== false; } catch { return false; }
+}
+/** Delete our own note from the start of the composer (plus the spaces after it). Never touches the rest of the draft. */
+function removeLeading(el, text) {
+  const want = String(text || '').trim();
+  if (!el || !want) return false;
+  if (isField(el)) {
+    const v = el.value || '';
+    const lead = v.length - v.trimStart().length;
+    if (!v.slice(lead).replace(/\u00a0/g, ' ').startsWith(want)) return false;
+    setFieldValue(el, v.slice(lead + want.length).replace(/^[ \t\u00a0]+/, ''));
     return true;
   }
-  return false;
+  if (!el.isContentEditable) return false;
+  const chars = []; // [node, offset, char] across the composer's text nodes
+  for (const n of textNodes(el)) for (let k = 0; k < n.data.length; k += 1) chars.push([n, k, n.data[k] === '\u00a0' ? ' ' : n.data[k]]);
+  let p = 0;
+  while (p < chars.length && /[ \t]/.test(chars[p][2])) p += 1;
+  if (chars.slice(p, p + want.length).map((c) => c[2]).join('') !== want) return false;
+  let q = p + want.length;
+  while (q < chars.length && chars[q][2] === ' ') q += 1;
+  const start = [chars[p][0], chars[p][1]];
+  const last = chars[q - 1];
+  const end = [last[0], last[1] + 1];
+  el.focus();
+  const r = document.createRange(); r.setStart(...start); r.setEnd(...end); selectRange(r);
+  try { return document.execCommand('delete', false) !== false; } catch { return false; }
+}
+/** Empty the composer (only used when it holds nothing but our own note + fill). */
+function clearComposer(el) {
+  if (!el) return false;
+  if (isField(el)) { setFieldValue(el, ''); return true; }
+  if (!el.isContentEditable) return false;
+  el.focus();
+  const r = document.createRange(); r.selectNodeContents(el); selectRange(r);
+  try { return document.execCommand('delete', false) !== false; } catch { return false; }
+}
+/** Apply a {clear, remove, insert} plan from lib/widget.js. */
+function runPlan(el, plan) {
+  if (plan.clear && !clearComposer(el)) return false;
+  if (!plan.clear && plan.remove && !removeLeading(el, plan.remove)) return false;
+  if (plan.insert) { if (!insertAtStart(el, plan.insert)) return false; caretToEnd(el); }
+  return true;
 }
 function getInputText(el) {
   if (!el) return '';
@@ -307,16 +379,11 @@ function ensureUI(onPick) {
     panel.append(b);
     if (M && W) paintMascot(art, W.poseFor(lv, { mini: true, reduced: true }));
     else { art.innerHTML = '<div class="fallback"></div>'; art.firstChild.style.background = hexOf(lv); }
-    b.addEventListener('click', () => { closePanel({ refocus: true }); pick(lv); });
+    // click (mouse, or Enter/Space on the focused face: detail 0) = pick. A pick only places a note; it never sends.
+    b.addEventListener('click', (e) => { closePanel({ refocus: true }); pick(lv, { viaKeyboard: e.detail === 0 }); });
     b.addEventListener('mouseenter', () => showPreview(lv, 'next'));
     b.addEventListener('focus', () => showPreview(lv, 'next'));
     b.addEventListener('mouseleave', () => hidePreview());
-    b.addEventListener('keydown', (e) => {
-      const i = LEVEL_LIST.indexOf(lv);
-      const move = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
-      if (move) { e.preventDefault(); panel.querySelectorAll('.face')[(i + move + 3) % 3].focus(); }
-      else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); panel.querySelectorAll('.face')[e.key === 'Home' ? 0 : 2].focus(); }
-    });
   }
   document.documentElement.appendChild(host);
 
@@ -356,17 +423,37 @@ function ensureUI(onPick) {
   root.querySelector('.offer .yes').addEventListener('click', () => onOffer('accept'));
   root.querySelector('.offer .no').addEventListener('click', () => onOffer('reject'));
   root.querySelector('.copy').addEventListener('click', async () => { if (fallbackText) await copyText(fallbackText); });
-  root.querySelector('.undo').addEventListener('click', () => undoPick());
+  root.querySelector('.undo').addEventListener('click', (e) => undoPick({ viaKeyboard: e.detail === 0 }));
 
   setLevel(level, { animate: false });
   place();
 }
 
-/* Escape and outside click close the panel (and the hover preview). Listeners sit on window so page handlers can't swallow them. */
-globalThis.addEventListener?.('keydown', (e) => {
-  if (e.key !== 'Escape') return;
-  if (isOpen()) { e.stopPropagation(); closePanel({ refocus: true }); } else hidePreview();
-}, true);
+/* Keys. Every key event that starts inside the widget (Escape, Enter, Space, arrows, Home/End, Tab...) is stopped at the
+   window capture phase, so no page or composer handler ever sees it; the widget then acts on it itself (lib/widget.js keyAction:
+   close / hide / move focus / let the focused widget button click). Escape from the page only closes the panel. */
+const FALLBACK_KEY = (key, { open }) => (key === 'Escape' ? { type: open ? 'close' : 'hide', preventDefault: true } : { type: 'none', preventDefault: false });
+function onKey(e) {
+  const host = document.getElementById(FAB_ID);
+  const inside = Boolean(host) && Boolean(e.composedPath?.().includes(host));
+  if (!inside) {
+    if (e.type !== 'keydown' || e.key !== 'Escape') return;
+    if (isOpen()) closePanel(); else hidePreview(); // the page keeps its own Escape (and its focus)
+    return;
+  }
+  e.stopImmediatePropagation();
+  if (e.type !== 'keydown') return;
+  const root = host.shadowRoot;
+  const faces = [...(root?.querySelectorAll('.panel .face') || [])];
+  const opts = { open: isOpen(), index: faces.indexOf(root?.activeElement), count: faces.length, repeat: e.repeat };
+  const a = (W ? W.keyAction : FALLBACK_KEY)(e.key, opts);
+  if (a.preventDefault) e.preventDefault();
+  if (a.type === 'close') closePanel({ refocus: true });
+  else if (a.type === 'hide') hidePreview();
+  else if (a.type === 'focus') faces[a.index]?.focus();
+  // 'native' (Enter/Space): the focused widget button's own click runs (open faces / pick / Undo). Nothing is sent.
+}
+for (const type of ['keydown', 'keypress', 'keyup']) globalThis.addEventListener?.(type, onKey, true);
 globalThis.addEventListener?.('pointerdown', (e) => {
   const host = document.getElementById(FAB_ID);
   if (host && isOpen() && !e.composedPath().includes(host)) closePanel();
@@ -403,41 +490,54 @@ async function composerFallback(text) {
   chip.hidden = false;
   return ok;
 }
-/** Put text in the composer, or fall back to clipboard + chip. Never sends. */
+/** Put one line of text in front of the composer text, or fall back to clipboard + chip. Never sends. */
 function writeComposer(sel, text) {
   const input = pickInput(sel);
-  if (input && setInputText(input, text)) return true;
-  composerFallback(text);
+  if (input && insertAtStart(input, text)) return true;
+  composerFallback(flat(text));
   return false;
 }
+/**
+ * Place (or swap) the load note for the NEXT manual send: lib/widget.js planPick decides; runPlan only inserts one line at the
+ * start or deletes our own leading note. An empty box gets note + fill (a rewrite request) that the user may send or edit.
+ */
+function applyNote(sel, note, fill) {
+  const input = pickInput(sel);
+  const oldNote = lastPrefix;
+  lastPrefix = flat(note);
+  if (!W) { if (note) composerFallback(flat(note + (getInputText(input).trim() ? '' : fill))); return false; }
+  const plan = W.planPick({ current: getInputText(input), oldNote, note, fill, fills: FILLS });
+  if (!plan.clear && !plan.remove && !plan.insert) return true;
+  if (input && runPlan(input, plan)) return true;
+  if (plan.insert) composerFallback(plan.insert);
+  return false;
+}
+/** After a keyboard-driven pick/Undo, focus goes back to the mascot (not left in the composer). */
+function refocusMascot(viaKeyboard) { if (viaKeyboard) $ui('.main')?.focus(); }
 
 /* ---------- pick + undo ---------- */
 let undoState = null; // { prevLevel, prefix }
 let lastPrefix = ''; // note currently placed in the composer by the last pick
-function pick(lv) {
+function pick(lv, opts = {}) {
   undoState = { prevLevel: level, prefix: '' };
   setLevel(lv); // the mascot answers at once; the note itself is prepared by the pick handler
-  lastPick(lv);
+  lastPick(lv, opts);
 }
 /** Undo: drop the pending note, take it back out of the composer, and show the previous level again. */
-async function undoPick() {
+async function undoPick({ viaKeyboard = false } = {}) {
   const prev = undoState?.prevLevel ?? 'calm';
   const prefix = (undoState?.prefix || '').trim();
   undoState = null;
   lastPrefix = '';
   setLevel(prev);
   await chrome.runtime.sendMessage({ type: 'clear_pending', level: prev });
-  if (prefix && selRef) {
+  if (prefix && selRef && W) {
     const input = pickInput(selRef);
-    const cur = getInputText(input).trim();
-    if (input && cur.startsWith(prefix)) {
-      let rest = cur.slice(prefix.length).trim();
-      if (rest === REWRITE || rest.startsWith('Please rewrite your last answer as a short summary first')) rest = '';
-      setInputText(input, rest);
-    }
+    if (input) runPlan(input, W.planUndo({ current: getInputText(input), note: prefix, fills: FILLS }));
   }
   const chip = $ui('.chip');
   if (chip) chip.hidden = true;
+  refocusMascot(viaKeyboard);
 }
 
 /* ---------- automatic suggestion (action phrasing only; daily cap + backoff live in background) ---------- */
@@ -456,12 +556,11 @@ async function answerOffer(outcome, sel) {
   if (!p) return;
   const res = await chrome.runtime.sendMessage({ type: 'suggest_outcome', outcome, trigger: p.trigger, host: HOST });
   if (outcome === 'accept' && res?.pendingPrefix) {
-    undoState = { prevLevel: level, prefix: res.pendingPrefix };
-    lastPrefix = res.pendingPrefix;
-    showChip(res.pendingPrefix);
-    const current = getInputText(pickInput(sel)).trim();
+    const note = flat(res.pendingPrefix);
+    undoState = { prevLevel: level, prefix: note };
+    showChip(note);
     // Never sends: only prepares the composer text (or copies it when the composer is missing).
-    writeComposer(sel, res.pendingPrefix + (current || 'Please rewrite your last answer as a short summary first, with the full details below.'));
+    applyNote(sel, note, REWRITE_OFFER);
   }
 }
 async function onUserSend(text, sel) {
@@ -480,13 +579,15 @@ async function onUserSend(text, sel) {
   o.hidden = false;
 }
 function watchSends(sel) {
-  // Observe the user's own Enter / send-button presses; read the composer text just before it clears.
+  // OBSERVE ONLY: notice the user's own (trusted) Enter / send-button presses and read the composer text before it clears.
+  // Never preventDefault, never re-dispatch, never send: the note is already in the box, the page sends it as usual.
   document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' || e.shiftKey || e.isComposing) return;
+    if (!e.isTrusted || e.key !== 'Enter' || e.shiftKey || e.isComposing) return;
     const input = pickInput(sel);
     if (input && (e.target === input || input.contains(e.target))) onUserSend(getInputText(input), sel);
   }, true);
   document.addEventListener('pointerdown', (e) => {
+    if (!e.isTrusted) return;
     const btn = candidates(sel?.submit || 'form button[type="submit"]').map((css) => { try { return e.target.closest?.(css); } catch { return null; } }).find(Boolean);
     if (btn) onUserSend(getInputText(pickInput(sel)), sel);
   }, true);
@@ -513,7 +614,7 @@ function watchSends(sel) {
   });
   watchSends(sel);
   onOffer = (outcome) => answerOffer(outcome, sel);
-  ensureUI(async (lv) => {
+  ensureUI(async (lv, { viaKeyboard = false } = {}) => {
     if (pendingOffer) { pendingOffer = null; hideOffer(); } // a manual pick supersedes an open offer
     const turns = extractTurns(sel);
     const res = await chrome.runtime.sendMessage({
@@ -522,21 +623,12 @@ function watchSends(sel) {
       recentTurns: turns.length,
       signals: { host: HOST, turnSample: turns.length },
     });
-    const prefix = res?.pendingPrefix || '';
+    const prefix = flat(res?.pendingPrefix || '');
     if (undoState) undoState.prefix = prefix;
     showChip(prefix);
-    const input = pickInput(sel);
-    let current = getInputText(input).trim();
-    // a new pick replaces the note from the previous pick instead of stacking two notes
-    const old = lastPrefix.trim(); lastPrefix = prefix;
-    const hadOld = Boolean(old) && current.startsWith(old);
-    if (hadOld) { current = current.slice(old.length).trim(); if (current === REWRITE) current = ''; }
-    if (!prefix) { if (hadOld && input) setInputText(input, current); return; }
-    if (!current) {
-      // optional fill rewrite request — user still sends
-      writeComposer(sel, prefix + REWRITE);
-    } else if (!current.startsWith(prefix.trim())) {
-      writeComposer(sel, prefix + current);
-    }
+    // a new pick replaces the note from the previous pick instead of stacking two notes; an empty box gets the
+    // optional rewrite request (one line, PLACED only: the user still sends it themselves)
+    applyNote(sel, prefix, REWRITE);
+    refocusMascot(viaKeyboard);
   });
 })();

@@ -152,3 +152,65 @@ export function clampPos(pos, { vw, vh, size = SIZE }) {
   if (!Number.isFinite(r) || !Number.isFinite(b)) return null;
   return { right: Math.round(Math.min(Math.max(4, r), Math.max(4, vw - size - 4))), bottom: Math.round(Math.min(Math.max(4, b), Math.max(4, vh - size - 4))) };
 }
+
+/* ---------- never send: composer text + keys (pure, covered by node --test) ----------
+ * The extension NEVER sends a message. It only puts a single-line note in front of the composer text; the user sends.
+ * Rich composers (ProseMirror/tiptap on grok.com and claude.ai) turn an inserted line break into an Enter key press
+ * (prosemirror-view readDOMChange: a change that "looksLikeEnter" -> handleKeyDown(Enter)), and Enter = send. So no text
+ * the extension inserts may contain a line-break character, and the user's own (possibly multi-line) draft is never re-typed:
+ * we only insert at the very start, or delete our own leading note.
+ */
+/** Characters a composer may treat as Enter when inserted: CR, LF, VT, FF, NEL, LINE/PARAGRAPH SEPARATOR. */
+export const SUBMIT_CHARS = /[\r\n\v\f\u0085\u2028\u2029]/;
+const SUBMIT_RUN = /[ \t]*[\r\n\v\f\u0085\u2028\u2029]+[ \t]*/g;
+/** Flatten text to one line (line breaks -> one space). Safe to insert into any composer. */
+export function oneLine(text) { return String(text ?? '').replace(SUBMIT_RUN, ' '); }
+const norm = (s) => String(s ?? '').replace(/\u00a0/g, ' ').trim();
+
+/**
+ * Plan the composer edit for a pick. current = composer text now; oldNote = note placed by the previous pick (or '');
+ * note = new note ('' for light/calm); fill = request used when the box is empty; fills = every fill text we may have placed.
+ * Returns { clear, remove, insert }: clear = empty the box (it only holds our own note + fill); remove = our old leading note
+ * to delete; insert = one-line text to put at the very start. Nothing here can send.
+ */
+export function planPick({ current = '', oldNote = '', note = '', fill = '', fills = [] } = {}) {
+  const cur = norm(current);
+  const old = norm(oneLine(oldNote));
+  const next = oneLine(note);
+  const plan = { clear: false, remove: '', insert: '' };
+  const hadOld = Boolean(old) && cur.startsWith(old);
+  let rest = hadOld ? cur.slice(old.length).trim() : cur;
+  const ours = (t) => !t || [fill, ...fills].map((f) => norm(oneLine(f))).includes(t);
+  if (hadOld && old === norm(next) && !ours(rest)) return plan; // same note already in front of the user's text
+  if (hadOld) { if (ours(rest)) { plan.clear = true; rest = ''; } else plan.remove = old; }
+  if (!norm(next)) return plan;
+  if (!rest) plan.insert = oneLine(next + (fill || ''));
+  else if (!rest.startsWith(norm(next))) plan.insert = next.endsWith(' ') ? next : `${next} `;
+  return plan;
+}
+/** Plan the composer edit for Undo: take our note (and an auto fill) back out, leave the user's own text alone. */
+export function planUndo({ current = '', note = '', fills = [] } = {}) {
+  const cur = norm(current);
+  const n = norm(oneLine(note));
+  if (!n || !cur.startsWith(n)) return { clear: false, remove: '', insert: '' };
+  const rest = cur.slice(n.length).trim();
+  const ours = !rest || fills.map((f) => norm(oneLine(f))).includes(rest);
+  return { clear: ours, remove: ours ? '' : n, insert: '' };
+}
+
+/**
+ * What a key pressed INSIDE the widget does. The content script stops every such key from reaching the page
+ * (so the chat composer never sees Escape/Enter/arrows/Space typed in the widget) and then applies this action.
+ * type: 'close' (Escape, panel open: close + focus the mascot) | 'hide' (Escape: hide the preview) | 'focus' (arrows/Home/End
+ * move between faces) | 'native' (Enter/Space: the focused widget button's own click = open faces / pick / Undo) | 'none'.
+ * There is no 'send' or 'submit' action: picking only places a note in the composer.
+ */
+export function keyAction(key, { open = false, index = -1, count = 3, repeat = false } = {}) {
+  if (key === 'Escape' || key === 'Esc') return { type: open ? 'close' : 'hide', preventDefault: true };
+  const onFace = open && index >= 0 && count > 0;
+  const move = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[key];
+  if (move) return onFace ? { type: 'focus', index: (index + move + count) % count, preventDefault: true } : { type: 'none', preventDefault: true };
+  if (key === 'Home' || key === 'End') return onFace ? { type: 'focus', index: key === 'Home' ? 0 : count - 1, preventDefault: true } : { type: 'none', preventDefault: false };
+  if (key === 'Enter' || key === ' ' || key === 'Spacebar') return repeat ? { type: 'none', preventDefault: true } : { type: 'native', preventDefault: false };
+  return { type: 'none', preventDefault: false };
+}

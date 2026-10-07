@@ -128,9 +128,9 @@ test('dock: lift above a composer that reaches the right edge; leave the default
   assert.equal(clampPos({ right: 'x', bottom: 1 }, { vw, vh }), null);
 });
 
-test('extension 0.3.0: mascot face in a Shadow DOM, faces panel, Escape/outside close, keyboard, reduced motion, no emoji', () => {
+test('extension 0.3.1: mascot face in a Shadow DOM, faces panel, Escape/outside close, keyboard, reduced motion, no emoji', () => {
   const m = JSON.parse(read('../extension/manifest.json'));
-  assert.equal(m.version, '0.3.0');
+  assert.equal(m.version, '0.3.1');
   assert.equal(m.name, 'Attune Load Feedback (prototype)');
   assert.deepEqual(m.content_scripts[0].js, ['content.js']);
   assert.ok(m.web_accessible_resources[0].resources.includes('lib/*'), 'lib/mascot.js + lib/widget.js importable from the content script');
@@ -143,7 +143,8 @@ test('extension 0.3.0: mascot face in a Shadow DOM, faces panel, Escape/outside 
   assert.match(ct, /composedPath\(\)\.includes\(host\)/, 'outside click closes the panel');
   assert.match(ct, /aria-expanded/);
   assert.match(ct, /aria-pressed/);
-  assert.match(ct, /ArrowRight/);
+  assert.match(ct, /W\.keyAction/, 'arrow keys handled via lib/widget.js keyAction');
+  assert.match(read('../extension/lib/widget.js'), /ArrowRight/);
   assert.match(ct, /:focus-visible/);
   assert.match(ct, /prefers-reduced-motion: no-preference/);
   assert.match(ct, /prefers-reduced-motion: reduce/);
@@ -154,5 +155,5 @@ test('extension 0.3.0: mascot face in a Shadow DOM, faces panel, Escape/outside 
   assert.doesNotMatch(read('../extension/lib/widget.js').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''), /chrome\.|document\.|window\./, 'widget.js stays pure');
   const bg = read('../extension/background.js');
   assert.match(bg, /prefs\.level = /);
-  assert.match(read('../extension/README.md'), /0\.3\.0/);
+  assert.match(read('../extension/README.md'), /0\.3\.1/);
 });

@@ -126,7 +126,7 @@ test('extension: instant apply default ON, chip Undo, no confirm, no auto-send',
   assert.match(lib, /prefixForLevel|rewritePrompt/);
   // empty composer fills rewrite text but still does not send
   assert.match(ct, /rewrite your last answer|Please rewrite/);
-  assert.match(ct, /setInputText/);
+  assert.match(ct, /insertAtStart/); // one-line insert at the start of the composer (0.3.1), never a send
 });
 
 test('extension prefixForLevel: overloaded/rising nonempty, calm empty', async () => {

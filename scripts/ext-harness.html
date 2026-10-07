@@ -1,7 +1,12 @@
 <!doctype html>
 <!-- Local visual check for the extension mascot widget (not part of the extension, nothing is sent anywhere).
      Serve the repo root (e.g. `python3 -m http.server 8099`) and open /scripts/ext-harness.html?level=overloaded&state=open
-     state: idle | hover | open | face (hover preview on a face choice); level: calm | rising | overloaded; lang=ko for Korean. -->
+     state: idle | hover | open | face (hover preview on a face choice); level: calm | rising | overloaded; lang=ko for Korean.
+     composer=pm swaps the textarea for a ProseMirror-like contenteditable. Both fake composers are HOSTILE on purpose: they
+     "send" (record into window.__h.submits and clear) on Enter keydown (trusted or synthetic), on an inserted line break
+     (beforeinput insertParagraph/insertLineBreak, or a newline appearing in the text), on form submit and on a send-button click.
+     nl=1 makes the stubbed background return a note ending in "\n\n" (checks the content script flattens it).
+     scripts/ext-harness-check.mjs drives this page in headless Chrome with real (trusted) keys and mouse; expected submits: 0. -->
 <html lang="en"><head><meta charset="utf-8"><title>Attune extension mascot harness</title>
 <style>
   body { margin: 0; font: 15px/1.5 system-ui, sans-serif; background: #F7F7F8; color: #1F2328; height: 100vh; }
@@ -21,9 +26,57 @@
   <div class="msg">How do I run Postgres in a container?</div>
   <div class="msg">Here is a long answer with several steps, options and caveats about volumes, ports, environment variables and health checks…</div>
 </main>
-<form onsubmit="return false"><textarea aria-label="Ask Grok anything" placeholder="Ask anything"></textarea><button type="submit" aria-label="Submit">↑</button></form>
+<form><textarea aria-label="Ask Grok anything" placeholder="Ask anything"></textarea><button type="submit" aria-label="Submit">↑</button></form>
 <script>
   const q = new URLSearchParams(location.search);
+  /* ---------- hostile fake composer: anything that looks like Enter or a line break = SEND ---------- */
+  const H = window.__h = { submits: [], leaks: [], allowBreak: false };
+  const form = document.querySelector('form');
+  let box = form.querySelector('textarea');
+  if (q.get('composer') === 'pm') {
+    const pm = document.createElement('div');
+    pm.className = 'tiptap ProseMirror';
+    pm.contentEditable = 'true';
+    pm.setAttribute('role', 'textbox');
+    pm.setAttribute('aria-label', 'Ask Grok anything');
+    pm.style.cssText = 'flex:1;min-height:44px;outline:none;white-space:pre-wrap;';
+    pm.innerHTML = '<p><br></p>';
+    box.replaceWith(pm);
+    box = pm;
+  }
+  H.box = box;
+  H.text = () => (box.value ?? box.innerText).replace(/\n$/, '');
+  const lineCount = () => (box.value !== undefined ? box.value : box.innerText.replace(/\n$/, '')).split('\n').length - 1;
+  const send = (why, e) => {
+    H.submits.push({ why, trusted: e ? e.isTrusted : null, text: H.text() });
+    if (box.value !== undefined) box.value = ''; else box.innerHTML = '<p><br></p>';
+  };
+  box.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    if (e.shiftKey) { // the user's own soft line break (allowed: it is the user's Shift+Enter, consumed by the next input)
+      H.allowBreak = true;
+      if (box.value === undefined) { e.preventDefault(); document.execCommand('insertLineBreak'); }
+      return;
+    }
+    e.preventDefault(); send('enter-keydown', e);
+  });
+  box.addEventListener('beforeinput', (e) => {
+    if (H.allowBreak) return;
+    if (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak' || /[\r\n\u2028\u2029]/.test(e.data || '')) { e.preventDefault(); send(`beforeinput:${e.inputType}`, e); }
+  });
+  let lastLines = 0;
+  box.addEventListener('input', (e) => {
+    const lines = lineCount();
+    if (!H.allowBreak && lines > lastLines) send(`newline-in-text:${e.inputType}`, e);
+    H.allowBreak = false;
+    lastLines = lineCount();
+  });
+  form.addEventListener('submit', (e) => { e.preventDefault(); send('form-submit', e); });
+  form.querySelector('button').addEventListener('click', (e) => { e.preventDefault(); send('send-button', e); });
+  // page key handlers registered later than the widget's window listener: none of them may see a key typed in the widget
+  for (const t of ['keydown', 'keyup', 'keypress']) {
+    document.addEventListener(t, (e) => { const h = document.getElementById('attune-load-fab'); if (h && e.composedPath().includes(h)) H.leaks.push(`${t}:${e.key}`); }, true);
+  }
   if (q.get('dark')) document.body.classList.add('dark');
   if (q.get('lang') === 'ko') document.documentElement.lang = 'ko';
   const store = { 'attune.ext.prefs.v1': { level: q.get('level') || 'calm' } };
@@ -33,7 +86,11 @@
       getURL: (p) => `/extension/${p}`,
       sendMessage: async (msg) => {
         if (msg.type === 'get_status') return { ok: true, prefs: store['attune.ext.prefs.v1'] };
-        if (msg.type === 'record_load') return { ok: true, pendingPrefix: msg.level === 'calm' ? '' : 'NOTE: summary first.\n\n' };
+        if (msg.type === 'record_load') {
+          const { prefixForLevel } = await import('/extension/lib/labels.js');
+          const p = prefixForLevel(msg.level);
+          return { ok: true, pendingPrefix: p && q.get('nl') ? `${p.trim()}\n\n` : p };
+        }
         return { ok: true };
       },
     },
@@ -43,7 +100,17 @@
     },
   };
 </script>
-<script src="/extension/content.js"></script>
+<script>
+  // The harness runs on localhost, so the content script falls back to the 'chatgpt.com' entry; point that entry at the
+  // grok.com selectors (textarea[aria-label='Ask Grok anything'] / ProseMirror contenteditable) before loading content.js.
+  fetch('/extension/selectors.json').then((r) => r.json()).then((all) => {
+    all['chatgpt.com'] = all['grok.com'];
+    const url = URL.createObjectURL(new Blob([JSON.stringify(all)], { type: 'application/json' }));
+    const getURL = chrome.runtime.getURL;
+    chrome.runtime.getURL = (p) => (p === 'selectors.json' ? url : getURL(p));
+    const s = document.createElement('script'); s.src = '/extension/content.js'; document.body.append(s);
+  });
+</script>
 <script>
   const state = q.get('state') || 'idle';
   const until = (f) => new Promise((r) => { const t = setInterval(() => { const v = f(); if (v) { clearInterval(t); r(v); } }, 30); });

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Attune Load Feedback (prototype)",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Local cognitive-load mascot (brain-balloon face) for ChatGPT, Claude, Gemini, and Grok. Prototype only — not submitted to the Chrome Web Store. No data leaves the browser.",
   "permissions": [
     "storage",
