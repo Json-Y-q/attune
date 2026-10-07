@@ -29,6 +29,7 @@ const { getAdaptation } = await import(adaptUrl);
 const { newSuggestState, canSuggest, markShown, recordOutcome } = await import(suggestUrl);
 const { makeLabel, appendLabel, exportLabelsJSON } = await import(labelsUrl);
 const { analyzeLoop, parseConversation } = await import(loopUrl);
+const { t: tr } = await import(pathToFileURL(join(docsJs, 'i18n.js')).href);
 
 const labels = [];
 let sessionId = `mcp_${Date.now().toString(36)}`;
@@ -57,7 +58,7 @@ const TOOLS = [
   {
     name: 'get_loop_status',
     description: 'Detect a looping chat (local rules).',
-    inputSchema: { type: 'object', properties: { conversation: CONV, turns: { type: 'array' }, verbose: V } },
+    inputSchema: { type: 'object', properties: { conversation: CONV, turns: { type: 'array' }, lang: { type: 'string', enum: ['en', 'ko'] }, verbose: V } },
   },
 ];
 
@@ -68,7 +69,24 @@ const json = (o) => text(JSON.stringify(o, null, 2));
 const paramsLine = (p) => [p.structure, p.summary_sentences ? `summary ${p.summary_sentences}` : null, p.keep_full_details ? 'full kept' : null, `pace ${p.pace}`, `tone ${p.tone}`, `amount ${p.amount}`, p.max_options ? `options ≤${p.max_options}` : null].filter(Boolean).join(' · ');
 const loopLine = (l) => (l && l.detected ? `${l.type} ${l.confidence}` : 'none');
 const gateLine = (g) => (g.ok ? `ok ${g.remaining} left` : `${g.reason}${g.until ? ` until ${new Date(g.until).toISOString().slice(0, 16)}Z` : ''}`);
-const evLine = (ev) => ev.map((e) => `${e.key}(${Object.entries(e.params || {}).map(([k, v]) => `${k}=${v}`).join(',')})`).join('; ');
+// Loop evidence as short human phrases (never raw translation keys). Long form uses the site's i18n sentences.
+const EV_SHORT = {
+  en: {
+    reask: 'same question repeated, turns {a}→{b}, {s}% alike', complaint: 'frustration wording, turn {a}',
+    aisame: 'AI replies alike, turns {a}→{b}, {s}%', aiadvice: 'same advice ×{n}: “{q}”', error: 'same error, turns {a}→{b}',
+    long: '{n} turns, still unresolved', noprogress: 'progress {p}/100', switch: 'direction changed, turn {a}', drift: 'first vs latest request {s}% alike',
+  },
+  ko: {
+    reask: '같은 질문 반복 {a}→{b}턴, 유사도 {s}%', complaint: '불만 표현 {a}턴',
+    aisame: 'AI 답 유사 {a}→{b}턴, {s}%', aiadvice: '같은 제안 {n}회: “{q}”', error: '같은 오류 {a}→{b}턴',
+    long: '{n}턴째 미해결', noprogress: '진전 {p}/100', switch: '방향 전환 {a}턴', drift: '처음·최근 요청 유사도 {s}%',
+  },
+};
+const evId = (e) => String(e.key || '').replace(/^lo_ev_/, '');
+const fill = (tpl, params = {}) => tpl.replace(/\{(\w+)\}/g, (_, k) => (k in params ? String(params[k]) : ''));
+const evShort = (e, lang) => fill(EV_SHORT[lang][evId(e)] || EV_SHORT[lang].long, e.params);
+const evLong = (e, lang) => tr(lang, e.key, e.params);
+const evLine = (ev, lang) => ev.map((e) => evShort(e, lang)).join('; ');
 
 function ok(id, result) {
   return { jsonrpc: '2.0', id, result };
@@ -80,7 +98,9 @@ function err(id, code, message) {
 function resolveTurns(args = {}) {
   if (Array.isArray(args.turns) && args.turns.length) return args.turns;
   if (typeof args.conversation === 'string' && args.conversation.trim()) {
-    return parseConversation(args.conversation) || [];
+    // Clients sometimes send escaped newlines ("\\n" as two characters): treat them as line breaks.
+    const conv = args.conversation.replace(/\\r\\n|\\n|\\r/g, '\n');
+    return parseConversation(conv) || [];
   }
   return [];
 }
@@ -147,15 +167,16 @@ function callTool(name, args = {}) {
   if (name === 'get_loop_status') {
     const turns = resolveTurns(args);
     const analysis = turns.length ? analyzeLoop(turns) : { detected: false, tooFew: true, type: null, confidence: 0, evidence: [] };
+    const lang = args.lang === 'ko' ? 'ko' : 'en';
     const full = {
       detected: analysis.detected,
       type: analysis.type,
       confidence: analysis.confidence,
-      evidence: analysis.evidence,
+      evidence: analysis.evidence.map((e) => ({ kind: evId(e), text: evLong(e, lang), short: evShort(e, lang), params: e.params })),
       exportHint: labels.length ? 'in-memory labels present (stdio session only)' : null,
     };
     if (args.verbose) return json(full);
-    return text(kv([['loop', loopLine(full)], ['evidence', full.evidence.length ? evLine(full.evidence) : null], ['labels', labels.length || null]]));
+    return text(kv([['loop', loopLine(full)], ['evidence', full.evidence.length ? evLine(analysis.evidence, lang) : null], ['labels', labels.length || null]]));
   }
   throw new Error(`unknown tool: ${name}`);
 }

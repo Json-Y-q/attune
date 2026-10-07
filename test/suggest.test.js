@@ -276,7 +276,7 @@ test('MCP: compact item-value responses are ≥50% smaller than verbose and keep
   assert.equal(ga.suggestion, 'Want a short summary?');
   assert.match(ga.gate, /^ok \d left$/);
   assert.match(lp.loop, /^reask /);
-  assert.match(lp.evidence, /lo_ev_reask\(a=\d+,b=\d+,s=\d+\)/);
+  assert.match(lp.evidence, /^same question repeated, turns \d+→\d+, \d+% alike/);
   for (const t of txt) assert.equal(isDiagnostic(t), false);
   // same meaning in the short context (KO too)
   const ko = buildAdaptationContext({ level: 'overloaded', lang: 'ko', short: true });
@@ -386,4 +386,45 @@ test('analyze-labels: exported JSON → Markdown summary (time bands, session mi
   assert.match(read('../README.md'), /2주 자기 실험/);
   assert.match(read('../docs/index.html'), /href="conversation\.html#rhythm"/);
   assert.match(read('../docs/conversation.html'), /href="#rhythm"/);
+});
+
+test('MCP: no raw translation keys in any tool response (compact + verbose, EN + KO); evidence is a human phrase; literal "\\n" = newline', () => {
+  const KEY = /\b[a-z]{2}_[a-z_]+\b/;
+  const reask = STRINGS.en.lo_ex_reask_text;
+  const same = 'You: How do I export the spreadsheet to PDF on one page?\nAI: Use File > Print and choose Fit to page.\nYou: How can I export my spreadsheet to PDF on one page?\nAI: Use File > Print and choose Fit to page.\nYou: still not working, how do I export the spreadsheet to PDF on one page\nAI: Use File > Print and choose Fit to page.';
+  const escaped = reask.replace(/\n/g, '\\n'); // two characters: backslash + n
+  assert.ok(!escaped.includes('\n'));
+  const calls = [{ jsonrpc: '2.0', id: 0, method: 'tools/list' }];
+  let id = 1;
+  for (const lang of ['en', 'ko']) for (const verbose of [false, true]) {
+    const v = verbose ? { verbose: true } : {};
+    calls.push(
+      { name: 'report_load', arguments: { level: 'overloaded', lang, conversation: reask, ...v } },
+      { name: 'get_adaptation', arguments: { overloaded: true, lang, conversation: same, ...v } },
+      { name: 'get_loop_status', arguments: { conversation: reask, lang, ...v } },
+      { name: 'get_loop_status', arguments: { conversation: same, lang, ...v } },
+      { name: 'get_loop_status', arguments: { conversation: escaped, lang, ...v } },
+      { name: 'record_suggestion', arguments: { outcome: 'ignore', ...v } },
+    );
+  }
+  const input = calls.map((c) => JSON.stringify(c.method ? c : { jsonrpc: '2.0', id: id++, method: 'tools/call', params: c })).join('\n') + '\n';
+  const p = spawnSync(process.execPath, ['mcp/server.mjs'], { cwd: new URL('..', import.meta.url).pathname, encoding: 'utf8', input, timeout: 5000 });
+  const lines = p.stdout.trim().split('\n');
+  assert.equal(lines.length, calls.length);
+  for (const line of lines) {
+    const body = JSON.parse(line);
+    assert.ok(!body.error, line);
+    const shown = body.result.content ? body.result.content[0].text : JSON.stringify(body.result);
+    assert.doesNotMatch(shown, KEY, shown.slice(0, 300));
+  }
+  const texts = lines.slice(1).map((l) => JSON.parse(l).result.content[0].text);
+  const enLoop = texts[2]; const enEscaped = texts[4]; const koLoop = texts[14];
+  assert.match(enLoop, /^loop: reask /);
+  assert.match(enLoop, /evidence: same question repeated, turns 1→3, \d+% alike/);
+  assert.equal(enEscaped, enLoop, 'escaped "\\n" input parses like real newlines');
+  assert.match(koLoop, /evidence: 같은 질문 반복 1→3턴, 유사도 \d+%; 불만 표현 [\d, ]+턴/);
+  const verboseLoop = JSON.parse(texts[8]);
+  assert.equal(verboseLoop.evidence[0].kind, 'reask');
+  assert.match(verboseLoop.evidence[0].text, /^Turns 1 and 3 \(yours\) share \d+% of their words$/);
+  assert.equal('key' in verboseLoop.evidence[0], false);
 });
