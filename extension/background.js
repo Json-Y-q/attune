@@ -17,6 +17,7 @@ async function getPrefs() {
     instantApply: true, // mascot click = attach to next message (default ON)
     insertEnabled: true,
     pendingPrefix: '',
+    level: 'calm', // last mascot pick (drives the mascot's colour and motion)
     sessionId: null,
     ...(r[PREFS] || {}),
   };
@@ -46,6 +47,7 @@ chrome.runtime.onMessage.addListener((msg, _s, sendResponse) => {
       const labels = appendLabel(await getLabels(), label);
       await setLabels(labels);
       let pendingPrefix = '';
+      prefs.level = ['calm', 'rising', 'overloaded'].includes(level) ? level : 'overloaded'; // mascot colour/motion on every tab
       if (prefs.instantApply !== false && prefs.insertEnabled !== false) {
         pendingPrefix = prefixForLevel(level);
         prefs.pendingPrefix = pendingPrefix;
@@ -92,6 +94,7 @@ chrome.runtime.onMessage.addListener((msg, _s, sendResponse) => {
     if (msg?.type === 'clear_pending') {
       const prefs = await getPrefs();
       prefs.pendingPrefix = '';
+      if (['calm', 'rising', 'overloaded'].includes(msg.level)) prefs.level = msg.level; // Undo shows the previous level again
       await setPrefs(prefs);
       sendResponse({ ok: true, prefs });
       return;

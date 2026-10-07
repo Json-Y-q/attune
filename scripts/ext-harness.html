@@ -1,0 +1,59 @@
+<!doctype html>
+<!-- Local visual check for the extension mascot widget (not part of the extension, nothing is sent anywhere).
+     Serve the repo root (e.g. `python3 -m http.server 8099`) and open /scripts/ext-harness.html?level=overloaded&state=open
+     state: idle | hover | open | face (hover preview on a face choice); level: calm | rising | overloaded; lang=ko for Korean. -->
+<html lang="en"><head><meta charset="utf-8"><title>Attune extension mascot harness</title>
+<style>
+  body { margin: 0; font: 15px/1.5 system-ui, sans-serif; background: #F7F7F8; color: #1F2328; height: 100vh; }
+  body.dark { background: #151517; color: #E8E8EA; }
+  main { max-width: 680px; margin: 0 auto; padding: 24px 24px 160px; }
+  .msg { background: #fff; border-radius: 14px; padding: 12px 14px; margin: 12px 0; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  body.dark .msg { background: #232326; }
+  form { position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; width: min(760px, calc(100vw - 32px)); display: flex; gap: 8px; background: #fff; border: 1px solid #D0D4DC; border-radius: 22px; padding: 10px 12px; box-sizing: border-box; }
+  body.dark form { background: #232326; border-color: #3A3A40; }
+  textarea { flex: 1; border: 0; resize: none; font: inherit; background: transparent; color: inherit; outline: none; height: 44px; }
+  form button { border: 0; border-radius: 50%; width: 40px; height: 40px; background: #1F2328; color: #fff; font-size: 18px; }
+  /* hostile page CSS: the widget lives in a shadow root, so none of this should reach it */
+  button { background: hotpink !important; } svg path { stroke: lime !important; } div { font-family: serif !important; }
+</style></head>
+<body>
+<main>
+  <div class="msg">How do I run Postgres in a container?</div>
+  <div class="msg">Here is a long answer with several steps, options and caveats about volumes, ports, environment variables and health checks…</div>
+</main>
+<form onsubmit="return false"><textarea aria-label="Ask Grok anything" placeholder="Ask anything"></textarea><button type="submit" aria-label="Submit">↑</button></form>
+<script>
+  const q = new URLSearchParams(location.search);
+  if (q.get('dark')) document.body.classList.add('dark');
+  if (q.get('lang') === 'ko') document.documentElement.lang = 'ko';
+  const store = { 'attune.ext.prefs.v1': { level: q.get('level') || 'calm' } };
+  const listeners = [];
+  window.chrome = {
+    runtime: {
+      getURL: (p) => `/extension/${p}`,
+      sendMessage: async (msg) => {
+        if (msg.type === 'get_status') return { ok: true, prefs: store['attune.ext.prefs.v1'] };
+        if (msg.type === 'record_load') return { ok: true, pendingPrefix: msg.level === 'calm' ? '' : 'NOTE: summary first.\n\n' };
+        return { ok: true };
+      },
+    },
+    storage: {
+      local: { get: async (k) => ({ [k]: store[k] }), set: async (o) => Object.assign(store, o), remove: async (k) => { delete store[k]; } },
+      onChanged: { addListener: (f) => listeners.push(f) },
+    },
+  };
+</script>
+<script src="/extension/content.js"></script>
+<script>
+  const state = q.get('state') || 'idle';
+  const until = (f) => new Promise((r) => { const t = setInterval(() => { const v = f(); if (v) { clearInterval(t); r(v); } }, 30); });
+  until(() => document.getElementById('attune-load-fab')?.shadowRoot?.querySelector('.main .art svg')).then(() => {
+    const root = document.getElementById('attune-load-fab').shadowRoot;
+    const main = root.querySelector('.main');
+    if (state === 'hover') main.dispatchEvent(new MouseEvent('mouseenter'));
+    if (state === 'open' || state === 'face') main.click();
+    if (state === 'face') root.querySelector(`.face[data-lv="${q.get('face') || 'rising'}"]`).dispatchEvent(new MouseEvent('mouseenter'));
+    document.title = 'ready';
+  });
+</script>
+</body></html>

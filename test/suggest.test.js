@@ -293,13 +293,15 @@ test('MCP: compact item-value responses are ≥50% smaller than verbose and keep
 import vm from 'node:vm';
 function loadContent({ found = {}, lang = 'en-US', clipboardOk = true } = {}) {
   const gen = () => ({ style: {}, dataset: {}, hidden: true, textContent: '', classList: { add() {}, remove() {}, toggle() {} }, addEventListener() {}, querySelector: () => gen(), querySelectorAll: () => [], appendChild() {}, setAttribute() {} });
-  const chipParts = { '.attune-chip-txt': { textContent: '' }, '.attune-copy': { hidden: true, textContent: '' } };
-  const chip = { hidden: true, classes: new Set(), classList: { add(c) { chip.classes.add(c); } }, querySelector: (c) => chipParts[c] };
+  const chipParts = { '.chip-txt': { textContent: '' }, '.copy': { hidden: true, textContent: '' } };
+  const chip = { hidden: true, classes: new Set(), classList: { add(c) { chip.classes.add(c); }, remove(c) { chip.classes.delete(c); } }, querySelector: (c) => chipParts[c] };
+  // the widget lives in an open shadow root on #attune-load-fab (already mounted here, so the script does not build it again)
+  const host = { shadowRoot: { querySelector: (c) => (c === '.chip' ? chip : chipParts[c] ?? null) } };
   const copied = [];
   const document = {
     querySelectorAll(css) { if (css.includes('[[')) throw new SyntaxError('bad'); return found[css] || []; },
-    querySelector(css) { if (css === '#attune-load-fab .attune-chip') return chip; if (css === '#attune-load-fab .attune-chip-txt') return chipParts['.attune-chip-txt']; return null; },
-    getElementById: () => null, documentElement: { appendChild() {} }, createElement: gen, addEventListener() {}, execCommand() { return true; },
+    querySelector: () => null,
+    getElementById: (id) => (id === 'attune-load-fab' ? host : null), documentElement: { appendChild() {}, lang: '' }, createElement: gen, addEventListener() {}, execCommand() { return true; },
   };
   const ctx = vm.createContext({
     document, location: { hostname: 'grok.com' }, setInterval() {}, setTimeout() {}, console,
@@ -344,15 +346,17 @@ test('extension fallback: composer missing → "couldn’t find the chat box" ch
   await new Promise((r) => setImmediate(r));
   assert.deepEqual(copied, ['LOAD NOTE']);
   assert.equal(chip.hidden, false);
-  assert.match(chipParts['.attune-chip-txt'].textContent, /Couldn’t find the chat box/);
-  assert.equal(chipParts['.attune-copy'].hidden, false, 'Copy button offered as a second path');
+  assert.match(chipParts['.chip-txt'].textContent, /Couldn’t find the chat box/);
+  assert.equal(chipParts['.copy'].hidden, false, 'Copy button offered as a second path');
+  assert.ok(chip.classes.has('warn'));
   const ko = loadContent({ found: {}, lang: 'ko-KR', clipboardOk: false });
   ko.ctx.writeComposer(sel, 'x');
   await new Promise((r) => setImmediate(r));
-  assert.match(ko.chipParts['.attune-chip-txt'].textContent, /^입력창을 찾지 못함/);
+  assert.match(ko.chipParts['.chip-txt'].textContent, /^입력창을 찾지 못함/);
   const ct = read('../extension/content.js');
   assert.match(ct, /position:fixed;right:16px;bottom:88px/);
-  assert.match(ct, /setInterval\(\(\) => \{ if \(!document\.getElementById\('attune-load-fab'\)\)/);
+  assert.match(ct, /setInterval\(\(\) => \{ if \(!document\.getElementById\(FAB_ID\)\) ensureUI/);
+  assert.match(ct, /const FAB_ID = 'attune-load-fab'/);
   assert.doesNotMatch(ct, /\.click\(\)|requestSubmit|form\.submit/);
 });
 
