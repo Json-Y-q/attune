@@ -1,22 +1,22 @@
 // Conversation page controller: scripted partner simulation + text-to-speech (no microphone, no AI model, no network).
-import { computeSettings } from './engine.js?v=e86ad124';
-import { SAMPLE_PROFILE } from './profile.js?v=e86ad124';
-import { transform, toPlainText } from './transform.js?v=e86ad124';
-import { loadProfile, loadJSON, saveJSON, removeKey } from './storage.js?v=e86ad124';
-import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=e86ad124';
+import { computeSettings } from './engine.js?v=8bf31d35';
+import { SAMPLE_PROFILE } from './profile.js?v=8bf31d35';
+import { transform, toPlainText } from './transform.js?v=8bf31d35';
+import { loadProfile, loadJSON, saveJSON, removeKey } from './storage.js?v=8bf31d35';
+import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=8bf31d35';
 import {
   newSession, userTurn, aiReplied, control, respondToSuggestion, undoAdjust, skipAhead, addSilence, silenceStage,
   activeSignals, loadIndexFor, density, effective, sessionMinutes, buildResumeCard, resumeExpired, SILENCE, SUGGESTION_TYPES,
   reportLoad,
-} from './partner.js?v=e86ad124';
-import { canSuggest, markShown, recordOutcome, suggestTrigger, suggestKey } from './suggest.js?v=e86ad124';
-import { softView, summarySentences } from './soften.js?v=e86ad124';
-import { makeLabel } from './labels.js?v=e86ad124';
-import { mountRhythm, readSuggest, writeSuggest } from './rhythmui.js?v=e86ad124';
-import { typeLive, typingCps } from './typing.js?v=e86ad124';
-import { mountLoop } from './loopui.js?v=e86ad124';
-import { mountMascotLoad, newSessionId, pushLabel } from './loadui.js?v=e86ad124';
-import { levelInfo, ttsSupported, pickVoices, createSpeaker, speechSentences } from './voice.js?v=e86ad124';
+} from './partner.js?v=8bf31d35';
+import { canSuggest, markShown, recordOutcome, suggestTrigger, suggestKey } from './suggest.js?v=8bf31d35';
+import { softView, summarySentences } from './soften.js?v=8bf31d35';
+import { makeLabel } from './labels.js?v=8bf31d35';
+import { mountRhythm, readSuggest, writeSuggest } from './rhythmui.js?v=8bf31d35';
+import { typeLive, typingCps } from './typing.js?v=8bf31d35';
+import { mountLoop } from './loopui.js?v=8bf31d35';
+import { mountMascotLoad, newSessionId, pushLabel } from './loadui.js?v=8bf31d35';
+import { levelInfo, ttsSupported, pickVoices, createSpeaker, speechSentences } from './voice.js?v=8bf31d35';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };

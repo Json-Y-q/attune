@@ -2,8 +2,8 @@
 // Pure, no network. Used by the web overload button, Chrome extension (prompt prefix), and local MCP.
 // Numbers and wording are ASSUMPTIONS for a prototype.
 
-import { THRESHOLDS } from './engine.js?v=e86ad124';
-import { analyzeLoop } from './loop.js?v=e86ad124';
+import { THRESHOLDS } from './engine.js?v=8bf31d35';
+import { analyzeLoop } from './loop.js?v=8bf31d35';
 
 export const LOAD_LEVELS = Object.freeze(['calm', 'rising', 'high', 'overloaded']);
 
@@ -21,8 +21,9 @@ export function loadLevel(loadIndex, { overloaded = false } = {}) {
  * Build a short system-context instruction the user can prepend (or an MCP tool can return).
  * Suggestive tone; never diagnostic.
  */
-export function buildAdaptationContext({ level = 'calm', loopType = null, lang = 'en' } = {}) {
+export function buildAdaptationContext({ level = 'calm', loopType = null, lang = 'en', short = false } = {}) {
   const ko = lang === 'ko';
+  if (short) return shortContext(level, loopType, ko);
   const lines = [];
   if (level === 'overloaded' || level === 'high') {
     lines.push(ko
@@ -46,6 +47,17 @@ export function buildAdaptationContext({ level = 'calm', loopType = null, lang =
     ? '사용자 상태를 단정하지 마세요("지친 것 같아요" 금지). "짧게 요약해 줄까요?"처럼 행동 제안으로만 말하세요.'
     : 'Never state how the user is (no "you seem tired"). Offer actions only, e.g. "Want a short summary?".');
   return lines.join(' ');
+}
+
+/** Same instruction, fewer words (MCP compact responses). Meaning matches buildAdaptationContext. */
+function shortContext(level, loopType, ko) {
+  const out = [];
+  if (level === 'overloaded' || level === 'high') out.push(ko ? '사용자: 부하 높음 보고. 한 문장 요약 먼저, 아래에 전체 내용(접기 가능, 내용 유지). 한 가지씩, 쉬운 말, 선택지 ≤2.' : 'User reported high load. 1-sentence summary first, then full details below (foldable; drop nothing). One thing at a time, plain words, ≤2 options.');
+  else if (level === 'rising') out.push(ko ? '사용자: 부하 상승 보고. 1~2문장 요약 먼저, 아래에 전체 내용(내용 유지).' : 'User reported rising load. 1–2 sentence summary first, then full details below (drop nothing).');
+  else out.push(ko ? '보통 밀도·속도. 짧게 원하면 맞추기.' : 'Normal density and pace; go shorter if asked.');
+  if (loopType) out.push(ko ? `맴돌 수 있음(${loopType}): 같은 제안 반복 금지, 문제를 한 줄로 재정리하거나 다른 접근.` : `May be looping (${loopType}): don't repeat advice; restate the problem in one line or try another approach.`);
+  out.push(ko ? '행동 제안만, 사용자 상태 단정 금지.' : "Offer actions; never describe the user's state.");
+  return out.join(' ');
 }
 
 /**
@@ -75,6 +87,7 @@ export function suggestionFor(level, lang = 'en') {
  * @param {{loadIndex?:number, overloaded?:boolean, turns?:Array, lang?:string}} input
  */
 export function getAdaptation(input = {}) {
+  const short = Boolean(input.short);
   const overloaded = Boolean(input.overloaded);
   const level = loadLevel(input.loadIndex, { overloaded });
   let loop = null;
@@ -83,7 +96,7 @@ export function getAdaptation(input = {}) {
   }
   const loopType = loop?.detected ? loop.type : null;
   const lang = input.lang === 'ko' ? 'ko' : 'en';
-  const context = buildAdaptationContext({ level, loopType, lang });
+  const context = buildAdaptationContext({ level, loopType, lang, short });
   const params = generationHints(level);
   return {
     level,

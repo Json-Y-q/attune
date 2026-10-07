@@ -214,7 +214,7 @@ test('extension: grok.com supported with minimal permission; suggestion bubble n
   assert.equal(m.host_permissions.length, 4);
   assert.ok(!m.host_permissions.some((h) => /x\.com|<all_urls>|\*:\/\/\*\//.test(h)));
   const sel = JSON.parse(read('../extension/selectors.json'));
-  assert.match(sel['grok.com'].input, /Ask Grok anything/);
+  assert.match(sel['grok.com'].input.join(' '), /Ask Grok anything/);
   const ct = read('../extension/content.js');
   assert.match(ct, /suggest_check/);
   assert.match(ct, /outcome: 'ignore'/);
@@ -241,9 +241,9 @@ test('MCP: Streamable HTTP handler (in-memory, no socket): token, 202 notificati
 
 test('MCP: get_adaptation gives an action-only suggestion; record_suggestion applies backoff', () => {
   const input = [
-    { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'get_adaptation', arguments: { overloaded: true } } },
-    { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'record_suggestion', arguments: { outcome: 'reject' } } },
-    { jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'get_adaptation', arguments: { overloaded: true } } },
+    { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'get_adaptation', arguments: { overloaded: true, verbose: true } } },
+    { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'record_suggestion', arguments: { outcome: 'reject', verbose: true } } },
+    { jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'get_adaptation', arguments: { overloaded: true, verbose: true } } },
   ].map((x) => JSON.stringify(x)).join('\n') + '\n';
   const proc = spawnSync(process.execPath, ['mcp/server.mjs'], { cwd: new URL('..', import.meta.url).pathname, encoding: 'utf8', input, timeout: 5000 });
   const out = proc.stdout.trim().split('\n').map((l) => JSON.parse(JSON.parse(l).result.content[0].text));
@@ -251,4 +251,139 @@ test('MCP: get_adaptation gives an action-only suggestion; record_suggestion app
   assert.equal(isDiagnostic(out[0].suggestion), false);
   assert.equal(out[1].gate.reason, 'backoff');
   assert.equal(out[2].suggestion, null, 'quiet during backoff');
+});
+
+test('MCP: compact item-value responses are ≥50% smaller than verbose and keep the same fields', () => {
+  const conv = STRINGS.en.lo_ex_reask_text;
+  const run = (verbose) => {
+    const calls = [['report_load', { level: 'overloaded', recentTurns: 3 }], ['get_adaptation', { overloaded: true, loadIndex: 80, conversation: conv }], ['get_loop_status', { conversation: conv }]];
+    const input = calls.map(([name, a], i) => JSON.stringify({ jsonrpc: '2.0', id: i, method: 'tools/call', params: { name, arguments: { ...a, ...(verbose ? { verbose: true } : {}) } } })).join('\n') + '\n';
+    const p = spawnSync(process.execPath, ['mcp/server.mjs'], { cwd: new URL('..', import.meta.url).pathname, encoding: 'utf8', input, timeout: 5000 });
+    return p.stdout.trim().split('\n');
+  };
+  const full = run(true); const short = run(false);
+  full.forEach((line, i) => assert.ok(Buffer.byteLength(short[i]) <= Buffer.byteLength(line) * 0.5, `tool ${i}: ${Buffer.byteLength(short[i])} vs ${Buffer.byteLength(line)}`));
+  const txt = short.map((l) => JSON.parse(l).result.content[0].text);
+  const kv = (t) => Object.fromEntries(t.split('\n').map((l) => [l.slice(0, l.indexOf(':')), l.slice(l.indexOf(':') + 2)]));
+  const [rl, ga, lp] = txt.map(kv);
+  assert.equal(rl.level, 'overloaded');
+  assert.match(rl.label, /^l_/);
+  assert.match(rl.params, /summary_then_details · summary 1 · full kept · pace slow/);
+  assert.match(rl.context, /summary first.*full details.*drop nothing/);
+  assert.equal(ga.level, 'overloaded');
+  assert.match(ga.loop, /^reask 0\.\d/);
+  assert.match(ga.context, /looping \(reask\)/);
+  assert.equal(ga.suggestion, 'Want a short summary?');
+  assert.match(ga.gate, /^ok \d left$/);
+  assert.match(lp.loop, /^reask /);
+  assert.match(lp.evidence, /lo_ev_reask\(a=\d+,b=\d+,s=\d+\)/);
+  for (const t of txt) assert.equal(isDiagnostic(t), false);
+  // same meaning in the short context (KO too)
+  const ko = buildAdaptationContext({ level: 'overloaded', lang: 'ko', short: true });
+  assert.match(ko, /요약 먼저/);
+  assert.match(ko, /내용 유지/);
+  assert.equal(isDiagnostic(ko), false);
+  // tools/list stays short: one-line descriptions, every tool takes verbose
+  const p = spawnSync(process.execPath, ['mcp/server.mjs'], { cwd: new URL('..', import.meta.url).pathname, encoding: 'utf8', input: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) + '\n' });
+  const tools = JSON.parse(p.stdout).result.tools;
+  for (const t of tools) { assert.ok(t.description.length <= 70, t.name); assert.equal(t.inputSchema.properties.verbose.type, 'boolean'); }
+});
+
+/* ---------- extension content script in a stubbed DOM (node:vm, no browser, no network) ---------- */
+import vm from 'node:vm';
+function loadContent({ found = {}, lang = 'en-US', clipboardOk = true } = {}) {
+  const gen = () => ({ style: {}, dataset: {}, hidden: true, textContent: '', classList: { add() {}, remove() {}, toggle() {} }, addEventListener() {}, querySelector: () => gen(), querySelectorAll: () => [], appendChild() {}, setAttribute() {} });
+  const chipParts = { '.attune-chip-txt': { textContent: '' }, '.attune-copy': { hidden: true, textContent: '' } };
+  const chip = { hidden: true, classes: new Set(), classList: { add(c) { chip.classes.add(c); } }, querySelector: (c) => chipParts[c] };
+  const copied = [];
+  const document = {
+    querySelectorAll(css) { if (css.includes('[[')) throw new SyntaxError('bad'); return found[css] || []; },
+    querySelector(css) { if (css === '#attune-load-fab .attune-chip') return chip; if (css === '#attune-load-fab .attune-chip-txt') return chipParts['.attune-chip-txt']; return null; },
+    getElementById: () => null, documentElement: { appendChild() {} }, createElement: gen, addEventListener() {}, execCommand() { return true; },
+  };
+  const ctx = vm.createContext({
+    document, location: { hostname: 'grok.com' }, setInterval() {}, setTimeout() {}, console,
+    navigator: { language: lang, clipboard: { writeText: async (t) => { if (!clipboardOk) throw new Error('denied'); copied.push(t); } } },
+    fetch: async () => { throw new Error('no network in tests'); },
+    chrome: { runtime: { getURL: (x) => x, sendMessage: async () => ({}) } },
+    Event: class {}, InputEvent: class {},
+  });
+  vm.runInContext(read('../extension/content.js'), ctx);
+  return { ctx, chip, chipParts, copied };
+}
+const el = (o = {}) => ({ tagName: 'TEXTAREA', value: '', disabled: false, readOnly: false, getAttribute: () => null, closest: () => null, getClientRects: () => (o.visible === false ? [] : [1]), dispatchEvent() {}, ...o });
+
+test('extension grok.com: robust composer candidates (textarea, contenteditable, aria-label), first visible match wins', () => {
+  const sel = JSON.parse(read('../extension/selectors.json'))['grok.com'];
+  assert.ok(Array.isArray(sel.input) && sel.input.length >= 8);
+  const joined = sel.input.join(' | ');
+  assert.match(joined, /textarea\[aria-label='Ask Grok anything'\]/);
+  assert.match(joined, /contenteditable='true'/);
+  assert.match(joined, /aria-label\*='Grok' i/);
+  assert.match(joined, /ProseMirror/);
+  // hidden textarea skipped, visible contenteditable picked
+  const hidden = el({ visible: false });
+  const ce = el({ tagName: 'DIV', isContentEditable: true });
+  const found = { [sel.input[0]]: [hidden], "div.ProseMirror[contenteditable='true']": [ce] };
+  const { ctx } = loadContent({ found });
+  assert.equal(ctx.pickInput(sel), ce);
+  // invalid selector in the list is skipped, not fatal
+  assert.equal(ctx.pickInput({ input: ['bad[[', "div.ProseMirror[contenteditable='true']"] }), ce);
+  // writes into the composer when found (never sends)
+  const ta = el();
+  const r = loadContent({ found: { [sel.input[0]]: [ta] } });
+  assert.equal(r.ctx.writeComposer(sel, 'NOTE'), true);
+  assert.equal(ta.value, 'NOTE');
+});
+
+test('extension fallback: composer missing → "couldn’t find the chat box" chip + clipboard copy; mascot stays floating', async () => {
+  const sel = JSON.parse(read('../extension/selectors.json'))['grok.com'];
+  const { ctx, chip, chipParts, copied } = loadContent({ found: {} });
+  assert.equal(ctx.pickInput(sel), null);
+  assert.equal(ctx.writeComposer(sel, 'LOAD NOTE'), false);
+  await new Promise((r) => setImmediate(r));
+  assert.deepEqual(copied, ['LOAD NOTE']);
+  assert.equal(chip.hidden, false);
+  assert.match(chipParts['.attune-chip-txt'].textContent, /Couldn’t find the chat box/);
+  assert.equal(chipParts['.attune-copy'].hidden, false, 'Copy button offered as a second path');
+  const ko = loadContent({ found: {}, lang: 'ko-KR', clipboardOk: false });
+  ko.ctx.writeComposer(sel, 'x');
+  await new Promise((r) => setImmediate(r));
+  assert.match(ko.chipParts['.attune-chip-txt'].textContent, /^입력창을 찾지 못함/);
+  const ct = read('../extension/content.js');
+  assert.match(ct, /position:fixed;right:16px;bottom:88px/);
+  assert.match(ct, /setInterval\(\(\) => \{ if \(!document\.getElementById\('attune-load-fab'\)\)/);
+  assert.doesNotMatch(ct, /\.click\(\)|requestSubmit|form\.submit/);
+});
+
+test('analyze-labels: exported JSON → Markdown summary (time bands, session minutes, acceptance), sparse note, dedupe', async () => {
+  const { summarize, readExport } = await import('../scripts/analyze-labels.mjs');
+  const mk = (i, extra = {}) => ({ ...makeLabel({ sessionId: 's', level: 'overloaded', now: T0 + i * 3600000, id: `l${i}` }), dow: 2, hour: 14, sessionMin: 31, ...extra });
+  const few = summarize(readExport({ labels: [mk(1), mk(2)] }));
+  assert.match(few, /Fewer than 5 load presses/);
+  assert.doesNotMatch(few, /## Load presses by weekday/);
+  const list = [mk(1), mk(2), mk(3), mk(4, { hour: 9, dow: 4, sessionMin: 5 }), mk(5),
+    { ...mk(6), kind: 'suggest', origin: 'auto', outcome: 'accept' }, { ...mk(7), kind: 'suggest', origin: 'auto', outcome: 'reject' }];
+  const md = summarize(readExport(JSON.stringify({ v: 1, labels: list })), { files: ['a.json'] });
+  assert.match(md, /\| Records \| 7 \|/);
+  assert.match(md, /shown 2 · accepted 1 \(50%\) · passed 1 · no answer 0/);
+  assert.match(md, /\| Most load presses \| Tue 12–15h \|/);
+  assert.match(md, /\| Tue \| 0 \| 0 \| 0 \| 0 \| 5 \| 0 \| 0 \| 0 \|/);
+  assert.match(md, /\| 1 \| 0 \| 0 \| 5 \| 0 \| 0 \|/);
+  assert.match(md, /Not a diagnosis/);
+  assert.equal(isDiagnostic(md), false);
+  const ko = summarize(readExport({ labels: list }), { lang: 'ko' });
+  assert.match(ko, /표시 2 · 수락 1 \(50%\)/);
+  // CLI: merges files and dedupes by id
+  const { writeFileSync, mkdtempSync } = await import('node:fs');
+  const dir = mkdtempSync('/tmp/attune-an-');
+  writeFileSync(`${dir}/a.json`, JSON.stringify({ labels: list }));
+  writeFileSync(`${dir}/b.json`, JSON.stringify({ labels: list.slice(0, 3) }));
+  const p = spawnSync(process.execPath, ['scripts/analyze-labels.mjs', `${dir}/a.json`, `${dir}/b.json`], { cwd: new URL('..', import.meta.url).pathname, encoding: 'utf8' });
+  assert.equal(p.status, 0, p.stderr);
+  assert.match(p.stdout, /\| Records \| 7 \|/);
+  assert.match(read('../README.md'), /Two-week self-experiment/);
+  assert.match(read('../README.md'), /2주 자기 실험/);
+  assert.match(read('../docs/index.html'), /href="conversation\.html#rhythm"/);
+  assert.match(read('../docs/conversation.html'), /href="#rhythm"/);
 });

@@ -35,55 +35,40 @@ let sessionId = `mcp_${Date.now().toString(36)}`;
 const sessionStart = Date.now();
 let suggestState = newSuggestState(); // in memory: same daily cap + backoff as the site and extension
 
+// Short descriptions keep tools/list small; `verbose: true` on any tool returns the full JSON payload.
+const V = { type: 'boolean' }; // verbose: full JSON instead of item: value lines
+const CONV = { type: 'string', description: 'You:/AI: lines' };
 const TOOLS = [
   {
     name: 'report_load',
-    description: 'Record a self-reported cognitive-load event (button press). Local only.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        level: { type: 'string', enum: ['calm', 'rising', 'high', 'overloaded'], description: 'Self-reported load' },
-        recentTurns: { type: 'number' },
-        note: { type: 'string' },
-        lang: { type: 'string', enum: ['en', 'ko'] },
-      },
-    },
+    description: 'Log self-reported load; returns reply guidance.',
+    inputSchema: { type: 'object', properties: { level: { type: 'string', enum: ['calm', 'rising', 'high', 'overloaded'] }, recentTurns: { type: 'number' }, note: { type: 'string' }, lang: { type: 'string', enum: ['en', 'ko'] }, verbose: V } },
   },
   {
     name: 'get_adaptation',
-    description: 'Given load + optional conversation turns, return a system-context phrase, soft generation params (summary-then-details structure, pace, tone) and an action-only suggestion line when the daily cap/backoff allow it.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        loadIndex: { type: 'number' },
-        overloaded: { type: 'boolean' },
-        lang: { type: 'string', enum: ['en', 'ko'] },
-        conversation: { type: 'string', description: 'Optional pasted dialogue (You:/AI: lines)' },
-        turns: { type: 'array', description: 'Optional [{role,text}] turns' },
-      },
-    },
+    description: 'Load (+chat) → reply guidance, params, optional action suggestion.',
+    inputSchema: { type: 'object', properties: { loadIndex: { type: 'number' }, overloaded: { type: 'boolean' }, lang: { type: 'string', enum: ['en', 'ko'] }, conversation: CONV, turns: { type: 'array' }, verbose: V } },
   },
   {
     name: 'record_suggestion',
-    description: 'Record the user\'s answer to an automatic suggestion (accept | reject | ignore). Applies the daily cap and 1/3/7-day backoff. Local, in memory.',
-    inputSchema: {
-      type: 'object',
-      properties: { outcome: { type: 'string', enum: ['accept', 'reject', 'ignore'] } },
-      required: ['outcome'],
-    },
+    description: 'Log answer to a suggestion; applies daily cap + backoff.',
+    inputSchema: { type: 'object', properties: { outcome: { type: 'string', enum: ['accept', 'reject', 'ignore'] }, verbose: V }, required: ['outcome'] },
   },
   {
     name: 'get_loop_status',
-    description: 'Rule-based local loop detection on provided turns or pasted text. No network.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        conversation: { type: 'string' },
-        turns: { type: 'array' },
-      },
-    },
+    description: 'Detect a looping chat (local rules).',
+    inputSchema: { type: 'object', properties: { conversation: CONV, turns: { type: 'array' }, verbose: V } },
   },
 ];
+
+/* ---------- compact item-value text (default) ---------- */
+const kv = (pairs) => pairs.filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => `${k}: ${v}`).join('\n');
+const text = (t) => ({ content: [{ type: 'text', text: t }] });
+const json = (o) => text(JSON.stringify(o, null, 2));
+const paramsLine = (p) => [p.structure, p.summary_sentences ? `summary ${p.summary_sentences}` : null, p.keep_full_details ? 'full kept' : null, `pace ${p.pace}`, `tone ${p.tone}`, `amount ${p.amount}`, p.max_options ? `options ≤${p.max_options}` : null].filter(Boolean).join(' · ');
+const loopLine = (l) => (l && l.detected ? `${l.type} ${l.confidence}` : 'none');
+const gateLine = (g) => (g.ok ? `ok ${g.remaining} left` : `${g.reason}${g.until ? ` until ${new Date(g.until).toISOString().slice(0, 16)}Z` : ''}`);
+const evLine = (ev) => ev.map((e) => `${e.key}(${Object.entries(e.params || {}).map(([k, v]) => `${k}=${v}`).join(',')})`).join('; ');
 
 function ok(id, result) {
   return { jsonrpc: '2.0', id, result };
@@ -121,8 +106,14 @@ function callTool(name, args = {}) {
       loadIndex: level === 'overloaded' ? 90 : level === 'rising' ? 55 : level === 'high' ? 80 : 20,
       turns,
       lang: args.lang === 'ko' ? 'ko' : 'en',
+      short: !args.verbose,
     });
-    return { content: [{ type: 'text', text: JSON.stringify({ label, adaptation, systemContext: adaptation.context, params: adaptation.params, labelCount: labels.length }, null, 2) }] };
+    if (args.verbose) return json({ label, adaptation, systemContext: adaptation.context, params: adaptation.params, labelCount: labels.length });
+    return text(kv([
+      ['level', label.level], ['label', `${label.id} ${label.ts.slice(0, 16)}Z turns ${label.recentTurns}`],
+      ['context', adaptation.context], ['params', paramsLine(adaptation.params)],
+      ['loop', adaptation.loop ? loopLine(adaptation.loop) : null], ['labels', labels.length],
+    ]));
   }
   if (name === 'get_adaptation') {
     const turns = resolveTurns(args);
@@ -131,12 +122,17 @@ function callTool(name, args = {}) {
       overloaded: Boolean(args.overloaded),
       turns,
       lang: args.lang === 'ko' ? 'ko' : 'en',
+      short: !args.verbose,
     });
     // Automatic suggestion line: only when the shared policy allows it (daily cap, backoff, on/off).
     const gate = canSuggest(suggestState, Date.now());
     if (adapt.suggestion && gate.ok) suggestState = markShown(suggestState, Date.now());
     const out = { ...adapt, suggestion: gate.ok ? adapt.suggestion : null, suggestionGate: gate };
-    return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
+    if (args.verbose) return json(out);
+    return text(kv([
+      ['level', out.level], ['loop', out.loop ? loopLine(out.loop) : null], ['context', out.context],
+      ['params', paramsLine(out.params)], ['suggestion', out.suggestion], ['gate', gateLine(gate)],
+    ]));
   }
   if (name === 'record_suggestion') {
     const outcome = ['accept', 'reject', 'ignore'].includes(args.outcome) ? args.outcome : null;
@@ -144,18 +140,22 @@ function callTool(name, args = {}) {
     suggestState = recordOutcome(suggestState, outcome, Date.now());
     const label = makeLabel({ sessionId, source: 'mcp', kind: 'suggest', level: 'rising', origin: 'auto', outcome, sessionStart, signals: {} });
     const next = appendLabel(labels, label); labels.length = 0; labels.push(...next);
-    return { content: [{ type: 'text', text: JSON.stringify({ outcome, gate: canSuggest(suggestState, Date.now()), declineStreak: suggestState.declineStreak, labelCount: labels.length }, null, 2) }] };
+    const gate = canSuggest(suggestState, Date.now());
+    if (args.verbose) return json({ outcome, gate, declineStreak: suggestState.declineStreak, labelCount: labels.length });
+    return text(kv([['outcome', outcome], ['gate', gateLine(gate)], ['streak', suggestState.declineStreak], ['labels', labels.length]]));
   }
   if (name === 'get_loop_status') {
     const turns = resolveTurns(args);
     const analysis = turns.length ? analyzeLoop(turns) : { detected: false, tooFew: true, type: null, confidence: 0, evidence: [] };
-    return { content: [{ type: 'text', text: JSON.stringify({
+    const full = {
       detected: analysis.detected,
       type: analysis.type,
       confidence: analysis.confidence,
       evidence: analysis.evidence,
       exportHint: labels.length ? 'in-memory labels present (stdio session only)' : null,
-    }, null, 2) }] };
+    };
+    if (args.verbose) return json(full);
+    return text(kv([['loop', loopLine(full)], ['evidence', full.evidence.length ? evLine(full.evidence) : null], ['labels', labels.length || null]]));
   }
   throw new Error(`unknown tool: ${name}`);
 }
@@ -256,9 +256,9 @@ function startHttp({ port = 3001, host = '127.0.0.1', token = null, allowNoToken
 
 if (process.argv.includes('--self-test')) {
   // Self-test hook (no MCP client needed)
-  const a = callTool('report_load', { level: 'overloaded', recentTurns: 3 });
-  const b = callTool('get_adaptation', { overloaded: true, loadIndex: 80 });
-  const c = callTool('get_loop_status', { conversation: 'You: how?\nAI: try A\nYou: how?\nAI: try A\nYou: still how?\nAI: try A again\nYou: same problem\nAI: try A' });
+  const a = callTool('report_load', { level: 'overloaded', recentTurns: 3, verbose: true });
+  const b = callTool('get_adaptation', { overloaded: true, loadIndex: 80, verbose: true });
+  const c = callTool('get_loop_status', { verbose: true, conversation: 'You: how?\nAI: try A\nYou: how?\nAI: try A\nYou: still how?\nAI: try A again\nYou: same problem\nAI: try A' });
   console.error(JSON.stringify({ ok: true, tools: TOOLS.map((t) => t.name), sample: { report: JSON.parse(a.content[0].text).label.level || JSON.parse(a.content[0].text).label.kind, hasAdaptation: Boolean(JSON.parse(a.content[0].text).systemContext), level: JSON.parse(b.content[0].text).level, loopKeys: Object.keys(JSON.parse(c.content[0].text)) } }));
   process.exit(0);
 } else if (process.argv.includes('--http-self-test')) {

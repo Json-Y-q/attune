@@ -58,15 +58,47 @@ Or serve `docs/` with any static server (ES modules need http://, not file://), 
 
 Try it: open Demo, pick "Low-HRV day" or "Long session + low HRV" and watch the settings and text change. Edit the answer text or the condition JSON freely.
 
+## Two-week self-experiment (label collection)
+
+Goal: collect your own load labels for 14 days and see *when* load goes up (time of day, weekday, minute into a session) and how often automatic suggestions help. Facts only, not a diagnosis. Labels stay in your browser until you export them.
+
+**Day 0 — setup (10 min)**
+1. Chrome: load the extension for real chats on ChatGPT, Claude, Gemini or Grok ([extension/README.md](extension/README.md) → "Load unpacked").
+2. Open the work rhythm view: [conversation.html#rhythm](https://json-y-q.github.io/attune/conversation.html#rhythm). Keep "Offer suggestions automatically" on and "At most per day" at 3.
+3. Optional: in the extension popup, check the same settings.
+
+**Each day**
+- When a reply feels heavy, click the mascot and pick a face (a bit heavy / overloaded). Pick calm when it feels fine again. One click, no explanation needed.
+- Answer automatic suggestions (Yes / Not now) or just carry on. All three outcomes are recorded.
+- On days you use AI chat, aim for at least one pick. Don't force picks on days you don't.
+
+**Export (day 4, 8, 11, 14)**
+- Site: Work rhythm → Export JSON. Extension: popup → Export JSON. Put the files in one folder, e.g. `attune-labels/`.
+- Clearing browser data deletes labels, so export first.
+
+**Analyse**
+```bash
+node scripts/analyze-labels.mjs attune-labels/*.json --out report.md          # English
+node scripts/analyze-labels.mjs attune-labels/*.json --out report.md --lang ko
+```
+The report lists records per day, a weekday × time-of-day table, minute-into-session bins and the suggestion acceptance rate. Labels with the same id are merged. With fewer than 5 load presses it says so instead of showing patterns.
+
+**Checklist**
+- [ ] The mascot shows on each chat site. If it says "Couldn't find the chat box", paste the copied note yourself and write down the site.
+- [ ] At least one pick on days with AI use
+- [ ] No more than 3 automatic suggestions a day, and quiet days after passing
+- [ ] Exported on day 4, 8, 11 and 14
+- [ ] Report read only after ≥5 load presses; notes on anything odd (missed picks, hidden mascot)
+
 ## Repository layout
 
 ```
-extension/ Chrome MV3 load-button prototype (unpacked only; not Web Store)
-mcp/        local stdio MCP middleware prototype (not for remote/marketplace)
+extension/ Chrome MV3 mascot prototype for ChatGPT/Claude/Gemini/Grok (unpacked only; not Web Store)
+mcp/        local MCP middleware prototype: stdio, or Streamable HTTP on 127.0.0.1 with a token (not deployed, no marketplace)
 docs/       static web app (GitHub Pages root): index.html (landing), onboarding.html, conversation.html, architecture.html, demo.html, css/, js/ (incl. partner, voice, story, mascot, individuals, loop, showcase, conversation), img/ (logos, mascot SVGs), data/ (sample summary + schema), media/ (hero video + optional image slots), favicon.svg
   js/       profile.js, engine.js, transform.js, adapter.js, partner.js, voice.js, story.js, mascot.js, individuals.js, typing.js, loop.js, labels.js, adapt.js (pure logic, tested) · loopui.js, loadui.js, landing.js, onboarding.js, architecture.js, conversation.js, showcase.js, stylecard.js, charts.js, media.js, demo.js, ui.js, storage.js, i18n.js (browser)
 test/       node:test unit and static checks (npm test)
-scripts/    serve.js (local static server, npm start), gen-mascot.mjs (writes the mascot SVGs)
+scripts/    serve.js (local static server, npm start), gen-mascot.mjs (writes the mascot SVGs), stamp.mjs (cache-busting), analyze-labels.mjs (exported labels → Markdown summary)
 brand/      logo work: BRAND.md (spec + comparison), overview.png, concept-2/ (chosen, applied to docs/),
             concept-1/ and concept-1b/ (candidates), archive/ (earlier concepts),
             mascot/ (optional mascot variant, separate from the logo)
@@ -184,15 +216,46 @@ npm start         # http://127.0.0.1:8080  (docs/ 정적 서버)
 
 데모에서 "HRV가 낮은 날" 또는 "장시간 사용 + 낮은 HRV"를 눌러 설정과 텍스트가 바뀌는 것을 확인하세요. 답변 텍스트와 컨디션 JSON은 자유롭게 수정할 수 있습니다.
 
+### 2주 자기 실험 (라벨 수집)
+
+목표: 14일 동안 내 부하 라벨을 모아 *언제* 부하가 오르는지(시간대·요일·세션 몇 분째)와 자동 제안이 얼마나 도움이 됐는지 봅니다. 사실만 보며 진단이 아닙니다. 라벨은 내보내기 전까지 내 브라우저에만 있습니다.
+
+**0일차 — 준비 (10분)**
+1. 크롬: 실제 대화(ChatGPT·Claude·Gemini·Grok)용 확장을 설치합니다([extension/README.md](extension/README.md) → "압축해제된 확장 프로그램 로드").
+2. 작업 리듬 화면을 엽니다: [conversation.html#rhythm](https://json-y-q.github.io/attune/conversation.html#rhythm). "자동으로 제안하기"는 켜고 "하루 최대"는 3으로 둡니다.
+3. 선택: 확장 팝업에서도 같은 설정을 확인합니다.
+
+**매일**
+- 답이 무겁게 느껴지면 마스코트를 눌러 얼굴(조금 무거움 / 과부하)을 고릅니다. 다시 괜찮아지면 평온을 고릅니다. 한 번 클릭이면 되고 설명은 필요 없습니다.
+- 자동 제안에는 "네, 좋아요 / 지금은 괜찮아요"로 답하거나 그냥 넘어가도 됩니다. 세 경우 모두 기록됩니다.
+- AI 대화를 쓴 날은 최소 한 번 고르는 것을 목표로 합니다. 안 쓴 날은 억지로 고르지 않습니다.
+
+**내보내기 (4·8·11·14일차)**
+- 사이트: 작업 리듬 → JSON 내보내기. 확장: 팝업 → Export JSON. 파일은 한 폴더(예: `attune-labels/`)에 모읍니다.
+- 브라우저 데이터를 지우면 라벨도 지워지니 먼저 내보내세요.
+
+**분석**
+```bash
+node scripts/analyze-labels.mjs attune-labels/*.json --out report.md --lang ko
+```
+보고서에는 날짜별 기록 수, 요일 × 시간대 표, 세션 경과 분 구간, 제안 수락률이 나옵니다. id가 같은 라벨은 합칩니다. 부하 입력이 5개 미만이면 패턴 대신 그 사실을 적습니다.
+
+**체크 항목**
+- [ ] 각 대화 사이트에 마스코트가 보인다. "입력창을 찾지 못함"이 뜨면 복사된 메모를 직접 붙여넣고 사이트를 적어 둔다.
+- [ ] AI를 쓴 날 최소 한 번 고름
+- [ ] 자동 제안은 하루 3회 이하, 넘긴 뒤에는 조용한 날이 있음
+- [ ] 4·8·11·14일차에 내보냄
+- [ ] 부하 입력 5개 이상 모인 뒤에 보고서를 읽음, 이상한 점(빠뜨린 입력, 안 보이는 마스코트) 메모
+
 ### 저장소 구조
 
 ```
-extension/ Chrome MV3 부하 버튼 프로토타입(언팩만·웹스토어 미제출)
-mcp/        로컬 stdio MCP 미들웨어 프로토타입(원격·마켓 금지)
+extension/ ChatGPT·Claude·Gemini·Grok용 Chrome MV3 마스코트 프로토타입(언팩만·웹스토어 미제출)
+mcp/        로컬 MCP 미들웨어 프로토타입: stdio 또는 127.0.0.1 Streamable HTTP+토큰(배포·마켓 없음)
 docs/       정적 웹앱(GitHub Pages 루트): index.html(랜딩), onboarding.html(온보딩), conversation.html(대화), architecture.html(구조), demo.html, css/, js/(partner·voice·story·mascot·individuals·loop·showcase·conversation 포함), img/(로고·마스코트 SVG), data/(요약 샘플·스키마), media/(히어로 영상 + 선택 이미지 슬롯), favicon.svg
   js/       profile.js, engine.js, transform.js, adapter.js, partner.js, voice.js, story.js, mascot.js, individuals.js, typing.js, loop.js, labels.js, adapt.js (순수 로직, 테스트됨) · loopui.js, loadui.js, landing.js, onboarding.js, architecture.js, conversation.js, showcase.js, stylecard.js, charts.js, media.js, demo.js, ui.js, storage.js, i18n.js (브라우저)
 test/       node:test 단위·정적 검사 (npm test)
-scripts/    serve.js (로컬 정적 서버, npm start), gen-mascot.mjs (마스코트 SVG 생성)
+scripts/    serve.js (로컬 정적 서버, npm start), gen-mascot.mjs (마스코트 SVG 생성), stamp.mjs (캐시 무효화), analyze-labels.mjs (내보낸 라벨 → Markdown 요약)
 brand/      로고 작업: BRAND.md(사양·비교), overview.png, concept-2/(확정, docs/에 적용),
             concept-1/·concept-1b/(후보), archive/(이전 시안),
             mascot/(로고와 별도인 선택 마스코트 변형)

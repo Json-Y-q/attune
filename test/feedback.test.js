@@ -149,7 +149,7 @@ test('mcp report_load returns label + systemContext + params in one call', () =>
   const proc = spawnSync(process.execPath, ['mcp/server.mjs'], {
     cwd: new URL('..', import.meta.url).pathname,
     encoding: 'utf8',
-    input: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'report_load', arguments: { level: 'overloaded', recentTurns: 2 } } }) + '\n',
+    input: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'report_load', arguments: { level: 'overloaded', recentTurns: 2, verbose: true } } }) + '\n',
     timeout: 5000,
   });
   assert.equal(proc.status, 0, proc.stderr);

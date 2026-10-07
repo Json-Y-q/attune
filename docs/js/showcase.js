@@ -1,13 +1,13 @@
 // "From overload to recovery" player: draws the pure story timeline (story.js) as a phone mock-up,
 // a load meter, the optional mascot and step buttons. Text via textContent only; no network, no storage except
 // the mascot on/off choice.
-import { storyAt, STORY_MS, PHASES, DEFAULT_LEVELS } from './story.js?v=e86ad124';
-import { transform } from './transform.js?v=e86ad124';
-import { renderBlocks, renderLoadMeter } from './ui.js?v=e86ad124';
-import { renderMascot, poseFor, STILL_POSES } from './mascot.js?v=e86ad124';
-import { PERSONAS, SHARED, allAt, adjustMinute, riseRate, minutesToMs } from './individuals.js?v=e86ad124';
-import { loadJSON, saveJSON } from './storage.js?v=e86ad124';
-import { prepareTyping, revealChars, typedChars } from './typing.js?v=e86ad124';
+import { storyAt, STORY_MS, PHASES, DEFAULT_LEVELS } from './story.js?v=8bf31d35';
+import { transform } from './transform.js?v=8bf31d35';
+import { renderBlocks, renderLoadMeter } from './ui.js?v=8bf31d35';
+import { renderMascot, poseFor, STILL_POSES } from './mascot.js?v=8bf31d35';
+import { PERSONAS, SHARED, allAt, adjustMinute, riseRate, minutesToMs } from './individuals.js?v=8bf31d35';
+import { loadJSON, saveJSON } from './storage.js?v=8bf31d35';
+import { prepareTyping, revealChars, typedChars } from './typing.js?v=8bf31d35';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };

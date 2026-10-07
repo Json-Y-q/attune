@@ -1,4 +1,4 @@
 // Architecture page: static diagram + text; this script only wires the language toggle.
-import { initPage } from './ui.js?v=e86ad124';
+import { initPage } from './ui.js?v=8bf31d35';
 
 initPage().start();

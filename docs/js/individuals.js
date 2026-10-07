@@ -2,8 +2,8 @@
 // Attune lightens the answers is personal too. Pure data + functions (no DOM), so it is unit-tested.
 // All values are VIRTUAL. The characters differ only in colour, eye shape and a small accessory; nothing here depends on, or
 // claims anything about, age, gender or any other group. The personal numbers come from the (virtual) onboarding baseline.
-import { THRESHOLDS } from './engine.js?v=e86ad124';
-import { clamp } from './profile.js?v=e86ad124';
+import { THRESHOLDS } from './engine.js?v=8bf31d35';
+import { clamp } from './profile.js?v=8bf31d35';
 
 /** One shared conversation: same length, same turns, same density for everybody. */
 export const SHARED = Object.freeze({ minutes: 50, turns: 20, charsPerReply: 900, durationMs: 24000 });

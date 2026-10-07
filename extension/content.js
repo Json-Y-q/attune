@@ -6,11 +6,24 @@ async function loadSelectors() {
   try { return await (await fetch(chrome.runtime.getURL('selectors.json'))).json(); }
   catch { return {}; }
 }
+const KO = /^ko/i.test(navigator.language || '');
+const MSG = KO
+  ? { noInput: '입력창을 찾지 못함 — 메모를 클립보드에 복사했어요. 입력창에 붙여넣기(Ctrl/⌘+V) 하세요.', copyFail: '입력창을 찾지 못함 — 아래 버튼으로 복사해 붙여넣으세요.', copy: '복사', ready: '다음 전송에 메모 준비됨' }
+  : { noInput: 'Couldn’t find the chat box — the note is copied. Paste it (Ctrl/⌘+V).', copyFail: 'Couldn’t find the chat box — copy the note with the button and paste it.', copy: 'Copy', ready: 'Load note ready for next send' };
+
+/** Candidate list: array in selectors.json (preferred) or a comma list. First visible, editable match wins. */
+function candidates(v) { return Array.isArray(v) ? v : String(v || '').split(',').map((s) => s.trim()).filter(Boolean); }
+function usable(el) {
+  if (!el || el.closest('#attune-load-fab')) return false;
+  if (el.disabled || el.readOnly || el.getAttribute('aria-hidden') === 'true') return false;
+  return el.getClientRects().length > 0;
+}
 function pickInput(sel) {
-  if (!sel?.input) return null;
-  for (const part of sel.input.split(',').map((s) => s.trim())) {
-    const el = document.querySelector(part);
-    if (el) return el;
+  for (const css of candidates(sel?.input)) {
+    let list = [];
+    try { list = [...document.querySelectorAll(css)]; } catch { continue; } // invalid selector: skip
+    const hit = list.find(usable);
+    if (hit) return hit;
   }
   return null;
 }
@@ -43,10 +56,14 @@ function getInputText(el) {
 }
 
 let onOffer = () => {};
+let lastPick = () => {};
 function ensureUI(onPick) {
+  lastPick = onPick;
   if (document.getElementById('attune-load-fab')) return;
   const root = document.createElement('div');
   root.id = 'attune-load-fab';
+  // Inline fallback so the mascot floats bottom-right even if the page blocks or overrides content.css.
+  root.style.cssText = 'position:fixed;right:16px;bottom:88px;z-index:2147483646;';
   root.innerHTML = `
     <button type="button" class="attune-mc" aria-label="Open load faces" title="Attune mascot — pick how heavy it feels">🎈</button>
     <div class="attune-faces" hidden>
@@ -54,7 +71,7 @@ function ensureUI(onPick) {
       <button type="button" data-lv="rising" title="A bit heavy">😐</button>
       <button type="button" data-lv="overloaded" title="Overloaded">😣</button>
     </div>
-    <div class="attune-chip" hidden><span class="attune-chip-txt"></span><button type="button" class="attune-undo">Undo</button></div>
+    <div class="attune-chip" role="status" hidden><span class="attune-chip-txt"></span><button type="button" class="attune-copy" hidden>Copy</button><button type="button" class="attune-undo">Undo</button></div>
     <div class="attune-offer" role="group" aria-label="Suggestion from Attune" hidden>
       <p class="attune-offer-txt"></p>
       <div class="attune-offer-row"><button type="button" class="attune-offer-yes">Yes, please</button><button type="button" class="attune-offer-no">Not now</button></div>
@@ -67,18 +84,48 @@ function ensureUI(onPick) {
   faces.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { faces.hidden = true; onPick(b.dataset.lv); }));
   root.querySelector('.attune-offer-yes').addEventListener('click', () => onOffer('accept'));
   root.querySelector('.attune-offer-no').addEventListener('click', () => onOffer('reject'));
+  root.querySelector('.attune-copy').addEventListener('click', async () => { if (fallbackText) await copyText(fallbackText); });
   root.querySelector('.attune-undo').addEventListener('click', async () => {
     await chrome.runtime.sendMessage({ type: 'clear_pending' });
     root.querySelector('.attune-chip').hidden = true;
   });
 }
 
-function showChip(text) {
+function showChip(text, message = MSG.ready) {
   const chip = document.querySelector('#attune-load-fab .attune-chip');
   const txt = document.querySelector('#attune-load-fab .attune-chip-txt');
   if (!chip || !txt) return;
-  txt.textContent = text ? 'Load note ready for next send' : '';
+  txt.textContent = text ? message : '';
   chip.hidden = !text;
+  const copyBtn = chip.querySelector('.attune-copy');
+  if (copyBtn) copyBtn.hidden = true;
+}
+
+/* Fallback when the composer cannot be found (e.g. a redesigned or logged-in layout):
+   keep the mascot floating bottom-right, show a "couldn't find the chat box" chip, copy the note to the clipboard. */
+let fallbackText = '';
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; } catch { return false; }
+}
+async function composerFallback(text) {
+  fallbackText = text;
+  const ok = await copyText(text);
+  const chip = document.querySelector('#attune-load-fab .attune-chip');
+  if (!chip) return ok;
+  chip.querySelector('.attune-chip-txt').textContent = ok ? MSG.noInput : MSG.copyFail;
+  chip.classList.add('attune-chip-warn');
+  const copyBtn = chip.querySelector('.attune-copy');
+  copyBtn.textContent = MSG.copy;
+  copyBtn.hidden = false;
+  chip.hidden = false;
+  return ok;
+}
+/** Put text in the composer, or fall back to clipboard + chip. Never sends. */
+function writeComposer(sel, text) {
+  const input = pickInput(sel);
+  if (input && setInputText(input, text)) return true;
+  composerFallback(text);
+  return false;
 }
 
 /* ---------- automatic suggestion (action phrasing only; daily cap + backoff live in background) ---------- */
@@ -98,10 +145,9 @@ async function answerOffer(outcome, sel) {
   const res = await chrome.runtime.sendMessage({ type: 'suggest_outcome', outcome, trigger: p.trigger, host: HOST });
   if (outcome === 'accept' && res?.pendingPrefix) {
     showChip(res.pendingPrefix);
-    const input = pickInput(sel);
-    const current = getInputText(input).trim();
-    // Never sends: only prepares the composer text.
-    setInputText(input, res.pendingPrefix + (current || 'Please rewrite your last answer as a short summary first, with the full details below.'));
+    const current = getInputText(pickInput(sel)).trim();
+    // Never sends: only prepares the composer text (or copies it when the composer is missing).
+    writeComposer(sel, res.pendingPrefix + (current || 'Please rewrite your last answer as a short summary first, with the full details below.'));
   }
 }
 async function onUserSend(text, sel) {
@@ -127,13 +173,15 @@ function watchSends(sel) {
     if (input && (e.target === input || input.contains(e.target))) onUserSend(getInputText(input), sel);
   }, true);
   document.addEventListener('pointerdown', (e) => {
-    const btn = sel?.submit ? e.target.closest?.(sel.submit) : e.target.closest?.('form button[type="submit"]');
+    const btn = candidates(sel?.submit || 'form button[type="submit"]').map((css) => { try { return e.target.closest?.(css); } catch { return null; } }).find(Boolean);
     if (btn) onUserSend(getInputText(pickInput(sel)), sel);
   }, true);
 }
 
 (async () => {
   const all = await loadSelectors();
+  // SPA pages can wipe injected nodes: re-attach the floating mascot if it disappears.
+  setInterval(() => { if (!document.getElementById('attune-load-fab')) ensureUI(lastPick); }, 2000);
   const sel = all[HOST] || all['chatgpt.com'];
   watchSends(sel);
   onOffer = (outcome) => answerOffer(outcome, sel);
@@ -149,13 +197,12 @@ function watchSends(sel) {
     const prefix = res?.pendingPrefix || '';
     showChip(prefix);
     if (!prefix) return;
-    const input = pickInput(sel);
-    const current = getInputText(input).trim();
+    const current = getInputText(pickInput(sel)).trim();
     if (!current) {
       // optional fill rewrite request — user still sends
-      setInputText(input, prefix + 'Please rewrite your last answer more shortly and simply.');
+      writeComposer(sel, prefix + 'Please rewrite your last answer more shortly and simply.');
     } else if (!current.startsWith(prefix.trim())) {
-      setInputText(input, prefix + current);
+      writeComposer(sel, prefix + current);
     }
   });
 })();

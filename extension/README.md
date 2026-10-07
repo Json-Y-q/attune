@@ -20,7 +20,7 @@ Supported sites: **chatgpt.com, claude.ai, gemini.google.com, grok.com**.
 4. Automatic suggestion: if you send nearly the same message again, a bubble may ask "Want a short summary first?" with **Yes, please / Not now**. Sending again without answering counts as "no answer".
 5. Popup (toolbar icon): manual buttons, auto-suggestion on/off, daily max (2 or 3), reset learning, export JSON, clear labels.
 
-If the mascot shows but the note does not land in the composer, Grok's page structure probably changed: edit the `grok.com` entry in `selectors.json` (the composer selector was checked on 2026-10-07 on the logged-out page; the logged-in message list selectors are best-effort fallbacks), then reload the extension.
+Composer detection tries a list of candidates in order (Grok's `textarea[aria-label='Ask Grok anything']`, other `aria-label`/`placeholder` textareas, ProseMirror/`contenteditable` boxes, any form textarea) and uses the first visible, editable one. If none is found (e.g. a new logged-in layout), the mascot still floats at the bottom right, a chip says **"Couldn't find the chat box"** ("입력창을 찾지 못함" in Korean), and the note is copied to the clipboard (with a **Copy** button as a second path) so you can paste it yourself. To fix it for good, add a selector to the `grok.com` list in `selectors.json` and reload the extension.
 
 ## Interaction rules
 - Floating **mascot**, not a text button. Default ON: a pick immediately prepares the note for the **next** message (no confirm dialog). Never auto-sends.

@@ -12,6 +12,8 @@
 
 Labels and suggestion state live in memory for the life of the process.
 
+**Response format.** By default every tool answers with short `item: value` lines (one-line descriptions in `tools/list`, a shorter but equivalent guidance text). Pass `verbose: true` to get the full JSON payload (label object, full context text, params object, gate). Measured on the same input (2026-10-07, JSON-RPC response bytes): `report_load` 2327 → 471 (−80%), `get_adaptation` 1638 → 579 (−65%), `get_loop_status` 486 → 164 (−66%), `tools/list` 1528 → 1272 (−17%; descriptions −70%, each tool gained a `verbose` flag).
+
 ## Transport 1 — stdio (default, local clients)
 ```bash
 node mcp/server.mjs              # stdio

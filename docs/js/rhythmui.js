@@ -1,9 +1,9 @@
 // "Work rhythm" view + automatic-suggestion settings. Reads local labels only; facts, not a diagnosis.
-import { loadJSON, saveJSON, removeKey } from './storage.js?v=e86ad124';
-import { aggregateRhythm, MIN_EVENTS, BANDS, BAND_HOURS } from './rhythm.js?v=e86ad124';
-import { exportLabelsJSON, LABEL_KEY } from './labels.js?v=e86ad124';
-import { readLabels } from './loadui.js?v=e86ad124';
-import { SUGGEST_KEY, normalizeSuggest, canSuggest, setEnabled, setDailyMax, resetSuggest, DAILY_MAX_CHOICES } from './suggest.js?v=e86ad124';
+import { loadJSON, saveJSON, removeKey } from './storage.js?v=8bf31d35';
+import { aggregateRhythm, MIN_EVENTS, BANDS, BAND_HOURS } from './rhythm.js?v=8bf31d35';
+import { exportLabelsJSON, LABEL_KEY } from './labels.js?v=8bf31d35';
+import { readLabels } from './loadui.js?v=8bf31d35';
+import { SUGGEST_KEY, normalizeSuggest, canSuggest, setEnabled, setDailyMax, resetSuggest, DAILY_MAX_CHOICES } from './suggest.js?v=8bf31d35';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };

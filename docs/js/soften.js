@@ -1,5 +1,5 @@
 // Soft transition helpers: summary first, the full original kept in a folded block. Pure, no DOM.
-import { splitSentences } from './transform.js?v=e86ad124';
+import { splitSentences } from './transform.js?v=8bf31d35';
 
 /**
  * Build a soft view of an answer. Nothing is dropped: `full` is the original text, unchanged.

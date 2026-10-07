@@ -22,9 +22,27 @@
     "assistantHint": "model-response"
   },
   "grok.com": {
-    "_verified": "2026-10-07: logged-out grok.com composer is textarea[aria-label='Ask Grok anything'] inside a form. Logged-in message DOM not verified; selectors below are fallbacks.",
-    "input": "textarea[aria-label='Ask Grok anything'], form textarea, div[contenteditable='true'].ProseMirror, div[contenteditable='true']",
-    "submit": "form button[type='submit'], button[aria-label='Submit']",
+    "_verified": "2026-10-07: logged-out composer = textarea[aria-label='Ask Grok anything'] in a form. Logged-in layout not verified, so several candidates are tried in order; the first visible, editable match wins. If none match, the extension copies the note to the clipboard and shows a 'couldn't find the chat box' chip.",
+    "input": [
+      "textarea[aria-label='Ask Grok anything']",
+      "textarea[aria-label*='Grok' i]",
+      "textarea[placeholder*='Grok' i]",
+      "textarea[aria-label*='Ask' i]",
+      "div[contenteditable='true'][aria-label*='Grok' i]",
+      "div.tiptap.ProseMirror[contenteditable='true']",
+      "div.ProseMirror[contenteditable='true']",
+      "[role='textbox'][contenteditable='true']",
+      "form textarea",
+      "main textarea",
+      "div[contenteditable='true']"
+    ],
+    "submit": [
+      "form button[type='submit']",
+      "button[aria-label='Submit']",
+      "button[aria-label*='Send' i]",
+      "button[aria-label*='Submit' i]",
+      "button[aria-label*='보내기']"
+    ],
     "messages": "[class*='message-bubble'], [data-testid*='message'], main article",
     "userRoleAttr": null,
     "userHint": "items-end|user",
