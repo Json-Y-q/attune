@@ -1,6 +1,6 @@
-# Attune MCP middleware (local prototype)
+# Tempoloon MCP middleware (local prototype)
 
-**Label: local prototype. Not deployed anywhere, not submitted to any marketplace. Makes no outbound network calls.**
+**Label: local prototype, frozen. Not deployed anywhere, not submitted to any marketplace. Makes no outbound network calls.** The Chrome extension (`extension/`) is the primary path; this server stays a local test prototype. Server identity: `tempoloon` (formerly `attune-load-local`).
 
 ## Tools
 | Tool | Purpose |
@@ -19,12 +19,12 @@ Labels and suggestion state live in memory for the life of the process.
 node mcp/server.mjs              # stdio
 node mcp/server.mjs --self-test  # prints a JSON summary to stderr
 ```
-Point a local MCP client at `node /path/to/attune/mcp/server.mjs` with transport **stdio**.
+Point a local MCP client at `node /path/to/tempoloon/mcp/server.mjs` with transport **stdio**.
 
 ## Transport 2 — Streamable HTTP (opt-in, loopback only)
 ```bash
 node mcp/server.mjs --http --port 3001                    # prints a random token
-ATTUNE_MCP_TOKEN=<long-random> node mcp/server.mjs --http # or bring your own token
+TEMPOLOON_MCP_TOKEN=<long-random> node mcp/server.mjs --http # or bring your own token (the old ATTUNE_MCP_* names still work)
 ```
 - Binds **127.0.0.1 only** (other hosts are refused). Endpoint: `POST /mcp` (JSON-RPC, JSON reply), notifications → `202`, `GET` → `405` (no server stream), `DELETE` ends a session. `GET /healthz` for a quick check.
 - **Token required** by default: `Authorization: Bearer <token>` or, for UIs that cannot set headers, the token as the last path segment: `/mcp/<token>`. `--no-token` exists for loopback-only debugging; never tunnel it.
@@ -45,11 +45,11 @@ What xAI documents (checked 2026-10-07, docs.x.ai/grok/connectors and /grok/conn
 - Business/Enterprise workspaces: an admin must first add the connector in console.x.ai.
 
 Steps (only after deciding to expose it; see "Decision" below):
-1. `ATTUNE_MCP_TOKEN=$(openssl rand -hex 24) node mcp/server.mjs --http --port 3001`, and keep it running.
+1. `TEMPOLOON_MCP_TOKEN=$(openssl rand -hex 24) node mcp/server.mjs --http --port 3001`, and keep it running.
 2. In a second terminal: `cloudflared tunnel --url http://localhost:3001`, then copy the `https://<random>.trycloudflare.com` URL.
-3. Check it: `curl -s -X POST https://<random>.trycloudflare.com/mcp/$ATTUNE_MCP_TOKEN -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`
-4. grok.com/connectors → New Connector → Custom → URL `https://<random>.trycloudflare.com/mcp/<token>`. If the dialog offers a header or API-key field, you can use `https://<random>.trycloudflare.com/mcp` with `Bearer <token>` instead. Which auth fields the custom-connector dialog shows is not confirmed in xAI's docs; the path token works either way.
-5. In a Grok chat, ask it to use the Attune tools, e.g. "call get_adaptation with overloaded=true".
+3. Check it: `curl -s -X POST https://<random>.trycloudflare.com/mcp/$TEMPOLOON_MCP_TOKEN -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`
+4. grok.com/connectors → New Connector → Custom → name it **Tempoloon** → URL `https://<random>.trycloudflare.com/mcp/<token>`. If the dialog offers a header or API-key field, you can use `https://<random>.trycloudflare.com/mcp` with `Bearer <token>` instead. Which auth fields the custom-connector dialog shows is not confirmed in xAI's docs; the path token works either way.
+5. In a Grok chat, ask it to use the Tempoloon tools, e.g. "call get_adaptation with overloaded=true".
 6. When done: stop `cloudflared` (Ctrl-C), stop the server, and remove the connector on grok.com.
 
 ## Decision needed before step 2 (remote exposure)

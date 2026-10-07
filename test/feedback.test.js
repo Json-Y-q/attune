@@ -119,7 +119,7 @@ test('extension: instant apply default ON, chip Undo, no confirm, no auto-send',
   assert.match(bg, /instantApply:\s*true/);
   assert.match(bg, /pendingPrefix/);
   assert.match(bg, /clear_pending/);
-  assert.match(ct, /attune-undo|Undo/);
+  assert.match(ct, /tempoloon-undo|Undo/);
   assert.match(ct, /record_load/);
   assert.doesNotMatch(ct, /\bconfirm\s*\(/);
   assert.doesNotMatch(ct, /\.click\(\)|requestSubmit|form\.submit|dispatchEvent\([^\)]*submit/);

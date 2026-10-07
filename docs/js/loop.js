@@ -2,7 +2,7 @@
 // Input: an array of turns { role: 'user' | 'ai', text }. Output: a loop type with confidence and evidence, plus escape options.
 // Similarity is plain token overlap (Jaccard) over words and Korean character bigrams, plus simple wording patterns (EN/KO).
 // It is an assumption-based heuristic for a prototype, not a validated measurement, and it never states what a person feels or thinks.
-import { t } from './i18n.js?v=8bf31d35';
+import { t } from './i18n.js?v=647d0f36';
 
 export const LOOP_TYPES = Object.freeze(['reask', 'same_answer', 'wavering', 'stalled']);
 export const LOOP_THRESHOLD = 0.55; // minimum confidence to call something a loop
@@ -56,7 +56,7 @@ const sentences = (text) => String(text).split(/(?<=[.!?。？！])\s+|\n+/).map
 
 /* ---------- parsing a pasted conversation ---------- */
 const USER_MARK = /^\s*(you|me|user|human|나|사용자|유저|질문)\s*[:：]\s*/i;
-const AI_MARK = /^\s*(ai|assistant|bot|chatgpt|gpt|claude|gemini|grok|attune|답변|어시스턴트)\s*[:：]\s*/i;
+const AI_MARK = /^\s*(ai|assistant|bot|chatgpt|gpt|claude|gemini|grok|tempoloon|답변|어시스턴트)\s*[:：]\s*/i;
 /** Text -> turns. Lines starting with "You:" / "AI:" (or 나: / AI:) mark turns; without markers, blank-line separated blocks alternate user, AI. */
 export function parseConversation(input) {
   const text = String(input ?? '').slice(0, MAX_INPUT_CHARS).replace(/\r\n?/g, '\n');

@@ -1,8 +1,11 @@
 import { makeLabel, appendLabel, normalizeLabels, exportLabelsJSON, LABEL_SCHEMA_VERSION, prefixForLevel } from './lib/labels.js';
 import { SUGGEST_KEY, normalizeSuggest, canSuggest, markShown, recordOutcome, setEnabled, setDailyMax, resetSuggest } from './lib/suggest.js';
+import { migrateStorage } from './lib/migrate.js';
 
-const STORE = 'attune.ext.labels.v1';
-const PREFS = 'attune.ext.prefs.v1';
+const STORE = 'tempoloon.ext.labels.v1';
+const PREFS = 'tempoloon.ext.prefs.v1';
+// Pre-rename data (formerly Attune: 'attune.*' keys) is moved to 'tempoloon.*' once per worker start, before any read.
+const migrated = migrateStorage(chrome.storage.local).catch(() => 0);
 
 async function getLabels() {
   const r = await chrome.storage.local.get(STORE);
@@ -30,6 +33,7 @@ const SUGGEST_TEXT = { loop: 'See the key point first? I can ask for a one-line 
 
 chrome.runtime.onMessage.addListener((msg, _s, sendResponse) => {
   (async () => {
+    await migrated;
     if (msg?.type === 'record_load') {
       const prefs = await getPrefs();
       const sid = prefs.sessionId || `ext_${Date.now().toString(36)}`;

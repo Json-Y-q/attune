@@ -2,8 +2,8 @@
 // Pure, no network. Used by the web overload button, Chrome extension (prompt prefix), and local MCP.
 // Numbers and wording are ASSUMPTIONS for a prototype.
 
-import { THRESHOLDS } from './engine.js?v=8bf31d35';
-import { analyzeLoop } from './loop.js?v=8bf31d35';
+import { THRESHOLDS } from './engine.js?v=647d0f36';
+import { analyzeLoop } from './loop.js?v=647d0f36';
 
 export const LOAD_LEVELS = Object.freeze(['calm', 'rising', 'high', 'overloaded']);
 

@@ -1,8 +1,9 @@
-# Attune — logo spec
+# Tempoloon — logo spec
 
 Slogan candidate: "AI that attunes to you."
 Idea: a brain-shaped speech bubble (5 wavy arcs on top, balloon bottom, tail bottom-left). Rapport with an AI + the load scale calm → rising → break.
 No medical cues (no cross, heart, pulse line, anatomical brain). Name/marks unregistered, trademark check pending.
+Rename (2026-10): the project is now **Tempoloon** (Korean 템포룬), formerly "Attune". The symbol artwork is unchanged; the lockups (`docs/img/logo*.svg`, `concept-2.svg`, `concept-H.svg`, `concept-1b*.svg`) carry the new "tempoloon" wordmark. Preview sheets/PNGs (`overview.png`, `*/preview/*`) and everything in `archive/` still show the old "attune" wordmark as history.
 
 ## Status
 | Folder | Role |
@@ -21,7 +22,7 @@ No medical cues (no cross, heart, pulse line, anatomical brain). Name/marks unre
 | Non-colour cue | arc thickness 6 / 7.5 / 9 / 10.5 / 12 (mono keeps it); 16 px: 11–23 |
 | Bottom outline | ink #0D1B2A (dark #E0E0FF), width 9 (16 px: 14) |
 | AI spark | small (r14), centred; dropped at 16 px |
-| Wordmark | "attune", Manrope 800, outlined to paths; body font Inter (both SIL OFL) |
+| Wordmark | "tempoloon", Manrope 800, outlined to paths (0.06 × font units, baseline y 142, same as the earlier wordmark); body font Inter (both SIL OFL) |
 | Variants | colour, dark, mono, mono white, 16 px (+dark), continuous-gradient study |
 | Colour vs gradient | 3-zone chosen: clear boundaries; min contrast on white 4.6 vs 4.3 for a smooth blend |
 | Tone | friendly, light, conversational |

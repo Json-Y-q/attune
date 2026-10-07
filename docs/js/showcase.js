@@ -1,13 +1,13 @@
 // "From overload to recovery" player: draws the pure story timeline (story.js) as a phone mock-up,
 // a load meter, the optional mascot and step buttons. Text via textContent only; no network, no storage except
 // the mascot on/off choice.
-import { storyAt, STORY_MS, PHASES, DEFAULT_LEVELS } from './story.js?v=8bf31d35';
-import { transform } from './transform.js?v=8bf31d35';
-import { renderBlocks, renderLoadMeter } from './ui.js?v=8bf31d35';
-import { renderMascot, poseFor, STILL_POSES } from './mascot.js?v=8bf31d35';
-import { PERSONAS, SHARED, allAt, adjustMinute, riseRate, minutesToMs } from './individuals.js?v=8bf31d35';
-import { loadJSON, saveJSON } from './storage.js?v=8bf31d35';
-import { prepareTyping, revealChars, typedChars } from './typing.js?v=8bf31d35';
+import { storyAt, STORY_MS, PHASES, DEFAULT_LEVELS } from './story.js?v=647d0f36';
+import { transform } from './transform.js?v=647d0f36';
+import { renderBlocks, renderLoadMeter } from './ui.js?v=647d0f36';
+import { renderMascot, poseFor, STILL_POSES } from './mascot.js?v=647d0f36';
+import { PERSONAS, SHARED, allAt, adjustMinute, riseRate, minutesToMs } from './individuals.js?v=647d0f36';
+import { loadJSON, saveJSON } from './storage.js?v=647d0f36';
+import { prepareTyping, revealChars, typedChars } from './typing.js?v=647d0f36';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -15,7 +15,7 @@ const reduced = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)'
 
 export function mountStory(getTr) {
   const tr = (k, p) => getTr()(k, p);
-  const state = { t: 0, playing: false, raf: 0, last: 0, touched: false, viewKey: '', phase: '', poseKey: '', aiEl: null, lastN: -1, mascotOn: loadJSON('attune.mascot') !== false };
+  const state = { t: 0, playing: false, raf: 0, last: 0, touched: false, viewKey: '', phase: '', poseKey: '', aiEl: null, lastN: -1, mascotOn: loadJSON('tempoloon.mascot') !== false };
 
   function bubble(cls, nodeOrText) {
     const b = el('div', `st-bubble ${cls}`);
@@ -107,9 +107,9 @@ export function mountStory(getTr) {
   $('st-scrub').addEventListener('input', (e) => seek(Number(e.target.value)));
   document.querySelectorAll('#st-steps button').forEach((b) => b.addEventListener('click', () => seek(PHASES.find((p) => p.id === b.dataset.phase).at + 700)));
   $('st-mascot-toggle').checked = state.mascotOn;
-  $('st-mascot-toggle').addEventListener('change', (e) => { state.mascotOn = e.target.checked; saveJSON('attune.mascot', state.mascotOn); state.poseKey = ''; render(); document.dispatchEvent(new CustomEvent('attune:mascot', { detail: { on: state.mascotOn } })); });
-  document.addEventListener('attune:mascot', (e) => { if (e.detail.on !== state.mascotOn) { state.mascotOn = e.detail.on; $('st-mascot-toggle').checked = state.mascotOn; state.poseKey = ''; render(); } });
-  document.addEventListener('attune:story-seek', (e) => seek(e.detail?.t ?? 0, false)); // deterministic seek (used to record the video)
+  $('st-mascot-toggle').addEventListener('change', (e) => { state.mascotOn = e.target.checked; saveJSON('tempoloon.mascot', state.mascotOn); state.poseKey = ''; render(); document.dispatchEvent(new CustomEvent('tempoloon:mascot', { detail: { on: state.mascotOn } })); });
+  document.addEventListener('tempoloon:mascot', (e) => { if (e.detail.on !== state.mascotOn) { state.mascotOn = e.detail.on; $('st-mascot-toggle').checked = state.mascotOn; state.poseKey = ''; render(); } });
+  document.addEventListener('tempoloon:story-seek', (e) => seek(e.detail?.t ?? 0, false)); // deterministic seek (used to record the video)
   if ('IntersectionObserver' in globalThis && !reduced()) {
     new IntersectionObserver((entries) => {
       if (entries.some((e) => e.isIntersecting) && !state.touched && !state.playing && state.t === 0) play();
@@ -123,7 +123,7 @@ export function mountStory(getTr) {
 /** "Same conversation, different pace": four illustrative mascots, one shared conversation (individuals.js). */
 export function mountIndividuals(getTr) {
   const tr = (k, p) => getTr()(k, p);
-  const st = { t: 0, playing: false, raf: 0, last: 0, touched: false, on: loadJSON('attune.mascot') !== false, poseKeys: {} };
+  const st = { t: 0, playing: false, raf: 0, last: 0, touched: false, on: loadJSON('tempoloon.mascot') !== false, poseKeys: {} };
   const grid = $('in-grid');
   const rows = {};
   const desc = (id) => tr(`in_desc_${id}`); // neutral description for assistive tech only (aria-label); nothing like it is shown on screen
@@ -197,9 +197,9 @@ export function mountIndividuals(getTr) {
   $('in-play').addEventListener('click', () => { st.touched = true; if (st.playing) pause(); else play(); });
   $('in-scrub').addEventListener('input', (e) => seek(Number(e.target.value)));
   $('in-mascot-toggle').checked = st.on;
-  $('in-mascot-toggle').addEventListener('change', (e) => { st.on = e.target.checked; saveJSON('attune.mascot', st.on); st.poseKeys = {}; render(); document.dispatchEvent(new CustomEvent('attune:mascot', { detail: { on: st.on } })); });
-  document.addEventListener('attune:mascot', (e) => { if (e.detail.on !== st.on) { st.on = e.detail.on; $('in-mascot-toggle').checked = st.on; st.poseKeys = {}; render(); } });
-  document.addEventListener('attune:individuals-seek', (e) => seek(e.detail?.t ?? 0, false));
+  $('in-mascot-toggle').addEventListener('change', (e) => { st.on = e.target.checked; saveJSON('tempoloon.mascot', st.on); st.poseKeys = {}; render(); document.dispatchEvent(new CustomEvent('tempoloon:mascot', { detail: { on: st.on } })); });
+  document.addEventListener('tempoloon:mascot', (e) => { if (e.detail.on !== st.on) { st.on = e.detail.on; $('in-mascot-toggle').checked = st.on; st.poseKeys = {}; render(); } });
+  document.addEventListener('tempoloon:individuals-seek', (e) => seek(e.detail?.t ?? 0, false));
   build();
   // reduced motion: no autoplay, start on the last frame so the differences are visible without motion
   if (reduced()) st.t = SHARED.durationMs;

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Attune MCP middleware — local prototype.
+ * Tempoloon MCP middleware — local prototype.
  * Tools: report_load, get_adaptation, get_loop_status, record_suggestion.
  * Transports: stdio (default) or Streamable HTTP bound to 127.0.0.1 (`--http`), token required.
  * Not deployed anywhere, not submitted to any marketplace, makes no outbound network calls.
@@ -182,7 +182,7 @@ function callTool(name, args = {}) {
 }
 
 const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
-const SERVER_INFO = { name: 'attune-load-local', version: '0.2.0' };
+const SERVER_INFO = { name: 'tempoloon', title: 'Tempoloon (local prototype)', version: '0.2.0' };
 
 async function handle(msg) {
   const { id, method, params } = msg;
@@ -268,7 +268,7 @@ function startHttp({ port = 3001, host = '127.0.0.1', token = null, allowNoToken
   const server = createServer(makeHttpHandler(secret));
   server.listen(port, host, () => {
     const p = server.address().port;
-    log(`attune MCP (Streamable HTTP) on http://${host}:${p}/mcp — loopback only`);
+    log(`tempoloon MCP (Streamable HTTP) on http://${host}:${p}/mcp — loopback only`);
     if (secret) log(`token required. Local URL with token: http://${host}:${p}/mcp/${secret}`);
     else log('WARNING: running without a token (--no-token). Do not tunnel this.');
   });
@@ -309,10 +309,11 @@ if (process.argv.includes('--self-test')) {
   console.error(JSON.stringify(r));
   process.exit(0);
 } else if (process.argv.includes('--http')) {
+  const legacyEnv = (k) => process.env[`ATTUNE_MCP_${k}`]; // legacy env names from before the rename (formerly Attune), still accepted
   startHttp({
-    port: Number(argVal('--port', process.env.ATTUNE_MCP_PORT || 3001)),
+    port: Number(argVal('--port', process.env.TEMPOLOON_MCP_PORT || legacyEnv('PORT') || 3001)),
     host: argVal('--host', '127.0.0.1'),
-    token: argVal('--token', process.env.ATTUNE_MCP_TOKEN || null),
+    token: argVal('--token', process.env.TEMPOLOON_MCP_TOKEN || legacyEnv('TOKEN') || null),
     allowNoToken: process.argv.includes('--no-token'),
   });
 } else {

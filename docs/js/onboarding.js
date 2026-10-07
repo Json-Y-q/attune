@@ -1,11 +1,11 @@
 // Onboarding page controller: 3 short tasks -> profile JSON -> localStorage (browser only).
-import { DigitSpanSession, buildProfile, validateProfile } from './profile.js?v=8bf31d35';
-import { transform } from './transform.js?v=8bf31d35';
-import { clearProfile, loadProfile, saveProfile } from './storage.js?v=8bf31d35';
-import { deliver, initPage, levelBar, renderBlocks } from './ui.js?v=8bf31d35';
-import { mountMedia } from './media.js?v=8bf31d35';
-import { styleCard } from './stylecard.js?v=8bf31d35';
-import { renderRadar, renderGauge } from './charts.js?v=8bf31d35';
+import { DigitSpanSession, buildProfile, validateProfile } from './profile.js?v=647d0f36';
+import { transform } from './transform.js?v=647d0f36';
+import { clearProfile, loadProfile, saveProfile } from './storage.js?v=647d0f36';
+import { deliver, initPage, levelBar, renderBlocks } from './ui.js?v=647d0f36';
+import { mountMedia } from './media.js?v=647d0f36';
+import { styleCard } from './stylecard.js?v=647d0f36';
+import { renderRadar, renderGauge } from './charts.js?v=647d0f36';
 
 const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -290,7 +290,7 @@ function download() {
   const blob = new Blob([JSON.stringify(currentProfile, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'attune-profile.json';
+  a.download = 'tempoloon-profile.json';
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }

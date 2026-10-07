@@ -2,7 +2,7 @@
 // Schema is shared by the conversation page, Chrome extension prototype, and local MCP server.
 // Values are ASSUMPTIONS for a prototype; not validated.
 
-export const LABEL_KEY = 'attune.labels.v1';
+export const LABEL_KEY = 'tempoloon.labels.v1';
 export const LABEL_SCHEMA_VERSION = 1;
 export const MAX_LABELS = 500;
 export const MAX_RECENT_TURNS = 8;

@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Attune architecture: how a wearable HRV signal could shape AI answers (planned) versus what this prototype implements (virtual sliders). Not a medical device.">
+  <meta name="description" content="Tempoloon architecture: how a wearable HRV signal could shape AI answers (planned) versus what this prototype implements (virtual sliders). Not a medical device.">
   <meta name="theme-color" content="#2F5DA8">
-  <title data-i18n="ar_title">Attune — How a body signal could reach the answer</title>
+  <title data-i18n="ar_title">Tempoloon — How a body signal could reach the answer</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=8bf31d35">
-  <script type="module" src="js/architecture.js?v=8bf31d35"></script>
+  <link rel="stylesheet" href="css/style.css?v=647d0f36">
+  <script type="module" src="js/architecture.js?v=647d0f36"></script>
 </head>
 <body class="ob ar">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
   <div class="banner" role="note" data-i18n="banner">Prototype — not a medical device, not a diagnosis, not scientifically validated. Sensor values here are virtual.</div>
   <header class="site-header">
-    <div class="brand"><a href="index.html"><picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-dark.svg"><img src="img/logo.svg" alt="" width="117" height="36"></picture><strong class="sr-only" data-i18n="brand">Attune</strong></a><span class="tag" data-i18n="brand_tag">prototype</span></div>
+    <div class="brand"><a href="index.html"><picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-dark.svg"><img src="img/logo.svg" alt="" width="161" height="36"></picture><strong class="sr-only" data-i18n="brand">Tempoloon</strong></a><span class="tag" data-i18n="brand_tag">prototype</span></div>
     <nav data-i18n-attr="aria-label:nav_label">
       <a href="index.html" data-i18n="nav_home">Home</a>
       <a href="onboarding.html" data-i18n="nav_onboard">Onboarding</a>
@@ -90,7 +90,7 @@
       <h2 data-i18n="ar_sample_h">Summary format (sample)</h2>
       <p data-i18n="ar_sample_p">This is the small summary the engine reads. In this prototype the values are virtual. The same shape is used by the demo sliders. Files: docs/data/sample-hrv.json and docs/data/hrv-summary.schema.json.</p>
       <pre class="json" tabindex="0">{
-  "schema": "attune.condition.v1",
+  "schema": "tempoloon.condition.v1",
   "source": "virtual",
   "baselineHrvMs": 55,
   "hrvMs": 37,

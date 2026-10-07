@@ -2,7 +2,7 @@
 // Shared verbatim by the site and the Chrome extension prototype (extension/lib/suggest.js).
 // Values are ASSUMPTIONS for a prototype; not validated.
 
-export const SUGGEST_KEY = 'attune.suggest.v1';
+export const SUGGEST_KEY = 'tempoloon.suggest.v1';
 export const DAILY_MAX_DEFAULT = 3;
 export const DAILY_MAX_CHOICES = Object.freeze([2, 3]);
 /** Quiet days after N consecutive declines (reject or ignore): 1 → 1 day, 2 → 3 days, 3+ → 7 days. */

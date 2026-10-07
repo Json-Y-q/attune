@@ -1,7 +1,7 @@
 // "Overload -> adjustment -> recovery" story: a deterministic timeline of VIRTUAL values (no sensors, no model).
 // storyAt(ms) is a pure function so the page, the tests and the recorded video all show exactly the same thing.
 // About 42 seconds: each stage dwells long enough to read, and the changes between stages are slow and eased.
-import { THRESHOLDS } from './engine.js?v=8bf31d35';
+import { THRESHOLDS } from './engine.js?v=647d0f36';
 
 export const STORY_MS = 42000;
 export const DEFAULT_LEVELS = Object.freeze({ amount: 4, pace: 4 });
@@ -11,7 +11,7 @@ export const PHASES = Object.freeze([
   { id: 'long', at: 0 }, // calm: long continuous replies start
   { id: 'rising', at: 6000 }, // the load slowly builds (orange)
   { id: 'overload', at: 15000 }, // balloon swells to the edge (magenta), held
-  { id: 'adjust', at: 22000 }, // Attune lightens: the balloon lets the air out
+  { id: 'adjust', at: 22000 }, // Tempoloon lightens: the balloon lets the air out
   { id: 'checkpoint', at: 26000 }, // checkpoint card + offer to rest
   { id: 'rest', at: 29500 }, // slow breathing, virtual clock jumps
   { id: 'resume', at: 34000 }, // resume card, answers relax

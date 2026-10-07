@@ -1,7 +1,7 @@
 # Media credits
 
 - `hero.mp4`, `hero.webm`, `hero-poster.webp`, `hero.en.vtt`, `hero.ko.vtt`: own work. A 42-second silent screen recording of the
-  "From overload to recovery" story on the landing page (`docs/js/story.js`, virtual values), rendered frame by frame from the page itself.
+  "From overload to recovery" story on the landing page (`docs/js/story.js`, virtual values), rendered frame by frame from the page itself (`scripts/record-hero.mjs`; re-rendered 2026-10-07 for the Tempoloon rename).
   The mascot is drawn for this project (`docs/js/mascot.js`, `brand/mascot/`). No stock footage, no real people, no sound.
   Licence: same as the project (PolyForm Noncommercial 1.0.0).
 - The inline SVG placeholders in `docs/onboarding.html` were drawn for this project.

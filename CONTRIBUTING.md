@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping! Attune is an early, unvalidated prototype; keep that honesty in code and docs.
+Thanks for helping! Tempoloon is an early, unvalidated prototype; keep that honesty in code and docs.
 
 ## Setup
 
@@ -28,4 +28,4 @@ Small, focused PRs with tests. Describe the behaviour change and how you checked
 
 By submitting a contribution (pull request, patch, issue text with code) you confirm that you have the right to submit it, and you license it under the [PolyForm Noncommercial License 1.0.0](LICENSE) like the rest of the repository. You also grant the project owner (Sehan Yun) a perpetual, worldwide, non-exclusive, royalty-free, irrevocable licence to use, modify, sublicense and distribute your contribution, including in commercial licences of the project. You keep your copyright. Do not submit code you cannot license this way.
 
-The name "Attune" and the logos are not licensed for contribution reuse; see [NOTICE](NOTICE).
+The name "Tempoloon" and the logos are not licensed for contribution reuse; see [NOTICE](NOTICE).

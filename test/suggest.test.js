@@ -295,13 +295,13 @@ function loadContent({ found = {}, lang = 'en-US', clipboardOk = true } = {}) {
   const gen = () => ({ style: {}, dataset: {}, hidden: true, textContent: '', classList: { add() {}, remove() {}, toggle() {} }, addEventListener() {}, querySelector: () => gen(), querySelectorAll: () => [], appendChild() {}, setAttribute() {} });
   const chipParts = { '.chip-txt': { textContent: '' }, '.copy': { hidden: true, textContent: '' } };
   const chip = { hidden: true, classes: new Set(), classList: { add(c) { chip.classes.add(c); }, remove(c) { chip.classes.delete(c); } }, querySelector: (c) => chipParts[c] };
-  // the widget lives in an open shadow root on #attune-load-fab (already mounted here, so the script does not build it again)
+  // the widget lives in an open shadow root on #tempoloon-load-fab (already mounted here, so the script does not build it again)
   const host = { shadowRoot: { querySelector: (c) => (c === '.chip' ? chip : chipParts[c] ?? null) } };
   const copied = [];
   const document = {
     querySelectorAll(css) { if (css.includes('[[')) throw new SyntaxError('bad'); return found[css] || []; },
     querySelector: () => null,
-    getElementById: (id) => (id === 'attune-load-fab' ? host : null), documentElement: { appendChild() {}, lang: '' }, createElement: gen, addEventListener() {}, execCommand() { return true; },
+    getElementById: (id) => (id === 'tempoloon-load-fab' ? host : null), documentElement: { appendChild() {}, lang: '' }, createElement: gen, addEventListener() {}, execCommand() { return true; },
   };
   const ctx = vm.createContext({
     document, location: { hostname: 'grok.com' }, setInterval() {}, setTimeout() {}, console,
@@ -356,7 +356,7 @@ test('extension fallback: composer missing → "couldn’t find the chat box" ch
   const ct = read('../extension/content.js');
   assert.match(ct, /position:fixed;right:16px;bottom:88px/);
   assert.match(ct, /setInterval\(\(\) => \{ if \(!document\.getElementById\(FAB_ID\)\) ensureUI/);
-  assert.match(ct, /const FAB_ID = 'attune-load-fab'/);
+  assert.match(ct, /const FAB_ID = 'tempoloon-load-fab'/);
   assert.doesNotMatch(ct, /\.click\(\)|requestSubmit|form\.submit/);
 });
 
@@ -380,7 +380,7 @@ test('analyze-labels: exported JSON → Markdown summary (time bands, session mi
   assert.match(ko, /표시 2 · 수락 1 \(50%\)/);
   // CLI: merges files and dedupes by id
   const { writeFileSync, mkdtempSync } = await import('node:fs');
-  const dir = mkdtempSync('/tmp/attune-an-');
+  const dir = mkdtempSync('/tmp/tempoloon-an-');
   writeFileSync(`${dir}/a.json`, JSON.stringify({ labels: list }));
   writeFileSync(`${dir}/b.json`, JSON.stringify({ labels: list.slice(0, 3) }));
   const p = spawnSync(process.execPath, ['scripts/analyze-labels.mjs', `${dir}/a.json`, `${dir}/b.json`], { cwd: new URL('..', import.meta.url).pathname, encoding: 'utf8' });

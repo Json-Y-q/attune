@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Attune condition summary (prototype)",
+  "title": "Tempoloon condition summary (prototype)",
   "description": "The small, preprocessed summary the density engine reads. Raw HRV samples are never part of it. In this prototype the values are virtual (sliders or a sample file).",
   "type": "object",
   "required": ["schema", "source", "baselineHrvMs", "hrvMs"],
   "properties": {
-    "schema": { "const": "attune.condition.v1" },
+    "schema": { "const": "tempoloon.condition.v1" },
     "source": { "enum": ["virtual"], "description": "Only 'virtual' exists today. A real device source is planned and not implemented." },
     "baselineHrvMs": { "type": "number", "exclusiveMinimum": 0, "description": "The person's usual HRV (ms)." },
     "hrvMs": { "type": "number", "exclusiveMinimum": 0, "description": "Today's HRV (ms)." },

@@ -1,8 +1,8 @@
-# Attune mascot (optional, candidate)
+# Tempoloon mascot (optional, candidate)
 
 A **separate variant** of the logo for the "From overload to recovery" story and the "Same conversation, different pace" section.
 The logo itself (`brand/concept-2/`, `docs/img/logo*.svg`) is **not changed** and stays the default; the mascot is shown only
-if the visitor switches it on (checkbox, remembered in `localStorage` as `attune.mascot`).
+if the visitor switches it on (checkbox, remembered in `localStorage` as `tempoloon.mascot`).
 
 ## What it is
 - A floating **head only**: the speech-bubble outline plus the five brain arcs of the logo, with simple dot eyes and a small mouth.

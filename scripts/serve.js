@@ -28,4 +28,4 @@ createServer(async (req, res) => {
     res.writeHead(e.code === 403 ? 403 : 404, { 'Content-Type': 'text/plain' });
     res.end(e.code === 403 ? 'Forbidden' : 'Not found');
   }
-}).listen(PORT, '127.0.0.1', () => console.log(`Attune on http://127.0.0.1:${PORT}`));
+}).listen(PORT, '127.0.0.1', () => console.log(`Tempoloon on http://127.0.0.1:${PORT}`));

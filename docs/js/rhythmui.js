@@ -1,15 +1,15 @@
 // "Work rhythm" view + automatic-suggestion settings. Reads local labels only; facts, not a diagnosis.
-import { loadJSON, saveJSON, removeKey } from './storage.js?v=8bf31d35';
-import { aggregateRhythm, MIN_EVENTS, BANDS, BAND_HOURS } from './rhythm.js?v=8bf31d35';
-import { exportLabelsJSON, LABEL_KEY } from './labels.js?v=8bf31d35';
-import { readLabels } from './loadui.js?v=8bf31d35';
-import { SUGGEST_KEY, normalizeSuggest, canSuggest, setEnabled, setDailyMax, resetSuggest, DAILY_MAX_CHOICES } from './suggest.js?v=8bf31d35';
+import { loadJSON, saveJSON, removeKey } from './storage.js?v=647d0f36';
+import { aggregateRhythm, MIN_EVENTS, BANDS, BAND_HOURS } from './rhythm.js?v=647d0f36';
+import { exportLabelsJSON, LABEL_KEY } from './labels.js?v=647d0f36';
+import { readLabels } from './loadui.js?v=647d0f36';
+import { SUGGEST_KEY, normalizeSuggest, canSuggest, setEnabled, setDailyMax, resetSuggest, DAILY_MAX_CHOICES } from './suggest.js?v=647d0f36';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
 export const readSuggest = () => normalizeSuggest(loadJSON(SUGGEST_KEY));
-export const writeSuggest = (st) => { saveJSON(SUGGEST_KEY, st); document.dispatchEvent(new CustomEvent('attune:suggest')); };
+export const writeSuggest = (st) => { saveJSON(SUGGEST_KEY, st); document.dispatchEvent(new CustomEvent('tempoloon:suggest')); };
 
 /** @param {{ tr:(k:string,p?:object)=>any, lang:()=>string }} api */
 export function mountRhythm(api) {
@@ -103,18 +103,18 @@ export function mountRhythm(api) {
   $('rh-export').addEventListener('click', () => {
     const a = el('a');
     a.href = URL.createObjectURL(new Blob([exportLabelsJSON(readLabels())], { type: 'application/json' }));
-    a.download = `attune-labels-${Date.now()}.json`;
+    a.download = `tempoloon-labels-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
   });
   $('rh-clear').addEventListener('click', () => {
     removeKey(LABEL_KEY);
-    document.dispatchEvent(new CustomEvent('attune:labels'));
+    document.dispatchEvent(new CustomEvent('tempoloon:labels'));
     $('rh-status').textContent = tr('rh_cleared');
   });
-  document.addEventListener('attune:labels', refresh);
-  document.addEventListener('attune:suggest', renderSettings);
-  document.addEventListener('attune:lang', refresh);
+  document.addEventListener('tempoloon:labels', refresh);
+  document.addEventListener('tempoloon:suggest', renderSettings);
+  document.addEventListener('tempoloon:lang', refresh);
   refresh();
   return { refresh };
 }

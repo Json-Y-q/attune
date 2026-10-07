@@ -22,9 +22,9 @@ $('export').onclick = async () => {
   const r = await chrome.runtime.sendMessage({ type: 'export_labels' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([r.json], { type: 'application/json' }));
-  a.download = `attune-ext-labels-${Date.now()}.json`; a.click();
+  a.download = `tempoloon-ext-labels-${Date.now()}.json`; a.click();
 };
-$('pos-reset').onclick = async () => { await chrome.storage.local.remove('attune.ext.pos.v1'); $('status').textContent = 'Mascot is back above the chat box.'; };
+$('pos-reset').onclick = async () => { await chrome.storage.local.remove('tempoloon.ext.pos.v1'); $('status').textContent = 'Mascot is back above the chat box.'; };
 $('clear').onclick = async () => { await chrome.runtime.sendMessage({ type: 'clear_labels' }); refresh(); };
 $('instant').onchange = async (e) => { await chrome.runtime.sendMessage({ type: 'set_prefs', prefs: { instantApply: e.target.checked } }); refresh(); };
 $('insert').onchange = async (e) => { await chrome.runtime.sendMessage({ type: 'set_prefs', prefs: { insertEnabled: e.target.checked } }); refresh(); };

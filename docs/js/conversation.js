@@ -1,28 +1,28 @@
 // Conversation page controller: scripted partner simulation + text-to-speech (no microphone, no AI model, no network).
-import { computeSettings } from './engine.js?v=8bf31d35';
-import { SAMPLE_PROFILE } from './profile.js?v=8bf31d35';
-import { transform, toPlainText } from './transform.js?v=8bf31d35';
-import { loadProfile, loadJSON, saveJSON, removeKey } from './storage.js?v=8bf31d35';
-import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=8bf31d35';
+import { computeSettings } from './engine.js?v=647d0f36';
+import { SAMPLE_PROFILE } from './profile.js?v=647d0f36';
+import { transform, toPlainText } from './transform.js?v=647d0f36';
+import { loadProfile, loadJSON, saveJSON, removeKey } from './storage.js?v=647d0f36';
+import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=647d0f36';
 import {
   newSession, userTurn, aiReplied, control, respondToSuggestion, undoAdjust, skipAhead, addSilence, silenceStage,
   activeSignals, loadIndexFor, density, effective, sessionMinutes, buildResumeCard, resumeExpired, SILENCE, SUGGESTION_TYPES,
   reportLoad,
-} from './partner.js?v=8bf31d35';
-import { canSuggest, markShown, recordOutcome, suggestTrigger, suggestKey } from './suggest.js?v=8bf31d35';
-import { softView, summarySentences } from './soften.js?v=8bf31d35';
-import { makeLabel } from './labels.js?v=8bf31d35';
-import { mountRhythm, readSuggest, writeSuggest } from './rhythmui.js?v=8bf31d35';
-import { typeLive, typingCps } from './typing.js?v=8bf31d35';
-import { mountLoop } from './loopui.js?v=8bf31d35';
-import { mountMascotLoad, newSessionId, pushLabel } from './loadui.js?v=8bf31d35';
-import { levelInfo, ttsSupported, pickVoices, createSpeaker, speechSentences } from './voice.js?v=8bf31d35';
+} from './partner.js?v=647d0f36';
+import { canSuggest, markShown, recordOutcome, suggestTrigger, suggestKey } from './suggest.js?v=647d0f36';
+import { softView, summarySentences } from './soften.js?v=647d0f36';
+import { makeLabel } from './labels.js?v=647d0f36';
+import { mountRhythm, readSuggest, writeSuggest } from './rhythmui.js?v=647d0f36';
+import { typeLive, typingCps } from './typing.js?v=647d0f36';
+import { mountLoop } from './loopui.js?v=647d0f36';
+import { mountMascotLoad, newSessionId, pushLabel } from './loadui.js?v=647d0f36';
+import { levelInfo, ttsSupported, pickVoices, createSpeaker, speechSentences } from './voice.js?v=647d0f36';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
-const PREFS_KEY = 'attune.partner.prefs.v1';
-const RESUME_KEY = 'attune.resume.v1';
-const SPEED_KEY = 'attune.voice.level.v1';
+const PREFS_KEY = 'tempoloon.partner.prefs.v1';
+const RESUME_KEY = 'tempoloon.resume.v1';
+const SPEED_KEY = 'tempoloon.voice.level.v1';
 const BASELINE_HRV = 55;
 const reduced = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 

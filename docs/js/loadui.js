@@ -1,20 +1,20 @@
 // Floating mascot load input: click opens 3 faces; choosing one records a label and switches reply mode at once.
 // Hover/focus on a face shows a preview only (no mode change). No separate overload button.
-import { loadJSON, saveJSON, removeKey } from './storage.js?v=8bf31d35';
-import { reportLoad, activeSignals, loadIndexFor, density, sessionMinutes, effective } from './partner.js?v=8bf31d35';
-import { renderMascot } from './mascot.js?v=8bf31d35';
+import { loadJSON, saveJSON, removeKey } from './storage.js?v=647d0f36';
+import { reportLoad, activeSignals, loadIndexFor, density, sessionMinutes, effective } from './partner.js?v=647d0f36';
+import { renderMascot } from './mascot.js?v=647d0f36';
 import {
   makeLabel, appendLabel, normalizeLabels, exportLabelsJSON, LABEL_KEY, newSessionId,
   poseForLevel, LOAD_LEVELS,
-} from './labels.js?v=8bf31d35';
+} from './labels.js?v=647d0f36';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
-const HINT_KEY = 'attune.mascot.hint.v1';
-const LEVEL_KEY = 'attune.mascot.level.v1';
+const HINT_KEY = 'tempoloon.mascot.hint.v1';
+const LEVEL_KEY = 'tempoloon.mascot.level.v1';
 
 function readLabels() { return normalizeLabels(loadJSON(LABEL_KEY)?.labels); }
-function writeLabels(labels) { saveJSON(LABEL_KEY, { v: 1, labels }); document.dispatchEvent(new CustomEvent('attune:labels')); }
+function writeLabels(labels) { saveJSON(LABEL_KEY, { v: 1, labels }); document.dispatchEvent(new CustomEvent('tempoloon:labels')); }
 /** Append one label to the local log (also used for automatic-suggestion outcomes). */
 export function pushLabel(label) { writeLabels(appendLabel(readLabels(), label)); }
 export { readLabels };
@@ -264,7 +264,7 @@ export function mountMascotLoad(api) {
     const json = exportLabelsJSON(readLabels());
     const a = el('a');
     a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-    a.download = `attune-labels-${Date.now()}.json`;
+    a.download = `tempoloon-labels-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
     status.textContent = api.tr('ld_exported');
@@ -301,8 +301,8 @@ export function mountMascotLoad(api) {
   function offer({ key, whyKey = null, onAnswer }) { offerState = { key, whyKey, onAnswer }; paintOffer(); }
   function clearOffer() { offerState = null; paintOffer(); }
 
-  document.addEventListener('attune:lang', () => { i18nChrome(); paintOffer(); });
-  document.addEventListener('attune:labels', refreshList);
+  document.addEventListener('tempoloon:lang', () => { i18nChrome(); paintOffer(); });
+  document.addEventListener('tempoloon:labels', refreshList);
   document.addEventListener('pointerdown', (e) => {
     if (open && !wrap.contains(e.target)) closePicker();
   });

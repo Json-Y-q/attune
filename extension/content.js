@@ -6,9 +6,9 @@
 // the composer (ProseMirror/tiptap composers turn an inserted line break into Enter = send). See lib/widget.js planPick/keyAction.
 const N_TURNS = 8;
 const HOST = location.hostname.replace(/^www\./, '');
-const FAB_ID = 'attune-load-fab';
-const POS_KEY = 'attune.ext.pos.v1';
-const PREFS_KEY = 'attune.ext.prefs.v1';
+const FAB_ID = 'tempoloon-load-fab';
+const POS_KEY = 'tempoloon.ext.pos.v1';
+const PREFS_KEY = 'tempoloon.ext.prefs.v1';
 const REWRITE = 'Please rewrite your last answer more shortly and simply.'; // only PLACED in an empty box; the user sends it
 const REWRITE_OFFER = 'Please rewrite your last answer as a short summary first, with the full details below.';
 const FILLS = [REWRITE, REWRITE_OFFER];
@@ -19,13 +19,13 @@ async function loadSelectors() {
 }
 const KO = /^ko\b/i.test(document.documentElement?.lang || '') || /^ko\b/i.test(navigator.language || '');
 const MSG = KO
-  ? { noInput: '입력창을 찾지 못함 — 메모를 클립보드에 복사했어요. 입력창에 붙여넣기(Ctrl/⌘+V) 하세요.', copyFail: '입력창을 찾지 못함 — 아래 버튼으로 복사해 붙여넣으세요.', copy: '복사', ready: '다음 전송에 메모 준비됨', undo: '되돌리기', yes: '네, 좋아요', no: '지금은 괜찮아요', offer: 'Attune 제안' }
-  : { noInput: 'Couldn’t find the chat box — the note is copied. Paste it (Ctrl/⌘+V).', copyFail: 'Couldn’t find the chat box — copy the note with the button and paste it.', copy: 'Copy', ready: 'Load note ready for next send', undo: 'Undo', yes: 'Yes, please', no: 'Not now', offer: 'Suggestion from Attune' };
+  ? { noInput: '입력창을 찾지 못함 — 메모를 클립보드에 복사했어요. 입력창에 붙여넣기(Ctrl/⌘+V) 하세요.', copyFail: '입력창을 찾지 못함 — 아래 버튼으로 복사해 붙여넣으세요.', copy: '복사', ready: '다음 전송에 메모 준비됨', undo: '되돌리기', yes: '네, 좋아요', no: '지금은 괜찮아요', offer: '템포룬 제안' }
+  : { noInput: 'Couldn’t find the chat box — the note is copied. Paste it (Ctrl/⌘+V).', copyFail: 'Couldn’t find the chat box — copy the note with the button and paste it.', copy: 'Copy', ready: 'Load note ready for next send', undo: 'Undo', yes: 'Yes, please', no: 'Not now', offer: 'Suggestion from Tempoloon' };
 
 /** Candidate list: array in selectors.json (preferred) or a comma list. First visible, editable match wins. */
 function candidates(v) { return Array.isArray(v) ? v : String(v || '').split(',').map((s) => s.trim()).filter(Boolean); }
 function usable(el) {
-  if (!el || el.closest('#attune-load-fab')) return false;
+  if (!el || el.closest('#tempoloon-load-fab')) return false;
   if (el.disabled || el.readOnly || el.getAttribute('aria-hidden') === 'true') return false;
   return el.getClientRects().length > 0;
 }
@@ -145,7 +145,7 @@ async function loadLibs() {
   } catch { M = null; W = null; } // the widget still works as a plain coloured circle
 }
 const FALLBACK_HEX = { calm: '#2F5DA8', rising: '#B45F06', overloaded: '#B3124F' };
-const FALLBACK_TXT = { face: { calm: 'Light', rising: 'Medium', overloaded: 'Heavy' }, mascot: 'Attune load faces', group: 'Next reply style', undo: 'Undo' };
+const FALLBACK_TXT = { face: { calm: 'Light', rising: 'Medium', overloaded: 'Heavy' }, mascot: 'Tempoloon load faces', group: 'Next reply style', undo: 'Undo' };
 const LEVEL_LIST = ['calm', 'rising', 'overloaded'];
 const RANK = { calm: 0, rising: 1, overloaded: 2 };
 const LANG = KO ? 'ko' : 'en';
@@ -359,9 +359,9 @@ function ensureUI(onPick) {
         <div class="offer-row"><button type="button" class="yes">${MSG.yes}</button><button type="button" class="no">${MSG.no}</button></div>
       </div>
       <div class="chip" role="status" hidden><span class="chip-txt"></span><button type="button" class="copy" hidden>${MSG.copy}</button><button type="button" class="undo">${MSG.undo}</button></div>
-      <div class="panel" id="attune-faces" role="group" aria-label="${t.group}" hidden></div>
-      <div class="preview" id="attune-preview" role="note" hidden></div>
-      <button type="button" class="main" aria-describedby="attune-preview" aria-haspopup="true" aria-expanded="false" aria-controls="attune-faces"><div class="jit"><div class="art"></div></div><span class="puffs" aria-hidden="true"><i></i><i></i><i></i></span></button>
+      <div class="panel" id="tempoloon-faces" role="group" aria-label="${t.group}" hidden></div>
+      <div class="preview" id="tempoloon-preview" role="note" hidden></div>
+      <button type="button" class="main" aria-describedby="tempoloon-preview" aria-haspopup="true" aria-expanded="false" aria-controls="tempoloon-faces"><div class="jit"><div class="art"></div></div><span class="puffs" aria-hidden="true"><i></i><i></i><i></i></span></button>
     </div>`;
   const panel = root.querySelector('.panel');
   for (const lv of LEVEL_LIST) {
@@ -371,7 +371,7 @@ function ensureUI(onPick) {
     b.dataset.lv = lv;
     b.setAttribute('aria-label', t.face[lv]);
     b.setAttribute('aria-pressed', String(lv === level));
-    b.setAttribute('aria-describedby', 'attune-preview');
+    b.setAttribute('aria-describedby', 'tempoloon-preview');
     b.style.setProperty('--fc', hexOf(lv));
     const art = document.createElement('div');
     art.className = 'face-art';

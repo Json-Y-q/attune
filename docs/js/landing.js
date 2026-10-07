@@ -1,17 +1,17 @@
 // Landing page controller: an interactive preview of the same answer at different (virtual) conditions.
 // Reuses the engine and the rule-based transform; no network, no storage, text via textContent only.
-import { computeSettings, THRESHOLDS } from './engine.js?v=8bf31d35';
-import { renderMascot } from './mascot.js?v=8bf31d35';
-import { loadJSON } from './storage.js?v=8bf31d35';
-import { SAMPLE_PROFILE } from './profile.js?v=8bf31d35';
-import { transform } from './transform.js?v=8bf31d35';
-import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=8bf31d35';
-import { typeLive, typingCps } from './typing.js?v=8bf31d35';
-import { mountStory, mountIndividuals } from './showcase.js?v=8bf31d35';
-import { softView, summarySentences } from './soften.js?v=8bf31d35';
-import { mountMascotLoad } from './loadui.js?v=8bf31d35';
-import { mountFlow } from './flow.js?v=8bf31d35';
-import { mountMedia } from './media.js?v=8bf31d35';
+import { computeSettings, THRESHOLDS } from './engine.js?v=647d0f36';
+import { renderMascot } from './mascot.js?v=647d0f36';
+import { loadJSON } from './storage.js?v=647d0f36';
+import { SAMPLE_PROFILE } from './profile.js?v=647d0f36';
+import { transform } from './transform.js?v=647d0f36';
+import { initPage, renderBlocks, renderLoadMeter } from './ui.js?v=647d0f36';
+import { typeLive, typingCps } from './typing.js?v=647d0f36';
+import { mountStory, mountIndividuals } from './showcase.js?v=647d0f36';
+import { softView, summarySentences } from './soften.js?v=647d0f36';
+import { mountMascotLoad } from './loadui.js?v=647d0f36';
+import { mountFlow } from './flow.js?v=647d0f36';
+import { mountMedia } from './media.js?v=647d0f36';
 
 const $ = (id) => document.getElementById(id);
 const BASELINE_HRV_MS = 55; // virtual baseline for the preview
@@ -21,7 +21,7 @@ const PRESETS = {
   long: { hrvMs: 33, sessionMinutes: 60 }, // about -40%, long session
 };
 const state = { ...PRESETS.rested };
-let mascotOn = loadJSON('attune.mascot') !== false;
+let mascotOn = loadJSON('tempoloon.mascot') !== false;
 let artKey = '';
 let lastPace = 4;
 let outTyper = null;
@@ -85,7 +85,7 @@ document.querySelectorAll('.lp-pick').forEach((b) => b.addEventListener('click',
   if (!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) outTyper = typeLive($('lp-out'), { cps: typingCps(lastPace) });
 }));
 
-document.addEventListener('attune:mascot', (e) => { mascotOn = e.detail.on; render(); });
+document.addEventListener('tempoloon:mascot', (e) => { mascotOn = e.detail.on; render(); });
 mountFlow();
 
 /* Landing live mascot: one click applies level + regenerates the sample answer (local only). */

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Summarise exported Attune label JSON (site "Export JSON" or extension export) into a Markdown report.
+// Summarise exported Tempoloon label JSON (site "Export JSON" or extension export) into a Markdown report.
 // Facts only (counts, times, rates). No diagnosis. Local files only; no network.
 // Usage: node scripts/analyze-labels.mjs export1.json [export2.json ...] [--out report.md] [--lang ko]
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -8,7 +8,7 @@ import { normalizeLabels } from '../docs/js/labels.js';
 
 const T = {
   en: {
-    title: 'Attune label summary', files: 'Files', period: 'Period', days: (n) => `${n} days with records`, cols: '| date | records | load presses | suggestion answers |', total: 'Records',
+    title: 'Tempoloon label summary', files: 'Files', period: 'Period', days: (n) => `${n} days with records`, cols: '| date | records | load presses | suggestion answers |', total: 'Records',
     byLevel: 'Manual mascot presses by level', bySource: 'By source', heat: 'Load presses by weekday × time of day (local time at capture)',
     session: 'Load presses by minute into a session', accept: 'Automatic suggestions', rate: 'accepted', none: 'none yet',
     sparse: `Fewer than ${MIN_EVENTS} load presses: patterns are not shown yet. Keep recording.`,
@@ -17,7 +17,7 @@ const T = {
     days7: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], h: 'h', min: 'min', shown: 'shown', reject: 'passed', ignore: 'no answer',
   },
   ko: {
-    title: 'Attune 라벨 요약', files: '파일', period: '기간', days: (n) => `기록 있는 날 ${n}일`, cols: '| 날짜 | 기록 | 부하 입력 | 제안 응답 |', total: '기록 수',
+    title: '템포룬 라벨 요약', files: '파일', period: '기간', days: (n) => `기록 있는 날 ${n}일`, cols: '| 날짜 | 기록 | 부하 입력 | 제안 응답 |', total: '기록 수',
     byLevel: '마스코트 수동 입력(단계별)', bySource: '출처별', heat: '요일 × 시간대별 부하 입력 (기록 당시 현지 시각)',
     session: '세션 시작 후 몇 분째에 부하 입력', accept: '자동 제안', rate: '수락', none: '아직 없음',
     sparse: `부하 입력이 ${MIN_EVENTS}개 미만이라 아직 패턴을 보여 주지 않아요. 계속 기록해 주세요.`,

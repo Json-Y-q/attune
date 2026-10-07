@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Attune Load Feedback (prototype)",
-  "version": "0.3.1",
-  "description": "Local cognitive-load mascot (brain-balloon face) for ChatGPT, Claude, Gemini, and Grok. Prototype only — not submitted to the Chrome Web Store. No data leaves the browser.",
+  "name": "Tempoloon Load Feedback (prototype)",
+  "version": "0.4.0",
+  "description": "Tempoloon: a local brain-balloon mascot that shows your reading load on ChatGPT, Claude, Gemini and Grok. Prototype for testers, not in the Chrome Web Store. No data leaves the browser.",
   "permissions": [
     "storage",
     "activeTab"
@@ -18,7 +18,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "Attune load feedback",
+    "default_title": "Tempoloon load feedback",
     "default_popup": "popup.html"
   },
   "content_scripts": [

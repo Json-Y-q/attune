@@ -345,8 +345,8 @@ test('mascot: four still frames differ in shape (arc thickness, face), not only 
   const svgs = poses.map((p) => toSvgString(mascotTree(p)));
   assert.equal(new Set(svgs).size, 4);
   assert.ok(svgs.every((s) => !/<text|<image|href/.test(s)));
-  assert.match(readFileSync(new URL('../docs/img/mascot-heavy.svg', import.meta.url), 'utf8'), /Attune mascot, heavy/);
-  assert.ok(readFileSync(new URL('../docs/img/logo.svg', import.meta.url), 'utf8').includes('Attune logo'));
+  assert.match(readFileSync(new URL('../docs/img/mascot-heavy.svg', import.meta.url), 'utf8'), /Tempoloon mascot, heavy/);
+  assert.ok(readFileSync(new URL('../docs/img/logo.svg', import.meta.url), 'utf8').includes('Tempoloon logo'));
 });
 
 test('mascot follows the story: swells, trembles and sweats at the edge, lets the air out, breathes, brightens', () => {

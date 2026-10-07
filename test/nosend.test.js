@@ -126,11 +126,11 @@ function loadContent() {
   const panel = mk('panel', { hidden: false, querySelectorAll: () => faces, querySelector: () => faces[0] });
   const parts = { '.panel': panel, '.main': mk('main'), '.preview': mk('preview'), '.wrap': mk('wrap'), '.chip': mk('chip'), '.chip-txt': mk('chip-txt'), '.offer': mk('offer') };
   const shadowRoot = { activeElement: faces[2], querySelector: (s) => parts[s] ?? null, querySelectorAll: (s) => (s === '.panel .face' ? faces : []) };
-  const host = { id: 'attune-load-fab', shadowRoot, style: {}, getBoundingClientRect: () => ({ right: 0, bottom: 0 }) };
+  const host = { id: 'tempoloon-load-fab', shadowRoot, style: {}, getBoundingClientRect: () => ({ right: 0, bottom: 0 }) };
   const composer = { tagName: 'TEXTAREA', value: '', dispatched: [], dispatchEvent(e) { this.dispatched.push(e); }, getAttribute: () => null, closest: () => null, getClientRects: () => [1] };
   const document = {
     querySelectorAll: (css) => (css.includes('textarea') ? [composer] : []), querySelector: () => null,
-    getElementById: (id) => (id === 'attune-load-fab' ? host : null), documentElement: { appendChild() {}, lang: '' },
+    getElementById: (id) => (id === 'tempoloon-load-fab' ? host : null), documentElement: { appendChild() {}, lang: '' },
     createElement: () => mk('el'), addEventListener() {}, execCommand: () => { throw new Error('execCommand must not run for a textarea'); },
   };
   const ctx = vm.createContext({

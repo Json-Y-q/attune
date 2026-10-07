@@ -1,17 +1,22 @@
-# Attune Chrome extension (MV3 prototype)
+# Tempoloon Chrome extension (MV3 prototype)
 
-**Status: prototype (v0.3.1) / not submitted to the Chrome Web Store.** Loaded by hand as an unpacked extension. Nothing leaves the browser (`chrome.storage.local` only), and it never sends a message for you.
+**Status: prototype (v0.4.0) / not submitted to the Chrome Web Store.** Tester builds are shared as an unlisted zip only. Loaded by hand as an unpacked extension. Nothing leaves the browser (`chrome.storage.local` only), and it never sends a message for you.
 
 Supported sites: **chatgpt.com, claude.ai, gemini.google.com, grok.com**.
 (`x.com/i/grok` is not included: X is a single-page app, so a path-limited content script would not load reliably, and a host permission for all of `x.com` would be far broader than needed. Use grok.com.)
 
 ## Install (Chrome, "Load unpacked")
-1. Get the folder: `git clone https://github.com/Json-Y-q/attune.git` (or download the repo ZIP and unzip it). The extension is the `attune/extension` folder (the one that contains `manifest.json`).
+1. Get the folder: `git clone https://github.com/Json-Y-q/tempoloon.git` (or download the repo ZIP and unzip it). The extension is the `tempoloon/extension` folder (the one that contains `manifest.json`).
 2. Open `chrome://extensions` in Chrome.
 3. Turn on **Developer mode** (toggle, top right).
-4. Click **Load unpacked** and choose the `attune/extension` folder.
-5. Pin "Attune Load Feedback (prototype)" from the puzzle-piece menu if you want the popup handy.
+4. Click **Load unpacked** and choose the `tempoloon/extension` folder.
+5. Pin "Tempoloon Load Feedback (prototype)" from the puzzle-piece menu if you want the popup handy.
 6. After pulling new code: press the ↻ reload icon on the extension card, then reload the chat tab.
+
+Tester zip (no git needed): unzip `tempoloon-extension-<version>.zip` into a folder you keep, then do steps 2–4 with that folder. The zip is shared with testers directly; it is not published anywhere.
+
+## Renamed in 0.4.0 (formerly "Attune")
+The extension used to be called "Attune Load Feedback". 0.4.0 only changes the name (Tempoloon, Korean 템포룬) and the storage keys. Labels, preferences, the mascot position and suggestion state saved under the old `attune.*` keys are moved to `tempoloon.*` automatically the first time the new version runs (`lib/migrate.js`, tested). This works when you reload the **same** unpacked folder. Chrome gives a different folder (for example a freshly unzipped copy) a new extension ID with empty storage, so export your labels from the old one first (popup → Export JSON) if you switch folders.
 
 ## Try it on grok.com
 1. Open https://grok.com and sign in to your own account.

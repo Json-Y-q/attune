@@ -1,11 +1,11 @@
 {
-  "name": "attune-mcp-local",
+  "name": "tempoloon-mcp-local",
   "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Attune cognitive-load MCP middleware \u2014 local prototype (stdio, or Streamable HTTP on 127.0.0.1 with a token). Not deployed, not submitted to any marketplace.",
+  "description": "Tempoloon cognitive-load MCP middleware \u2014 local prototype (stdio, or Streamable HTTP on 127.0.0.1 with a token). Not deployed, not submitted to any marketplace.",
   "bin": {
-    "attune-mcp": "./server.mjs"
+    "tempoloon-mcp": "./server.mjs"
   },
   "engines": {
     "node": ">=18"

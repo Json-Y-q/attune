@@ -23,7 +23,7 @@ const server = createServer(async (req, res) => {
 await new Promise((r) => server.once('listening', r));
 const base = `http://127.0.0.1:${server.address().port}`;
 
-const profile = await mkdtemp(join(tmpdir(), 'attune-harness-'));
+const profile = await mkdtemp(join(tmpdir(), 'tempoloon-harness-'));
 const chrome = spawn(CHROME, ['--headless=new', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--window-size=1200,800', 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] });
 const wsUrl = await new Promise((ok, bad) => {
   let buf = '';
@@ -53,7 +53,7 @@ async function key(k, { shift = false, repeat = false } = {}) {
   if (!repeat) await cdp('Input.dispatchKeyEvent', { type: 'keyUp', ...common });
   await sleep(60);
 }
-const S = (sel) => `document.getElementById('attune-load-fab').shadowRoot.querySelector(${JSON.stringify(sel)})`;
+const S = (sel) => `document.getElementById('tempoloon-load-fab').shadowRoot.querySelector(${JSON.stringify(sel)})`;
 async function center(expr) { return ev(`(() => { const r = (${expr}).getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`); }
 async function hover(expr) { const p = await center(expr); await cdp('Input.dispatchMouseEvent', { type: 'mouseMoved', ...p }); await sleep(120); }
 async function click(expr) {
@@ -63,7 +63,7 @@ async function click(expr) {
   await cdp('Input.dispatchMouseEvent', { type: 'mouseReleased', ...p, button: 'left', clickCount: 1 });
   await sleep(250);
 }
-const state = () => ev(`({ submits: __h.submits.length, why: __h.submits.map((s) => s.why), leaks: __h.leaks.slice(), text: __h.text(), html: (__h.box.innerHTML || '').slice(0, 300), open: ${S('.panel')}.hidden === false, chip: ${S('.chip')}.hidden === false, focus: document.activeElement?.id === 'attune-load-fab' ? 'widget:' + (document.getElementById('attune-load-fab').shadowRoot.activeElement?.className || '?') : (document.activeElement === __h.box ? 'composer' : document.activeElement?.tagName), level: ${S('.wrap')}.dataset.level })`);
+const state = () => ev(`({ submits: __h.submits.length, why: __h.submits.map((s) => s.why), leaks: __h.leaks.slice(), text: __h.text(), html: (__h.box.innerHTML || '').slice(0, 300), open: ${S('.panel')}.hidden === false, chip: ${S('.chip')}.hidden === false, focus: document.activeElement?.id === 'tempoloon-load-fab' ? 'widget:' + (document.getElementById('tempoloon-load-fab').shadowRoot.activeElement?.className || '?') : (document.activeElement === __h.box ? 'composer' : document.activeElement?.tagName), level: ${S('.wrap')}.dataset.level })`);
 
 async function run(query) {
   await cdp('Page.navigate', { url: `${base}/scripts/ext-harness.html?${query}` });

@@ -1,5 +1,5 @@
 {
-  "schema": "attune.condition.v1",
+  "schema": "tempoloon.condition.v1",
   "source": "virtual",
   "baselineHrvMs": 55,
   "hrvMs": 37,

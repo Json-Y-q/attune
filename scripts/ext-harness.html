@@ -7,7 +7,7 @@
      (beforeinput insertParagraph/insertLineBreak, or a newline appearing in the text), on form submit and on a send-button click.
      nl=1 makes the stubbed background return a note ending in "\n\n" (checks the content script flattens it).
      scripts/ext-harness-check.mjs drives this page in headless Chrome with real (trusted) keys and mouse; expected submits: 0. -->
-<html lang="en"><head><meta charset="utf-8"><title>Attune extension mascot harness</title>
+<html lang="en"><head><meta charset="utf-8"><title>Tempoloon extension mascot harness</title>
 <style>
   body { margin: 0; font: 15px/1.5 system-ui, sans-serif; background: #F7F7F8; color: #1F2328; height: 100vh; }
   body.dark { background: #151517; color: #E8E8EA; }
@@ -75,17 +75,17 @@
   form.querySelector('button').addEventListener('click', (e) => { e.preventDefault(); send('send-button', e); });
   // page key handlers registered later than the widget's window listener: none of them may see a key typed in the widget
   for (const t of ['keydown', 'keyup', 'keypress']) {
-    document.addEventListener(t, (e) => { const h = document.getElementById('attune-load-fab'); if (h && e.composedPath().includes(h)) H.leaks.push(`${t}:${e.key}`); }, true);
+    document.addEventListener(t, (e) => { const h = document.getElementById('tempoloon-load-fab'); if (h && e.composedPath().includes(h)) H.leaks.push(`${t}:${e.key}`); }, true);
   }
   if (q.get('dark')) document.body.classList.add('dark');
   if (q.get('lang') === 'ko') document.documentElement.lang = 'ko';
-  const store = { 'attune.ext.prefs.v1': { level: q.get('level') || 'calm' } };
+  const store = { 'tempoloon.ext.prefs.v1': { level: q.get('level') || 'calm' } };
   const listeners = [];
   window.chrome = {
     runtime: {
       getURL: (p) => `/extension/${p}`,
       sendMessage: async (msg) => {
-        if (msg.type === 'get_status') return { ok: true, prefs: store['attune.ext.prefs.v1'] };
+        if (msg.type === 'get_status') return { ok: true, prefs: store['tempoloon.ext.prefs.v1'] };
         if (msg.type === 'record_load') {
           const { prefixForLevel } = await import('/extension/lib/labels.js');
           const p = prefixForLevel(msg.level);
@@ -114,8 +114,8 @@
 <script>
   const state = q.get('state') || 'idle';
   const until = (f) => new Promise((r) => { const t = setInterval(() => { const v = f(); if (v) { clearInterval(t); r(v); } }, 30); });
-  until(() => document.getElementById('attune-load-fab')?.shadowRoot?.querySelector('.main .art svg')).then(() => {
-    const root = document.getElementById('attune-load-fab').shadowRoot;
+  until(() => document.getElementById('tempoloon-load-fab')?.shadowRoot?.querySelector('.main .art svg')).then(() => {
+    const root = document.getElementById('tempoloon-load-fab').shadowRoot;
     const main = root.querySelector('.main');
     if (state === 'hover') main.dispatchEvent(new MouseEvent('mouseenter'));
     if (state === 'open' || state === 'face') main.click();
