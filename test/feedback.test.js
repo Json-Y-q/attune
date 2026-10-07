@@ -124,8 +124,9 @@ test('extension: instant apply default ON, chip Undo, no confirm, no auto-send',
   assert.doesNotMatch(ct, /\bconfirm\s*\(/);
   assert.doesNotMatch(ct, /\.click\(\)|requestSubmit|form\.submit|dispatchEvent\([^\)]*submit/);
   assert.match(lib, /prefixForLevel|rewritePrompt/);
-  // empty composer fills rewrite text but still does not send
-  assert.match(ct, /rewrite your last answer|Please rewrite/);
+  // empty composer gets the rewrite request only when a previous answer exists (fillFor), and still nothing is sent
+  assert.match(lib, /Redo the last answer this way\./);
+  assert.match(ct, /fillFor\(\{ hasAnswer: hasAssistantMessage\(sel\), lang: LANG \}\)/);
   assert.match(ct, /insertAtStart/); // one-line insert at the start of the composer (0.3.1), never a send
 });
 
@@ -134,7 +135,8 @@ test('extension prefixForLevel: overloaded/rising nonempty, calm empty', async (
   assert.equal(prefixForLevel('calm'), '');
   assert.ok(prefixForLevel('rising').length > 20);
   assert.ok(prefixForLevel('overloaded').length > 20);
-  assert.match(prefixForLevel('overloaded'), /short|cognitive load/i);
+  assert.match(prefixForLevel('overloaded'), /^\[Tempoloon: heavy\] 1-line summary first/);
+  assert.match(prefixForLevel('overloaded', 'ko'), /^\[템포룬: 무거움\] 한 줄 요약 먼저/);
 });
 
 test('mcp report_load returns label + systemContext + params in one call', () => {

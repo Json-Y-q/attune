@@ -65,6 +65,15 @@ async function click(expr) {
 }
 const state = () => ev(`({ submits: __h.submits.length, why: __h.submits.map((s) => s.why), leaks: __h.leaks.slice(), text: __h.text(), html: (__h.box.innerHTML || '').slice(0, 300), open: ${S('.panel')}.hidden === false, chip: ${S('.chip')}.hidden === false, focus: document.activeElement?.id === 'tempoloon-load-fab' ? 'widget:' + (document.getElementById('tempoloon-load-fab').shadowRoot.activeElement?.className || '?') : (document.activeElement === __h.box ? 'composer' : document.activeElement?.tagName), level: ${S('.wrap')}.dataset.level })`);
 
+// Chip vs mascot vs composer (form): gap >= 12px from the mascot, no overlap with the composer, inside the viewport.
+const chipGeometry = () => ev(`(() => {
+  const R = (el) => { const r = el.getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom }; };
+  const c = R(${S('.chip')}); const m = R(${S('.main')}); const f = R(document.querySelector('form'));
+  const hit = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  const gap = Math.max(m.left - c.right, c.left - m.right, m.top - c.bottom, c.top - m.bottom);
+  const ok = gap >= 12 && !hit(c, f) && c.left >= 0 && c.top >= 0 && c.right <= innerWidth && c.bottom <= innerHeight;
+  return { ok, gap: Math.round(gap), side: ${S(".chip")}.dataset.side || null };
+})()`);
 async function run(query) {
   await cdp('Page.navigate', { url: `${base}/scripts/ext-harness.html?${query}` });
   for (let i = 0; i < 100 && !(await ev(`document.title === 'ready'`).catch(() => false)); i += 1) await sleep(50);
@@ -77,7 +86,8 @@ async function run(query) {
   await key('Escape'); await log('Escape again (focus on mascot)');
   // 2. mouse pick heavy, then Escape, then Undo
   await click(S('.main')); await hover(S('.face[data-lv="overloaded"]')); await click(S('.face[data-lv="overloaded"]')); await sleep(200);
-  await log('mouse pick heavy (empty box)');
+  const emptyPick = await log('mouse pick heavy (empty box)');
+  const chipBox = await chipGeometry();
   await key('Escape'); await log('Escape after pick');
   await click(S('.undo')); await sleep(200); await log('Undo (mouse)');
   // 3. keyboard: focus mascot, Enter opens, arrows, Escape, Space opens, End = heavy, Enter picks, held Enter repeats
@@ -100,7 +110,10 @@ async function run(query) {
   const widgetSubmits = (await state()).submits;
   // 5. sanity: a genuine user Enter in the composer DOES send (proves the fake composer detects sends)
   await ev(`__h.box.focus()`); await key('Enter'); const sanity = await log('genuine user Enter in composer');
-  return { query, widgetSubmits, genuineSendDetected: sanity.submits === widgetSubmits + 1, leaks: sanity.leaks.length, pageErrors: pageErrors.splice(0), steps };
+  const prev = /(^|&)prev=1/.test(query);
+  const redo = /(^|&)lang=ko/.test(query) ? /^\[템포룬: 무거움\] .*다시 써 주세요\.$/ : /^\[Tempoloon: heavy\] .*Redo the last answer this way\.$/;
+  const rewriteOk = prev ? redo.test(emptyPick.text) : /^\[Tempoloon: heavy\] /.test(emptyPick.text) && !/Redo the last answer|rewrite|다시 써/i.test(emptyPick.text);
+  return { query, widgetSubmits, emptyPickText: emptyPick.text, rewriteOk, chip: chipBox, genuineSendDetected: sanity.submits === widgetSubmits + 1, leaks: sanity.leaks.length, pageErrors: pageErrors.splice(0), steps };
 }
 
 const report = [];
@@ -112,12 +125,12 @@ if (arg('--eval')) { // debugging aid: load one harness page and print an expres
 }
 try {
   const only = arg('--only', '');
-  for (const q of ['composer=pm', 'composer=pm&nl=1', 'composer=textarea', 'composer=textarea&nl=1']) if (!only || q === only) report.push(await run(q));
+  for (const q of ['composer=pm', 'composer=pm&nl=1', 'composer=textarea', 'composer=textarea&nl=1', 'composer=pm&prev=1', 'composer=textarea&prev=1&lang=ko']) if (!only || q === only) report.push(await run(q));
 } finally {
   ws.close(); chrome.kill(); server.close(); await rm(profile, { recursive: true, force: true }).catch(() => {});
 }
 const verbose = process.argv.includes('--verbose');
 console.log(JSON.stringify(verbose ? report : report.map(({ steps, ...r }) => ({ ...r, finalText: steps.at(-2).text })), null, 1));
-const ok = report.every((r) => r.widgetSubmits === 0 && r.genuineSendDetected && r.leaks === 0 && !r.pageErrors.length);
-console.log(ok ? 'PASS: 0 submits from the widget in every run' : 'FAIL');
+const ok = report.every((r) => r.widgetSubmits === 0 && r.genuineSendDetected && r.leaks === 0 && !r.pageErrors.length && r.rewriteOk && r.chip.ok);
+console.log(ok ? 'PASS: 0 submits from the widget in every run (empty chat: note only; previous answer: note + redo request; chip clear of mascot and composer)' : 'FAIL');
 process.exit(ok ? 0 : 1);

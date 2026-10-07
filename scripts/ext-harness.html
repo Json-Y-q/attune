@@ -77,6 +77,9 @@
   for (const t of ['keydown', 'keyup', 'keypress']) {
     document.addEventListener(t, (e) => { const h = document.getElementById('tempoloon-load-fab'); if (h && e.composedPath().includes(h)) H.leaks.push(`${t}:${e.key}`); }, true);
   }
+  // prev=1: the page already shows an assistant answer (grok.com "assistantMessage" selector), so an empty-box pick also
+  // places the short "redo the last answer" request; without it the chat counts as new and only the style note is placed.
+  if (q.get('prev')) { const a = document.createElement('div'); a.className = 'items-start'; a.innerHTML = '<div class="message-bubble">Earlier answer from the assistant.</div>'; document.querySelector('main').append(a); }
   if (q.get('dark')) document.body.classList.add('dark');
   if (q.get('lang') === 'ko') document.documentElement.lang = 'ko';
   const store = { 'tempoloon.ext.prefs.v1': { level: q.get('level') || 'calm' } };
@@ -88,7 +91,7 @@
         if (msg.type === 'get_status') return { ok: true, prefs: store['tempoloon.ext.prefs.v1'] };
         if (msg.type === 'record_load') {
           const { prefixForLevel } = await import('/extension/lib/labels.js');
-          const p = prefixForLevel(msg.level);
+          const p = prefixForLevel(msg.level, msg.lang);
           return { ok: true, pendingPrefix: p && q.get('nl') ? `${p.trim()}\n\n` : p };
         }
         return { ok: true };
@@ -120,6 +123,7 @@
     if (state === 'hover') main.dispatchEvent(new MouseEvent('mouseenter'));
     if (state === 'open' || state === 'face') main.click();
     if (state === 'face') root.querySelector(`.face[data-lv="${q.get('face') || 'rising'}"]`).dispatchEvent(new MouseEvent('mouseenter'));
+    if (state === 'pick') { main.click(); root.querySelector(`.face[data-lv="${q.get('face') || 'overloaded'}"]`).click(); } // chip + note placement
     document.title = 'ready';
   });
 </script>

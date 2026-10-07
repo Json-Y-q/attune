@@ -153,6 +153,41 @@ export function clampPos(pos, { vw, vh, size = SIZE }) {
   return { right: Math.round(Math.min(Math.max(4, r), Math.max(4, vw - size - 4))), bottom: Math.round(Math.min(Math.max(4, b), Math.max(4, vh - size - 4))) };
 }
 
+export const CHIP_GAP = 12;
+const overlap = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+/**
+ * Where the "note ready / Undo" chip goes (fixed, viewport px). It must not sit under the mascot (the cursor covers it there)
+ * and must never cover the composer (its send / voice buttons). mascot / composer = bounding rects {left,top,right,bottom};
+ * chip = {w,h}. Preferred: to the LEFT of the mascot, gap >= CHIP_GAP, bottom-aligned with the mascot, which when docked is the
+ * composer's top edge minus the gap. No room on the left: above the mascot (or below it near the top of the screen).
+ * Always inside the viewport; lifted above the composer if it would touch it. Returns {left, top, side}.
+ */
+export function chipPos({ vw, vh, mascot, chip, composer = null, gap = CHIP_GAP, margin = 4 }) {
+  const w = Math.max(0, Math.min(Number(chip?.w) || 0, vw - 2 * margin));
+  const h = Math.max(0, Number(chip?.h) || 0);
+  const cx = (x) => Math.min(Math.max(margin, x), Math.max(margin, vw - w - margin));
+  const cy = (y) => Math.min(Math.max(margin, y), Math.max(margin, vh - h - margin));
+  const box = (l, t) => ({ left: l, top: t, right: l + w, bottom: t + h });
+  const pad = (r) => (r ? { left: r.left - gap, top: r.top - gap, right: r.right + gap, bottom: r.bottom + gap } : null);
+  const m = pad(mascot); const c = pad(composer);
+  let side = 'left';
+  let left = mascot.left - gap - w;
+  let top = mascot.bottom - h;
+  if (left < margin) {
+    side = 'above';
+    left = mascot.right - w;
+    top = mascot.top - gap - h;
+    if (top < margin) { side = 'below'; top = mascot.bottom + gap; }
+  }
+  left = cx(left); top = cy(top);
+  if (c && overlap(box(left, top), c)) top = cy(composer.top - gap - h); // never over the composer / its buttons
+  if (overlap(box(left, top), m)) { // clamping or lifting pushed it into the mascot: put it above both
+    top = cy(Math.min(mascot.top, composer ? composer.top : Infinity) - gap - h);
+    if (side === 'left') side = 'above';
+  }
+  return { left: Math.round(left), top: Math.round(top), side };
+}
+
 /* ---------- never send: composer text + keys (pure, covered by node --test) ----------
  * The extension NEVER sends a message. It only puts a single-line note in front of the composer text; the user sends.
  * Rich composers (ProseMirror/tiptap on grok.com and claude.ai) turn an inserted line break into an Enter key press

@@ -1,6 +1,6 @@
 # Tempoloon Chrome extension (MV3 prototype)
 
-**Status: prototype (v0.4.0) / not submitted to the Chrome Web Store.** Tester builds are shared as an unlisted zip only. Loaded by hand as an unpacked extension. Nothing leaves the browser (`chrome.storage.local` only), and it never sends a message for you.
+**Status: prototype (v0.4.1) / not submitted to the Chrome Web Store.** Tester builds are shared as an unlisted zip only. Loaded by hand as an unpacked extension. Nothing leaves the browser (`chrome.storage.local` only), and it never sends a message for you.
 
 Supported sites: **chatgpt.com, claude.ai, gemini.google.com, grok.com**.
 (`x.com/i/grok` is not included: X is a single-page app, so a path-limited content script would not load reliably, and a host permission for all of `x.com` would be far broader than needed. Use grok.com.)
@@ -15,6 +15,17 @@ Supported sites: **chatgpt.com, claude.ai, gemini.google.com, grok.com**.
 
 Tester zip (no git needed): unzip `tempoloon-extension-<version>.zip` into a folder you keep, then do steps 2–4 with that folder. The zip is shared with testers directly; it is not published anywhere.
 
+## Compact notes (0.4.1)
+The note the extension puts in the chat box is one short line, action-only (what the reply should look like, never a statement about you):
+
+| Pick | English | Korean (page or browser language ko) |
+|---|---|---|
+| light | (no note) | (no note) |
+| medium | `[Tempoloon: medium] 1-2 sentence summary first, full details kept below.` | `[템포룬: 중간] 1~2문장 요약 먼저, 전체 내용은 아래에 유지.` |
+| heavy | `[Tempoloon: heavy] 1-line summary first, all details under "Details"; one step at a time, max 2 options.` | `[템포룬: 무거움] 한 줄 요약 먼저, 전체 내용은 "자세히" 아래에. 한 번에 하나씩, 선택지 최대 2개.` |
+
+Empty box + an earlier answer on the page: the note is followed by `Redo the last answer this way.` (`마지막 답을 이 방식으로 다시 써 주세요.`). An earlier answer is detected with the per-site `assistantMessage` selectors in `selectors.json`; if none match (new chat, or an unknown layout) only the note is placed. The grok.com `assistantMessage` candidates are not yet verified on a logged-in chat.
+
 ## Renamed in 0.4.0 (formerly "Attune")
 The extension used to be called "Attune Load Feedback". 0.4.0 only changes the name (Tempoloon, Korean 템포룬) and the storage keys. Labels, preferences, the mascot position and suggestion state saved under the old `attune.*` keys are moved to `tempoloon.*` automatically the first time the new version runs (`lib/migrate.js`, tested). This works when you reload the **same** unpacked folder. Chrome gives a different folder (for example a freshly unzipped copy) a new extension ID with empty storage, so export your labels from the old one first (popup → Export JSON) if you switch folders.
 
@@ -23,7 +34,7 @@ The extension used to be called "Attune Load Feedback". 0.4.0 only changes the n
 2. The **brain-balloon mascot** (the same head as on the website, ~60px, no name or label) floats at the bottom right, lifted above the chat box so it never covers the input or the send button. Drag it anywhere; the spot is remembered (popup → **Reset mascot position** puts it back).
 3. **Colour + motion show the current reply style**: calm = blue outline with a light blue head, slow breathing; rising = orange, a little swollen, one sweat drop, a slight wobble; break = magenta, clearly inflated, three sweat drops, trembling. Going back to calm lets the air out with a "pshh" (puffs drift away). With `prefers-reduced-motion` it shows the same still frames (size, face, sweat) without any movement.
 4. **Hover** the mascot → a small bubble shows how replies look right now (e.g. "Replies now: summary first (~3 lines)") with bars. Preview only, nothing changes.
-5. **Click** the mascot → three mascot faces: **light / medium / heavy**. Hover (or focus) a face → "Next reply: ~3 lines, summary first" with bars shrinking to the expected length. **Click a face** → applied at once: the mascot changes, and on medium/heavy a short note is put in front of whatever you type (an empty box gets a "rewrite shorter" request). It is attached to your **next** message only; you still press send yourself. A chip says "Load note ready" with **Undo** (removes the note from the box and shows the previous level again).
+5. **Click** the mascot → three mascot faces: **light / medium / heavy**. Hover (or focus) a face → "Next reply: ~3 lines, summary first" with bars shrinking to the expected length. **Click a face** → applied at once: the mascot changes, and on medium/heavy a short one-line note is put in front of whatever you type. If the box is empty **and** the chat already has an answer, a short "Redo the last answer this way." follows the note; in a new/empty chat only the note is placed. It is attached to your **next** message only; you still press send yourself. A chip to the **left** of the mascot (12px gap, never over the chat box or its send/voice buttons) says "Load note ready" with **Undo** (removes the note from the box and shows the previous level again).
 6. Keyboard: Tab to the mascot, Enter/Space opens the faces, arrow keys move between them, Enter picks, **Escape** closes (focus returns to the mascot). Clicking anywhere outside also closes the panel.
 7. Automatic suggestion: if you send nearly the same message again, a bubble may ask "Want a short summary first?" with **Yes, please / Not now**. Sending again without answering counts as "no answer".
 8. Popup (toolbar icon): manual buttons, auto-suggestion on/off, daily max (2 or 3), reset learning, reset mascot position, export JSON, clear labels.
@@ -41,15 +52,15 @@ Composer detection tries a list of candidates in order (Grok's `textarea[aria-la
 
 ## Interaction rules
 - Floating **mascot**, not a text button. Default ON: a pick immediately prepares the note for the **next** message (no confirm dialog). Never auto-sends.
-- Notes ask the model for a 1–2 sentence summary first and the full details below. Nothing is dropped.
+- Notes ask the model for a short summary first (1 line on heavy, 1–2 sentences on medium) and the full details below. Nothing is dropped. Heavy notes stay under 110 characters, medium under 80 (tested).
 - Hover text only describes the **reply** ("Next reply: 1-line summary first"), never the person.
 - Automatic suggestions follow the same policy as the site (`lib/suggest.js` is a verbatim copy of `docs/js/suggest.js`): at most 2–3 per day, quiet for 1 / 3 / 7 days after 1 / 2 / 3 passes in a row, and a "yes" shortens that. Wording is action-only ("Want a short summary first?"), never a statement about you.
 
 ## How the mascot is built
 - `lib/mascot.js` is a **verbatim copy** of `docs/js/mascot.js` (checked by a test), so the extension draws exactly the website's head. `lib/widget.js` holds the pure logic (level → colour/pose, "pshh" deflate and inflate frames, preview wording EN/KO, docking above the composer) and is covered by `node --test`.
 - `content.js` loads both with `import(chrome.runtime.getURL(...))` (they are listed under `web_accessible_resources`) and renders the widget inside an open **Shadow DOM**, so the chat site's CSS cannot restyle it. If the modules cannot load, a plain coloured circle with the same three choices is shown instead.
-- Never-send check: `node --experimental-websocket scripts/ext-harness-check.mjs` (Node 22+: no flag) drives the harness below in headless Chrome with `composer=pm` (ProseMirror-like) and `composer=textarea`, through hover, pick, Escape, Undo and keyboard picking, and fails on any submit.
-- Visual check without installing: serve the repo root (`python3 -m http.server 8099`) and open `http://localhost:8099/scripts/ext-harness.html?level=overloaded&state=open` (states: `idle`, `hover`, `open`, `face`; add `&lang=ko` or `&dark=1`). The harness stubs the `chrome.*` APIs; nothing is sent anywhere.
+- Never-send check: `node --experimental-websocket scripts/ext-harness-check.mjs` (Node 22+: no flag) drives the harness below in headless Chrome with `composer=pm` (ProseMirror-like) and `composer=textarea`, through hover, pick, Escape, Undo and keyboard picking, and fails on any submit. It also checks that an empty-chat pick places only the note (`prev=1`: note + redo request) and that the Undo chip keeps a 12px+ gap from the mascot, stays off the composer and inside the viewport.
+- Visual check without installing: serve the repo root (`python3 -m http.server 8099`) and open `http://localhost:8099/scripts/ext-harness.html?level=overloaded&state=open` (states: `idle`, `hover`, `open`, `face`, `pick` (heavy pick: note + chip); add `&lang=ko`, `&dark=1`, or `&prev=1` for a chat that already has an answer). The harness stubs the `chrome.*` APIs; nothing is sent anywhere.
 
 ## Permissions
 `storage`, `activeTab`, and host_permissions for `https://chatgpt.com/*`, `https://claude.ai/*`, `https://gemini.google.com/*`, `https://grok.com/*` only.

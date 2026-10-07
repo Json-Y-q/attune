@@ -1,8 +1,11 @@
 {
-  "_comment": "DOM selectors for chatgpt.com / claude.ai / gemini.google.com / grok.com. These break often when vendors redesign. Edit this file; do not hard-code in content.js.",
+  "_comment": "DOM selectors for chatgpt.com / claude.ai / gemini.google.com / grok.com. These break often when vendors redesign. Edit this file; do not hard-code in content.js. \"assistantMessage\" = selectors that match a previous assistant answer; when none match (new/empty chat, or an unknown layout) the extension adds only the style note, never the \"redo the last answer\" request.",
   "chatgpt.com": {
     "input": "#prompt-textarea, textarea[data-id], div[contenteditable='true']#prompt-textarea, form textarea",
     "messages": "[data-message-author-role], .agent-turn, main article",
+    "assistantMessage": [
+      "[data-message-author-role='assistant']"
+    ],
     "userRoleAttr": "data-message-author-role",
     "userRoleValue": "user",
     "assistantRoleValue": "assistant"
@@ -10,6 +13,11 @@
   "claude.ai": {
     "input": "div[contenteditable='true'].ProseMirror, fieldset textarea, div[contenteditable='true']",
     "messages": "[data-test-render-count], .font-claude-message, div[data-is-streaming]",
+    "assistantMessage": [
+      "div[data-is-streaming]",
+      ".font-claude-response",
+      ".font-claude-message"
+    ],
     "userRoleAttr": null,
     "userHint": "human|user",
     "assistantHint": "assistant|claude"
@@ -17,6 +25,11 @@
   "gemini.google.com": {
     "input": "rich-textarea textarea, .ql-editor, div[contenteditable='true']",
     "messages": "message-content, .model-response-text, .user-query-bubble-with-background",
+    "assistantMessage": [
+      "model-response",
+      "message-content.model-response-text",
+      ".model-response-text"
+    ],
     "userRoleAttr": null,
     "userHint": "user-query",
     "assistantHint": "model-response"
@@ -44,8 +57,14 @@
       "button[aria-label*='보내기']"
     ],
     "messages": "[class*='message-bubble'], [data-testid*='message'], main article",
+    "assistantMessage": [
+      "[data-testid='assistant-message']",
+      "div.items-start [class*='message-bubble']",
+      "[class*='response-content-markdown']"
+    ],
     "userRoleAttr": null,
     "userHint": "items-end|user",
-    "assistantHint": "items-start|assistant|grok"
+    "assistantHint": "items-start|assistant|grok",
+    "_verifiedAssistant": "2026-10-07: assistantMessage candidates for grok.com are not verified on a logged-in chat; if none match, a pick on an empty box adds only the style note (no rewrite request)."
   }
 }

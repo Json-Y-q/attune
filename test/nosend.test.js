@@ -7,8 +7,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import vm from 'node:vm';
-import { SUBMIT_CHARS, oneLine, planPick, planUndo, keyAction } from '../extension/lib/widget.js';
-import { prefixForLevel, rewritePrompt } from '../extension/lib/labels.js';
+import { SUBMIT_CHARS, oneLine, planPick, planUndo, keyAction, chipPos, CHIP_GAP } from '../extension/lib/widget.js';
+import { prefixForLevel, rewritePrompt, REWRITE_FILLS, NOTE_MAX, fillFor } from '../extension/lib/labels.js';
 
 const read = (rel) => readFileSync(new URL(rel, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`\\])\/\/.*$/gm, '$1');
@@ -64,8 +64,9 @@ test('the next-send watcher only observes trusted user presses; it never cancels
 
 test('note text has no submit characters (all levels, the rewrite fills, and newline-carrying input is flattened)', () => {
   for (const lv of ['calm', 'rising', 'overloaded']) assert.doesNotMatch(prefixForLevel(lv), SUBMIT_CHARS, lv);
+  for (const lv of ['rising', 'overloaded']) assert.doesNotMatch(prefixForLevel(lv, 'ko'), SUBMIT_CHARS, `ko ${lv}`);
   assert.doesNotMatch(rewritePrompt(), SUBMIT_CHARS);
-  for (const m of ct.matchAll(/const (REWRITE|REWRITE_OFFER) = '([^']*)'/g)) assert.doesNotMatch(m[2], SUBMIT_CHARS, m[1]);
+  for (const f of REWRITE_FILLS) assert.doesNotMatch(f, SUBMIT_CHARS, f);
   assert.equal(oneLine('A.\n\nB'), 'A. B');
   assert.equal(oneLine('A.\r\n'), 'A. ');
   assert.equal(oneLine('x\u2028y\u2029z\u0085w\vq\fr'), 'x y z w q r');
@@ -73,10 +74,10 @@ test('note text has no submit characters (all levels, the rewrite fills, and new
 });
 
 test('planPick / planUndo: only one-line inserts at the start or removal of our own note; the user draft is never re-typed', () => {
-  const R = 'Please rewrite your last answer more shortly and simply.';
-  const fills = [R, 'Please rewrite your last answer as a short summary first, with the full details below.'];
+  const R = rewritePrompt();
+  const fills = [...REWRITE_FILLS];
   const heavy = prefixForLevel('overloaded'); const medium = prefixForLevel('rising');
-  const drafts = ['', 'hello', 'hello\nworld', 'line 1\r\n\r\nline 2\u2028x', '   spaced  '];
+  const drafts = ['', 'hello', 'hello\nworld', 'draft 1\r\n\r\ndraft 2\u2028x', '   spaced  '];
   const notes = ['', heavy, medium, `${heavy.trim()}\n\n`, 'NOTE.\nTWO LINES\n'];
   for (const d of drafts) for (const oldN of notes) for (const n of notes) {
     const cur = oldN && d ? `${oneLine(oldN)}${d}` : oldN ? `${oneLine(oldN)}${R}` : d;
@@ -97,6 +98,98 @@ test('planPick / planUndo: only one-line inserts at the start or removal of our 
   assert.deepEqual(planUndo({ current: `${heavy}${R}`, note: heavy, fills }), { clear: true, remove: '', insert: '' });
   assert.deepEqual(planUndo({ current: `${heavy}hi\nthere`, note: heavy, fills }), { clear: false, remove: heavy.trim(), insert: '' });
   assert.deepEqual(planUndo({ current: 'user edited it', note: heavy, fills }), { clear: false, remove: '', insert: '' });
+});
+
+const DIAGNOSIS = /cognitive load|the user (reported|is|seems|feels)|you (seem|are|look|feel)|tired|overwhelm|stress|burnout|exhaust|confus|struggl|부하|지치|피곤|힘들|번아웃|스트레스|사용자가/i;
+test('0.4.1 notes are compact: one line, length cap per level, action-only, core instructions kept (EN + KO)', () => {
+  for (const lang of ['en', 'ko']) {
+    assert.equal(prefixForLevel('calm', lang), '', 'light = no note');
+    const med = prefixForLevel('rising', lang); const heavy = prefixForLevel('overloaded', lang);
+    for (const [lv, n] of [['rising', med], ['overloaded', heavy]]) {
+      assert.doesNotMatch(n, SUBMIT_CHARS, `${lang} ${lv}: no line break`);
+      assert.ok(n.trim().length <= NOTE_MAX[lv], `${lang} ${lv}: ${n.trim().length} > ${NOTE_MAX[lv]}`);
+      assert.ok(n.endsWith(' ') && !n.endsWith('  '), 'one trailing space so the user text follows');
+      assert.doesNotMatch(n, DIAGNOSIS, `${lang} ${lv}: no statement about the user`);
+    }
+    assert.ok(med.length < heavy.length, 'medium is shorter than heavy');
+    assert.ok(heavy.trim().length <= 110 && med.trim().length <= 80);
+  }
+  const en = prefixForLevel('overloaded'); const ko = prefixForLevel('overloaded', 'ko');
+  for (const re of [/1-line summary first/, /"Details"/, /one step at a time/, /max 2 options/]) assert.match(en, re);
+  for (const re of [/한 줄 요약 먼저/, /"자세히"/, /한 번에 하나씩/, /선택지 최대 2개/]) assert.match(ko, re);
+  assert.match(prefixForLevel('rising'), /summary first, full details kept below/);
+  assert.match(prefixForLevel('rising', 'ko'), /요약 먼저, 전체 내용은 아래에 유지/);
+  for (const f of REWRITE_FILLS) { assert.doesNotMatch(f, DIAGNOSIS); assert.ok(f.length <= 40, f); }
+  assert.equal(rewritePrompt(), 'Redo the last answer this way.');
+  assert.equal(rewritePrompt('ko'), '마지막 답을 이 방식으로 다시 써 주세요.');
+  // the background gets the language from the content script
+  assert.match(read('../extension/background.js'), /prefixForLevel\(level, msg\.lang\)/);
+  assert.match(ct, /lang: LANG, \/\/ note in Korean/);
+});
+
+test('empty / new chat: only the style note, no "redo the last answer"; with a previous answer: note + short redo request', () => {
+  assert.equal(fillFor({ hasAnswer: false }), '');
+  assert.equal(fillFor({ hasAnswer: false, lang: 'ko' }), '');
+  assert.equal(fillFor({ hasAnswer: true }), rewritePrompt());
+  assert.equal(fillFor({ hasAnswer: true, lang: 'ko' }), rewritePrompt('ko'));
+  const heavy = prefixForLevel('overloaded');
+  assert.deepEqual(planPick({ current: '', note: heavy, fill: fillFor({ hasAnswer: false }), fills: REWRITE_FILLS }), { clear: false, remove: '', insert: heavy });
+  assert.deepEqual(planPick({ current: '', note: heavy, fill: fillFor({ hasAnswer: true }), fills: REWRITE_FILLS }), { clear: false, remove: '', insert: `${heavy}${rewritePrompt()}` });
+  // a draft in the box: never a rewrite request, with or without a previous answer
+  assert.equal(planPick({ current: 'my question', note: heavy, fill: fillFor({ hasAnswer: true }), fills: REWRITE_FILLS }).insert, heavy);
+  // Undo after an empty-chat pick clears only our note
+  assert.deepEqual(planUndo({ current: heavy, note: heavy, fills: REWRITE_FILLS }), { clear: true, remove: '', insert: '' });
+  // selectors.json: every site has an assistantMessage list; content.js treats a missing selector as "no previous answer"
+  const all = JSON.parse(read('../extension/selectors.json'));
+  for (const site of ['chatgpt.com', 'claude.ai', 'gemini.google.com', 'grok.com']) {
+    assert.ok(Array.isArray(all[site].assistantMessage) && all[site].assistantMessage.length > 0, `${site} assistantMessage`);
+  }
+  assert.match(ct, /function fillNow\(sel\) \{ return L \? L\.fillFor\(\{ hasAnswer: hasAssistantMessage\(sel\), lang: LANG \}\) : ''; \}/);
+});
+
+test('content.js hasAssistantMessage: unknown selector = false, matching non-empty answer = true, own widget ignored', () => {
+  const env = loadContent();
+  const has = vm.runInContext('hasAssistantMessage', env.ctx);
+  const nodes = { '.answer': [], '.empty': [{ textContent: '   ', closest: () => null }], '.mine': [{ textContent: 'x', closest: () => ({}) }] };
+  env.ctx.document.querySelectorAll = (css) => { if (css === 'bad[') throw new Error('invalid'); return nodes[css] || []; };
+  assert.equal(has({}), false, 'no assistantMessage selector: no rewrite');
+  assert.equal(has({ assistantMessage: ['.answer'] }), false, 'new chat: nothing matches');
+  assert.equal(has({ assistantMessage: ['bad[', '.empty', '.mine'] }), false, 'invalid / empty / own-widget nodes do not count');
+  nodes['.answer'] = [{ textContent: 'Here is the answer', closest: () => null }];
+  assert.equal(has({ assistantMessage: ['bad[', '.answer'] }), true);
+  assert.equal(has({ assistantMessage: '.empty, .answer' }), true, 'comma list works too');
+});
+
+test('Undo chip placement (chipPos): left of the mascot with a >= 12px gap, never over the composer, inside the viewport', () => {
+  const hit = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  const gapOf = (a, b) => Math.max(b.left - a.right, a.left - b.right, b.top - a.bottom, a.top - b.bottom);
+  const cases = [];
+  for (const vw of [360, 800, 1200, 1920]) for (const vh of [500, 800, 1080]) for (const w of [140, 220, 280]) for (const h of [28, 52]) {
+    const composer = { left: Math.round(vw * 0.15), right: Math.round(vw * 0.85), top: vh - 96, bottom: vh - 16 };
+    const docked = { left: vw - 76, right: vw - 16, top: composer.top - 12 - 60, bottom: composer.top - 12 };
+    const wide = { left: 0, right: vw, top: vh - 120, bottom: vh };
+    const dockedWide = { left: vw - 76, right: vw - 16, top: wide.top - 72, bottom: wide.top - 12 };
+    const dragged = { left: Math.round(vw / 2) - 30, right: Math.round(vw / 2) + 30, top: vh - 70, bottom: vh - 10 }; // dragged onto the composer
+    const topLeft = { left: 4, right: 64, top: 4, bottom: 64 };
+    cases.push([vw, vh, { w, h }, docked, composer], [vw, vh, { w, h }, dockedWide, wide], [vw, vh, { w, h }, dragged, composer], [vw, vh, { w, h }, topLeft, null], [vw, vh, { w, h }, docked, null]);
+  }
+  for (const [vw, vh, chip, mascot, composer] of cases) {
+    const p = chipPos({ vw, vh, mascot, chip, composer });
+    const cw = Math.min(chip.w, vw - 8);
+    const r = { left: p.left, top: p.top, right: p.left + cw, bottom: p.top + chip.h };
+    const msg = JSON.stringify({ vw, vh, chip, mascot, composer, p });
+    assert.ok(r.left >= 0 && r.top >= 0 && r.right <= vw && r.bottom <= vh, `in viewport ${msg}`);
+    assert.ok(gapOf(r, mascot) >= CHIP_GAP, `gap from the mascot ${msg}`);
+    if (composer) assert.ok(!hit(r, composer), `not over the composer / its buttons ${msg}`);
+  }
+  // the usual case: docked above the composer -> to the left of the mascot, bottom aligned with the composer top - gap
+  const vw = 1200; const vh = 800;
+  const composer = { left: 300, right: 1190, top: 700, bottom: 790 };
+  const mascot = { left: 1124, right: 1184, top: 628, bottom: 688 };
+  assert.deepEqual(chipPos({ vw, vh, mascot, chip: { w: 220, h: 30 }, composer }), { left: 1124 - 12 - 220, top: 688 - 30, side: 'left' });
+  assert.equal(CHIP_GAP, 12);
+  assert.match(ct, /W\.chipPos\(/, 'content.js places the chip with chipPos');
+  assert.match(ct, /\.chip \{ position: fixed;/, 'chip is out of the mascot column');
 });
 
 test('keyAction: Escape / arrows / Home / End / Space / Enter never mean send; Escape closes, arrows move, held Enter is swallowed', () => {

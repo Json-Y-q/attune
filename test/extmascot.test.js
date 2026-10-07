@@ -128,9 +128,9 @@ test('dock: lift above a composer that reaches the right edge; leave the default
   assert.equal(clampPos({ right: 'x', bottom: 1 }, { vw, vh }), null);
 });
 
-test('extension 0.4.0: mascot face in a Shadow DOM, faces panel, Escape/outside close, keyboard, reduced motion, no emoji', () => {
+test('extension 0.4.1: mascot face in a Shadow DOM, faces panel, Escape/outside close, keyboard, reduced motion, no emoji', () => {
   const m = JSON.parse(read('../extension/manifest.json'));
-  assert.equal(m.version, '0.4.0');
+  assert.equal(m.version, '0.4.1');
   assert.equal(m.name, 'Tempoloon Load Feedback (prototype)');
   assert.deepEqual(m.content_scripts[0].js, ['content.js']);
   assert.ok(m.web_accessible_resources[0].resources.includes('lib/*'), 'lib/mascot.js + lib/widget.js importable from the content script');

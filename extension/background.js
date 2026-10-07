@@ -53,7 +53,7 @@ chrome.runtime.onMessage.addListener((msg, _s, sendResponse) => {
       let pendingPrefix = '';
       prefs.level = ['calm', 'rising', 'overloaded'].includes(level) ? level : 'overloaded'; // mascot colour/motion on every tab
       if (prefs.instantApply !== false && prefs.insertEnabled !== false) {
-        pendingPrefix = prefixForLevel(level);
+        pendingPrefix = prefixForLevel(level, msg.lang); // compact one-line note, Korean when the page/browser is ko
         prefs.pendingPrefix = pendingPrefix;
       }
       await setPrefs(prefs);
@@ -82,7 +82,7 @@ chrome.runtime.onMessage.addListener((msg, _s, sendResponse) => {
       const label = makeLabel({ sessionId: prefs.sessionId || `ext_${Date.now().toString(36)}`, kind: 'suggest', level: 'rising', origin: 'auto', outcome, sessionStart: prefs.sessionStart ?? null, signals: { trigger: msg.trigger || 'short', host: msg.host || '' } });
       await setLabels(appendLabel(await getLabels(), label));
       let pendingPrefix = '';
-      if (outcome === 'accept' && prefs.insertEnabled !== false) { pendingPrefix = prefixForLevel('rising'); prefs.pendingPrefix = pendingPrefix; await setPrefs(prefs); }
+      if (outcome === 'accept' && prefs.insertEnabled !== false) { pendingPrefix = prefixForLevel('rising', msg.lang); prefs.pendingPrefix = pendingPrefix; await setPrefs(prefs); }
       sendResponse({ ok: true, pendingPrefix });
       return;
     }

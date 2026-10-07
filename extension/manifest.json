@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tempoloon Load Feedback (prototype)",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Tempoloon: a local brain-balloon mascot that shows your reading load on ChatGPT, Claude, Gemini and Grok. Prototype for testers, not in the Chrome Web Store. No data leaves the browser.",
   "permissions": [
     "storage",

@@ -45,7 +45,7 @@ test('rename: product names (EN Tempoloon, KO 템포룬), extension manifest, MC
   assert.match(m.name, /^Tempoloon\b/);
   assert.match(m.action.default_title, /^Tempoloon\b/);
   assert.match(m.description, /Tempoloon/);
-  assert.equal(m.version, '0.4.0');
+  assert.equal(m.version, '0.4.1');
   assert.equal(JSON.parse(read('../package.json')).name, 'tempoloon');
   assert.equal(JSON.parse(read('../mcp/package.json')).name, 'tempoloon-mcp-local');
   assert.match(read('../mcp/server.mjs'), /const SERVER_INFO = \{ name: 'tempoloon',/);

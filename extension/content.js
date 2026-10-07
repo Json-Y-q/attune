@@ -9,9 +9,9 @@ const HOST = location.hostname.replace(/^www\./, '');
 const FAB_ID = 'tempoloon-load-fab';
 const POS_KEY = 'tempoloon.ext.pos.v1';
 const PREFS_KEY = 'tempoloon.ext.prefs.v1';
-const REWRITE = 'Please rewrite your last answer more shortly and simply.'; // only PLACED in an empty box; the user sends it
-const REWRITE_OFFER = 'Please rewrite your last answer as a short summary first, with the full details below.';
-const FILLS = [REWRITE, REWRITE_OFFER];
+// Rewrite request (lib/labels.js rewritePrompt/fillFor): only PLACED in an empty box, and only when the page already shows an
+// assistant answer (selectors.json "assistantMessage"); a new/empty chat gets the style note alone. The user sends it.
+const fills = () => (L?.REWRITE_FILLS ? [...L.REWRITE_FILLS] : []);
 
 async function loadSelectors() {
   try { return await (await fetch(chrome.runtime.getURL('selectors.json'))).json(); }
@@ -38,6 +38,17 @@ function pickInput(sel) {
   }
   return null;
 }
+/** True when the page shows at least one assistant answer (selectors.json "assistantMessage"). Unknown selector = false. */
+function hasAssistantMessage(sel) {
+  for (const css of candidates(sel?.assistantMessage)) {
+    let list = [];
+    try { list = [...document.querySelectorAll(css)]; } catch { continue; } // invalid selector: skip
+    if (list.some((n) => !n.closest?.('#tempoloon-load-fab') && String(n.textContent || '').trim())) return true;
+  }
+  return false;
+}
+/** Text after the note in an empty box: the short rewrite request only when a previous answer exists. */
+function fillNow(sel) { return L ? L.fillFor({ hasAnswer: hasAssistantMessage(sel), lang: LANG }) : ''; }
 function extractTurns(sel) {
   const turns = [];
   if (!sel?.messages) return turns;
@@ -139,10 +150,12 @@ function getInputText(el) {
 const $ui = (s) => document.getElementById(FAB_ID)?.shadowRoot?.querySelector(s) ?? null;
 let M = null; // lib/mascot.js (drawing)
 let W = null; // lib/widget.js (pure state / wording / layout)
+let L = null; // lib/labels.js (note + rewrite wording)
 async function loadLibs() {
   try {
     [M, W] = await Promise.all([import(chrome.runtime.getURL('lib/mascot.js')), import(chrome.runtime.getURL('lib/widget.js'))]);
   } catch { M = null; W = null; } // the widget still works as a plain coloured circle
+  try { L = await import(chrome.runtime.getURL('lib/labels.js')); } catch { L = null; } // no rewrite request without it
 }
 const FALLBACK_HEX = { calm: '#2F5DA8', rising: '#B45F06', overloaded: '#B3124F' };
 const FALLBACK_TXT = { face: { calm: 'Light', rising: 'Medium', overloaded: 'Heavy' }, mascot: 'Tempoloon load faces', group: 'Next reply style', undo: 'Undo' };
@@ -182,7 +195,7 @@ button:focus-visible { outline: 3px solid var(--c); outline-offset: 3px; box-sha
 .bars i { display: block; height: 6px; border-radius: 3px; width: var(--w); background: var(--pc, #2F5DA8); transform-origin: left center; }
 .bars i.off { opacity: .16; transform: scaleX(.3); }
 .p-tip { display: block; font-weight: 500; font-size: 10.5px; color: #6B7487; margin-top: 6px; }
-.chip { display: flex; gap: 8px; align-items: center; background: #E4ECFA; color: #14172B; padding: 6px 10px; border-radius: 999px; font-size: 12px; max-width: 240px; box-shadow: 0 4px 12px rgba(13,27,42,.15); }
+.chip { position: fixed; left: 0; top: 0; box-sizing: border-box; display: flex; gap: 8px; align-items: center; background: #E4ECFA; color: #14172B; padding: 6px 10px; border-radius: 999px; font-size: 12px; max-width: 280px; box-shadow: 0 4px 12px rgba(13,27,42,.15); }
 .chip.warn { background: #FFF1D6; color: #3B2600; border: 1px solid #B45F06; border-radius: 12px; flex-wrap: wrap; }
 .undo { border: none; background: transparent; color: #2F5DA8; font-weight: 700; cursor: pointer; padding: 2px 4px; border-radius: 6px; }
 .copy { border: 1px solid #B45F06; background: #fff; color: #3B2600; border-radius: 8px; padding: 2px 8px; font-weight: 700; cursor: pointer; }
@@ -304,7 +317,15 @@ function placePreview() {
   const roomLeft = r.left - 10 >= w + 4;
   box.style.left = `${Math.round(roomLeft ? r.left - 10 - w : Math.min(innerWidth - w - 4, r.right + 10))}px`;
   box.style.top = 'auto';
-  box.style.bottom = `${Math.round(Math.max(4, innerHeight - r.bottom))}px`;
+  let bottom = Math.max(4, innerHeight - r.bottom);
+  const chip = $ui('.chip');
+  if (chip && !chip.hidden) { // keep the preview clear of the chip: lift it above the chip when they would overlap
+    const c = chip.getBoundingClientRect();
+    const left = parseFloat(box.style.left) || 0;
+    const h = box.offsetHeight || 0;
+    if (left < c.right && left + w > c.left && innerHeight - bottom > c.top && innerHeight - bottom - h < c.bottom) bottom = innerHeight - c.top + 8;
+  }
+  box.style.bottom = `${Math.round(bottom)}px`;
 }
 function hidePreview() { const b = $ui('.preview'); if (b) b.hidden = true; previewMode = null; }
 
@@ -326,21 +347,35 @@ function closePanel({ refocus = false } = {}) {
   if (refocus) $ui('.main')?.focus();
 }
 
+/** The composer's box (its form, which holds the send / voice buttons) as a viewport rect, or null. */
+function composerRect() {
+  const input = selRef ? pickInput(selRef) : null;
+  const box = input?.closest?.('form') || input;
+  return box?.getBoundingClientRect?.() || null;
+}
 /** Docked above the composer (or the dragged spot), always on screen. */
 function place() {
   const host = document.getElementById(FAB_ID);
   if (!host || !W) return;
   const vw = innerWidth; const vh = innerHeight;
   let pos = userPos ? W.clampPos(userPos, { vw, vh }) : null;
-  if (!pos) {
-    const input = selRef ? pickInput(selRef) : null;
-    const box = input?.closest?.('form') || input;
-    const rect = box?.getBoundingClientRect?.() || null;
-    pos = { right: W.MARGIN, bottom: W.dockBottom({ vw, vh, composer: rect }) };
-  }
+  if (!pos) pos = { right: W.MARGIN, bottom: W.dockBottom({ vw, vh, composer: composerRect() }) };
   host.style.right = `${pos.right}px`;
   host.style.bottom = `${pos.bottom}px`;
+  placeChip();
   placePreview();
+}
+/** Chip (note ready / Undo): left of the mascot with a 12px+ gap, clear of the composer's buttons, on screen (W.chipPos). */
+function placeChip() {
+  const chip = $ui('.chip'); const main = $ui('.main');
+  if (!chip || chip.hidden || !main || !W) return;
+  chip.style.left = '0px'; chip.style.top = '0px'; // measure at full available width, then move
+  const r = chip.getBoundingClientRect();
+  const p = W.chipPos({ vw: innerWidth, vh: innerHeight, mascot: main.getBoundingClientRect(), chip: { w: Math.ceil(r.width || chip.offsetWidth || 200), h: Math.ceil(r.height || chip.offsetHeight || 30) }, composer: composerRect() });
+  chip.style.left = `${p.left}px`;
+  chip.style.top = `${p.top}px`;
+  chip.dataset.side = p.side;
+  placePreview(); // the hover preview moves above the chip if they would overlap
 }
 
 function ensureUI(onPick) {
@@ -469,6 +504,7 @@ function showChip(text, message = MSG.ready) {
   chip.classList.remove('warn');
   const copyBtn = chip.querySelector('.copy');
   if (copyBtn) copyBtn.hidden = true;
+  placeChip();
 }
 
 /* Fallback when the composer cannot be found (e.g. a redesigned or logged-in layout):
@@ -488,6 +524,7 @@ async function composerFallback(text) {
   copyBtn.textContent = MSG.copy;
   copyBtn.hidden = false;
   chip.hidden = false;
+  placeChip();
   return ok;
 }
 /** Put one line of text in front of the composer text, or fall back to clipboard + chip. Never sends. */
@@ -506,7 +543,7 @@ function applyNote(sel, note, fill) {
   const oldNote = lastPrefix;
   lastPrefix = flat(note);
   if (!W) { if (note) composerFallback(flat(note + (getInputText(input).trim() ? '' : fill))); return false; }
-  const plan = W.planPick({ current: getInputText(input), oldNote, note, fill, fills: FILLS });
+  const plan = W.planPick({ current: getInputText(input), oldNote, note, fill, fills: fills() });
   if (!plan.clear && !plan.remove && !plan.insert) return true;
   if (input && runPlan(input, plan)) return true;
   if (plan.insert) composerFallback(plan.insert);
@@ -521,6 +558,7 @@ let lastPrefix = ''; // note currently placed in the composer by the last pick
 function pick(lv, opts = {}) {
   undoState = { prevLevel: level, prefix: '' };
   setLevel(lv); // the mascot answers at once; the note itself is prepared by the pick handler
+  if (previewMode === 'now') showPreview(level, 'now'); // the refocused mascot's preview shows the new style, not the old one
   lastPick(lv, opts);
 }
 /** Undo: drop the pending note, take it back out of the composer, and show the previous level again. */
@@ -533,7 +571,7 @@ async function undoPick({ viaKeyboard = false } = {}) {
   await chrome.runtime.sendMessage({ type: 'clear_pending', level: prev });
   if (prefix && selRef && W) {
     const input = pickInput(selRef);
-    if (input) runPlan(input, W.planUndo({ current: getInputText(input), note: prefix, fills: FILLS }));
+    if (input) runPlan(input, W.planUndo({ current: getInputText(input), note: prefix, fills: fills() }));
   }
   const chip = $ui('.chip');
   if (chip) chip.hidden = true;
@@ -554,13 +592,14 @@ function hideOffer() { const o = $ui('.offer'); if (o) o.hidden = true; }
 async function answerOffer(outcome, sel) {
   const p = pendingOffer; pendingOffer = null; hideOffer();
   if (!p) return;
-  const res = await chrome.runtime.sendMessage({ type: 'suggest_outcome', outcome, trigger: p.trigger, host: HOST });
+  const res = await chrome.runtime.sendMessage({ type: 'suggest_outcome', outcome, trigger: p.trigger, host: HOST, lang: LANG });
   if (outcome === 'accept' && res?.pendingPrefix) {
     const note = flat(res.pendingPrefix);
     undoState = { prevLevel: level, prefix: note };
     showChip(note);
     // Never sends: only prepares the composer text (or copies it when the composer is missing).
-    applyNote(sel, note, REWRITE_OFFER);
+    applyNote(sel, note, fillNow(sel));
+    place();
   }
 }
 async function onUserSend(text, sel) {
@@ -620,15 +659,17 @@ function watchSends(sel) {
     const res = await chrome.runtime.sendMessage({
       type: 'record_load',
       level: lv,
+      lang: LANG, // note in Korean when the page or browser language is ko
       recentTurns: turns.length,
       signals: { host: HOST, turnSample: turns.length },
     });
     const prefix = flat(res?.pendingPrefix || '');
     if (undoState) undoState.prefix = prefix;
     showChip(prefix);
-    // a new pick replaces the note from the previous pick instead of stacking two notes; an empty box gets the
-    // optional rewrite request (one line, PLACED only: the user still sends it themselves)
-    applyNote(sel, prefix, REWRITE);
+    // a new pick replaces the note from the previous pick instead of stacking two notes; an empty box gets the short
+    // rewrite request only when a previous answer is on the page (one line, PLACED only: the user still sends it themselves)
+    applyNote(sel, prefix, fillNow(sel));
+    place(); // the composer may have grown: re-dock the mascot and move the chip clear of it
     refocusMascot(viaKeyboard);
   });
 })();
